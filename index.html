@@ -58,7 +58,7 @@
   /* ============ شاشة الدخول ============ */
   #loginScreen {
     background:linear-gradient(145deg, rgba(15,20,40,0.95), rgba(5,8,20,0.98));
-    padding:28px 22px;
+    padding:32px 24px;
     border-radius:24px;
     width:100%;
     max-width:420px;
@@ -94,7 +94,7 @@
   .subtitle {
     color:#94a3b8;
     font-size:13px;
-    margin-bottom:22px;
+    margin-bottom:24px;
     letter-spacing:1px;
   }
 
@@ -185,37 +185,16 @@
     text-shadow:0 0 10px rgba(248,113,113,0.6);
   }
 
-  /* ============ صندوق بيانات الأدمن ============ */
-  .admin-info-box {
-    margin-top:18px;
-    padding:14px;
-    border-radius:14px;
-    background:linear-gradient(145deg, rgba(250,204,21,0.08), rgba(56,189,248,0.05));
-    border:1px dashed rgba(250,204,21,0.5);
-    font-size:13px;
-    text-align:right;
-    direction:rtl;
-    box-shadow:inset 0 0 20px rgba(250,204,21,0.08);
-  }
-  .admin-info-box .title {
-    color:#facc15;
-    font-weight:bold;
-    margin-bottom:8px;
-    font-size:13px;
-    text-align:center;
-    text-shadow:0 0 10px rgba(250,204,21,0.6);
-  }
-  .admin-info-box .row {
-    display:flex;
-    justify-content:space-between;
-    padding:4px 0;
-    color:#cbd5e1;
-  }
-  .admin-info-box .row b {
-    color:#38bdf8;
+  /* سطر أمني أسفل شاشة الدخول */
+  .secure-note {
+    margin-top:22px;
+    font-size:12px;
+    color:#64748b;
     letter-spacing:1px;
-    text-shadow:0 0 8px rgba(56,189,248,0.5);
+    padding-top:16px;
+    border-top:1px solid rgba(56,189,248,0.15);
   }
+  .secure-note span { color:#38bdf8; }
 
   /* ============ لوحة التحكم ============ */
   #dashboard {
@@ -515,6 +494,11 @@
   </div>
   <button class="btn btn-gold" onclick="handleLogin()">🚀 دخول النظام</button>
   <div class="error-msg" id="loginError"></div>
+
+  <div class="secure-note">
+    🔐 نظام محمي • الدخول <span>للأدمن والكباتن</span> فقط
+  </div>
+</div>
 
 <!-- ============ لوحة التحكم ============ -->
 <div id="dashboard">
