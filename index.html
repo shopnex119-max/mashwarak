@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>مشوارك | نظام إدارة الأسطول الفضائي</title>
+<style>
+  /* ============ الأساسيات ============ */
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Tahoma','Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent; }
+
+  html, body { width:100%; min-height:100vh; overflow-x:hidden; }
+
+  body {
+    background:#05060e;
+    color:#e8f0ff;
+    position:relative;
+    padding:12px;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    min-height:100vh;
+  }
+
+  /* ============ خلفية النجوم الفضائية ============ */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+      radial-gradient(2px 2px at 60% 70%, #7dd3fc, transparent),
+      radial-gradient(1px 1px at 80% 20%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 35% 85%, #facc15, transparent),
+      radial-gradient(1px 1px at 90% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 10% 50%, #a78bfa, transparent),
+      radial-gradient(2px 2px at 50% 10%, #fff, transparent);
+    background-size:200% 200%;
+    animation:starMove 30s linear infinite;
+    z-index:-2;
+    opacity:0.7;
+  }
+  body::after {
+    content:'';
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(59,130,246,0.18), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(250,204,21,0.15), transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(139,92,246,0.10), transparent 60%);
+    z-index:-1;
+    pointer-events:none;
+  }
+  @keyframes starMove {
+    0% { background-position:0% 0%; }
+    100% { background-position:100% 100%; }
+  }
+
+  /* ============ شاشة الدخول ============ */
+  #loginScreen {
+    background:linear-gradient(145deg, rgba(15,20,40,0.95), rgba(5,8,20,0.98));
+    padding:28px 22px;
+    border-radius:24px;
+    width:100%;
+    max-width:420px;
+    box-shadow:0 0 60px rgba(56,189,248,0.25), inset 0 0 40px rgba(56,189,248,0.05);
+    border:1px solid rgba(56,189,248,0.35);
+    text-align:center;
+    margin-top:20px;
+    backdrop-filter:blur(10px);
+    animation:fadeUp 0.6s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .logo-text {
+    font-size:36px;
+    font-weight:900;
+    background:linear-gradient(90deg,#facc15,#38bdf8,#facc15);
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:2px;
+    margin-bottom:6px;
+    animation:shine 3s linear infinite;
+    text-shadow:0 0 30px rgba(250,204,21,0.4);
+  }
+  @keyframes shine {
+    to { background-position:200% center; }
+  }
+
+  .subtitle {
+    color:#94a3b8;
+    font-size:13px;
+    margin-bottom:22px;
+    letter-spacing:1px;
+  }
+
+  .input-wrap {
+    position:relative;
+    margin:12px 0;
+  }
+  .input-wrap input {
+    width:100%;
+    padding:14px 45px 14px 14px;
+    border-radius:14px;
+    border:1px solid rgba(56,189,248,0.3);
+    background:rgba(8,15,35,0.85);
+    color:#fff;
+    font-size:15px;
+    transition:0.3s;
+  }
+  .input-wrap input:focus {
+    outline:none;
+    border-color:#38bdf8;
+    box-shadow:0 0 0 3px rgba(56,189,248,0.15), 0 0 20px rgba(56,189,248,0.3);
+  }
+  .input-wrap .icon {
+    position:absolute;
+    top:50%;
+    right:14px;
+    transform:translateY(-50%);
+    font-size:16px;
+    color:#38bdf8;
+    pointer-events:none;
+  }
+
+  /* ============ زر أساسي ============ */
+  .btn {
+    width:100%;
+    padding:14px;
+    margin-top:12px;
+    border:none;
+    border-radius:14px;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg,#38bdf8,#3b82f6);
+    color:#020617;
+    box-shadow:0 0 25px rgba(56,189,248,0.45);
+  }
+  .btn-primary:hover, .btn-primary:active {
+    box-shadow:0 0 35px rgba(56,189,248,0.8);
+    transform:translateY(-2px);
+  }
+  .btn-gold {
+    background:linear-gradient(135deg,#facc15,#f59e0b);
+    color:#111;
+    box-shadow:0 0 25px rgba(250,204,21,0.4);
+  }
+  .btn-gold:hover { box-shadow:0 0 35px rgba(250,204,21,0.75); transform:translateY(-2px); }
+  .btn-danger {
+    background:linear-gradient(135deg,#ef4444,#b91c1c);
+    color:#fff;
+    box-shadow:0 0 20px rgba(239,68,68,0.4);
+  }
+  .btn-outline {
+    background:transparent;
+    color:#38bdf8;
+    border:1.5px solid #38bdf8;
+    box-shadow:0 0 15px rgba(56,189,248,0.2);
+  }
+  .btn-outline:hover { background:rgba(56,189,248,0.1); }
+  .btn-small {
+    width:auto;
+    padding:7px 12px;
+    font-size:12px;
+    margin:3px 2px;
+    border-radius:10px;
+    margin-top:0;
+  }
+
+  .error-msg {
+    color:#f87171;
+    font-size:13px;
+    margin-top:8px;
+    min-height:18px;
+    text-shadow:0 0 10px rgba(248,113,113,0.6);
+  }
+
+  /* ============ صندوق بيانات الأدمن ============ */
+  .admin-info-box {
+    margin-top:18px;
+    padding:14px;
+    border-radius:14px;
+    background:linear-gradient(145deg, rgba(250,204,21,0.08), rgba(56,189,248,0.05));
+    border:1px dashed rgba(250,204,21,0.5);
+    font-size:13px;
+    text-align:right;
+    direction:rtl;
+    box-shadow:inset 0 0 20px rgba(250,204,21,0.08);
+  }
+  .admin-info-box .title {
+    color:#facc15;
+    font-weight:bold;
+    margin-bottom:8px;
+    font-size:13px;
+    text-align:center;
+    text-shadow:0 0 10px rgba(250,204,21,0.6);
+  }
+  .admin-info-box .row {
+    display:flex;
+    justify-content:space-between;
+    padding:4px 0;
+    color:#cbd5e1;
+  }
+  .admin-info-box .row b {
+    color:#38bdf8;
+    letter-spacing:1px;
+    text-shadow:0 0 8px rgba(56,189,248,0.5);
+  }
+
+  /* ============ لوحة التحكم ============ */
+  #dashboard {
+    display:none;
+    width:100%;
+    max-width:960px;
+    background:linear-gradient(160deg, rgba(15,20,40,0.95), rgba(5,8,20,0.98));
+    border-radius:22px;
+    padding:18px;
+    border:1px solid rgba(56,189,248,0.3);
+    box-shadow:0 0 60px rgba(56,189,248,0.15), inset 0 0 40px rgba(56,189,248,0.03);
+    margin-top:15px;
+    animation:fadeUp 0.4s ease;
+    backdrop-filter:blur(8px);
+  }
+  #dashboard h1 {
+    font-size:20px;
+    background:linear-gradient(90deg,#facc15,#38bdf8);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    font-weight:900;
+  }
+  .topbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid rgba(56,189,248,0.2);
+    padding-bottom:12px;
+    margin-bottom:14px;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .topbar .user-info {
+    font-size:13px;
+    color:#94a3b8;
+  }
+  .topbar .user-info span {
+    color:#38bdf8;
+    font-weight:bold;
+    text-shadow:0 0 8px rgba(56,189,248,0.6);
+  }
+
+  /* ============ التبويبات ============ */
+  .tabs {
+    display:flex;
+    gap:6px;
+    margin-bottom:15px;
+    flex-wrap:wrap;
+  }
+  .tab-btn {
+    flex:1;
+    min-width:80px;
+    padding:10px 6px;
+    background:rgba(15,23,42,0.8);
+    color:#94a3b8;
+    border:1px solid rgba(56,189,248,0.15);
+    border-radius:12px;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:bold;
+    transition:0.3s;
+  }
+  .tab-btn.active {
+    background:linear-gradient(135deg,#38bdf8,#3b82f6);
+    color:#020617;
+    box-shadow:0 0 20px rgba(56,189,248,0.5);
+    border-color:transparent;
+  }
+  .tab-btn:hover:not(.active) {
+    border-color:rgba(56,189,248,0.5);
+    color:#e0f2fe;
+  }
+
+  .tab-content { display:none; animation:fadeUp 0.3s ease; }
+  .tab-content.active { display:block; }
+
+  /* ============ كروت الإحصائيات ============ */
+  .stats-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));
+    gap:10px;
+    margin-bottom:15px;
+  }
+  .stat-card {
+    background:linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.9));
+    padding:14px 10px;
+    border-radius:14px;
+    border:1px solid rgba(56,189,248,0.25);
+    text-align:center;
+    box-shadow:0 0 20px rgba(56,189,248,0.08);
+    transition:0.3s;
+  }
+  .stat-card:hover {
+    transform:translateY(-3px);
+    box-shadow:0 0 30px rgba(56,189,248,0.25);
+  }
+  .stat-card .label {
+    font-size:11px;
+    color:#94a3b8;
+    margin-bottom:6px;
+    letter-spacing:0.5px;
+  }
+  .stat-card .value {
+    font-size:20px;
+    font-weight:900;
+    color:#38bdf8;
+    text-shadow:0 0 12px rgba(56,189,248,0.7);
+  }
+  .stat-card.green .value { color:#4ade80; text-shadow:0 0 12px rgba(74,222,128,0.7); }
+  .stat-card.red .value { color:#f87171; text-shadow:0 0 12px rgba(248,113,113,0.7); }
+  .stat-card.gold .value { color:#facc15; text-shadow:0 0 12px rgba(250,204,21,0.7); }
+
+  /* ============ النماذج ============ */
+  .form-group { margin-bottom:12px; }
+  .form-group label {
+    display:block;
+    font-size:13px;
+    color:#94a3b8;
+    margin-bottom:6px;
+    font-weight:bold;
+  }
+  .form-group input, .form-group select {
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(56,189,248,0.25);
+    background:rgba(8,15,35,0.85);
+    color:#fff;
+    font-size:14px;
+    transition:0.3s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline:none;
+    border-color:#38bdf8;
+    box-shadow:0 0 0 3px rgba(56,189,248,0.15), 0 0 15px rgba(56,189,248,0.3);
+  }
+  .form-row {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width:520px) {
+    .form-row { grid-template-columns:1fr; }
+  }
+
+  /* ============ اختيار الوردية ============ */
+  .shift-picker {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:6px;
+  }
+  .shift-option {
+    padding:14px;
+    border-radius:14px;
+    border:1.5px solid rgba(56,189,248,0.3);
+    background:rgba(8,15,35,0.85);
+    color:#cbd5e1;
+    text-align:center;
+    cursor:pointer;
+    font-weight:bold;
+    font-size:14px;
+    transition:0.3s;
+    user-select:none;
+  }
+  .shift-option .emoji { display:block; font-size:22px; margin-bottom:4px; }
+  .shift-option.selected.morning {
+    background:linear-gradient(135deg,#facc15,#f59e0b);
+    color:#111;
+    border-color:#facc15;
+    box-shadow:0 0 25px rgba(250,204,21,0.6);
+    transform:translateY(-2px);
+  }
+  .shift-option.selected.evening {
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;
+    border-color:#8b5cf6;
+    box-shadow:0 0 25px rgba(139,92,246,0.6);
+    transform:translateY(-2px);
+  }
+
+  /* ============ الجداول ============ */
+  .table-wrap {
+    overflow-x:auto;
+    border-radius:14px;
+    margin-top:10px;
+    border:1px solid rgba(56,189,248,0.15);
+  }
+  table {
+    width:100%;
+    border-collapse:collapse;
+    background:rgba(15,23,42,0.6);
+    font-size:12.5px;
+    min-width:500px;
+  }
+  table th {
+    background:linear-gradient(135deg, rgba(56,189,248,0.25), rgba(59,130,246,0.15));
+    color:#e0f2fe;
+    padding:10px 8px;
+    text-align:center;
+    font-size:11.5px;
+    font-weight:bold;
+    letter-spacing:0.3px;
+    border-bottom:1px solid rgba(56,189,248,0.3);
+  }
+  table td {
+    padding:10px 8px;
+    text-align:center;
+    border-bottom:1px solid rgba(56,189,248,0.08);
+    color:#e2e8f0;
+  }
+  table tr:hover td { background:rgba(56,189,248,0.06); }
+
+  /* ============ الشارات ============ */
+  .badge {
+    display:inline-block;
+    padding:3px 9px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:bold;
+  }
+  .badge-work { background:rgba(74,222,128,0.15); color:#4ade80; border:1px solid rgba(74,222,128,0.4); }
+  .badge-exp  { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.4); }
+  .badge-morning { background:rgba(250,204,21,0.15); color:#facc15; border:1px solid rgba(250,204,21,0.4); }
+  .badge-evening { background:rgba(139,92,246,0.2); color:#c4b5fd; border:1px solid rgba(139,92,246,0.5); }
+
+  /* ============ التنبيهات ============ */
+  #toast {
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%) translateY(-120px);
+    background:linear-gradient(135deg,#4ade80,#22c55e);
+    color:#052e16;
+    padding:12px 25px;
+    border-radius:14px;
+    font-weight:bold;
+    font-size:14px;
+    transition:0.4s;
+    z-index:9999;
+    box-shadow:0 8px 30px rgba(74,222,128,0.5);
+    max-width:90%;
+    text-align:center;
+  }
+  #toast.show { transform:translateX(-50%) translateY(0); }
+  #toast.error {
+    background:linear-gradient(135deg,#f87171,#ef4444);
+    color:#fff;
+    box-shadow:0 8px 30px rgba(248,113,113,0.5);
+  }
+
+  .section-title {
+    color:#38bdf8;
+    font-size:15px;
+    margin:16px 0 10px;
+    border-right:3px solid #38bdf8;
+    padding-right:10px;
+    font-weight:bold;
+    text-shadow:0 0 10px rgba(56,189,248,0.4);
+  }
+  .empty-msg {
+    text-align:center;
+    color:#64748b;
+    padding:20px;
+    font-size:13px;
+  }
+
+  /* ============ موبايل ============ */
+  @media (max-width:520px) {
+    body { padding:8px; }
+    #loginScreen { padding:22px 16px; border-radius:20px; }
+    .logo-text { font-size:28px; }
+    #dashboard { padding:14px; border-radius:18px; }
+    .stat-card .value { font-size:17px; }
+    .tab-btn { font-size:11px; padding:9px 4px; min-width:70px; }
+    table { font-size:11.5px; }
+    table th, table td { padding:8px 5px; }
+    .btn { font-size:15px; padding:13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ شاشة الدخول ============ -->
+<div id="loginScreen">
+  <div class="logo-text">مشوارك</div>
+  <p class="subtitle">نظام إدارة الأسطول الفضائي</p>
+
+  <div class="input-wrap">
+    <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
+    <span class="icon">👤</span>
+  </div>
+  <div class="input-wrap">
+    <input type="password" id="loginPass" placeholder="كلمة المرور">
+    <span class="icon">🔒</span>
+  </div>
+  <button class="btn btn-gold" onclick="handleLogin()">🚀 دخول النظام</button>
+  <div class="error-msg" id="loginError"></div>
+
+  <!-- بيانات الأدمن الظاهرة -->
+  <div class="admin-info-box">
+    <div class="title">⚡ بيانات الدخول للأدمن ⚡</div>
+    <div class="row"><span>اسم المستخدم:</span><b>Abdallh</b></div>
+    <div class="row"><span>كلمة المرور:</span><b>Abdallh2027</b></div>
+  </div>
+</div>
+
+<!-- ============ لوحة التحكم ============ -->
+<div id="dashboard">
+  <div class="topbar">
+    <div>
+      <h1 id="dashTitle">لوحة التحكم</h1>
+      <div class="user-info">مرحباً، <span id="currentUserName"></span></div>
+    </div>
+    <button class="btn btn-danger btn-small" onclick="logout()">خروج</button>
+  </div>
+
+  <!-- تبويبات الأدمن -->
+  <div id="adminTabs" class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-overview', this)">📊 الرئيسية</button>
+    <button class="tab-btn" onclick="switchTab('tab-captains', this)">👤 الكباتن</button>
+    <button class="tab-btn" onclick="switchTab('tab-trans', this)">📋 العمليات</button>
+    <button class="tab-btn" onclick="switchTab('tab-reports', this)">📈 التقارير</button>
+  </div>
+
+  <!-- تبويبات الكابتن -->
+  <div id="captainTabs" class="tabs" style="display:none;">
+    <button class="tab-btn active" onclick="switchTab('tab-myhome', this)">🏠 رئيسيتي</button>
+    <button class="tab-btn" onclick="switchTab('tab-addwork', this)">➕ شغل</button>
+    <button class="tab-btn" onclick="switchTab('tab-addexpense', this)">💸 مصروف</button>
+    <button class="tab-btn" onclick="switchTab('tab-mytrans', this)">📋 سجلي</button>
+  </div>
+
+  <!-- ============ محتوى الأدمن ============ -->
+
+  <!-- الرئيسية -->
+  <div id="tab-overview" class="tab-content active">
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <div class="label">إجمالي الإيرادات</div>
+        <div class="value" id="ovRevenue">0</div>
+      </div>
+      <div class="stat-card red">
+        <div class="label">إجمالي المصروفات</div>
+        <div class="value" id="ovExpense">0</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">صافي الربح</div>
+        <div class="value" id="ovNet">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">عدد الكباتن</div>
+        <div class="value" id="ovCaptains">0</div>
+      </div>
+    </div>
+
+    <div class="section-title">⚡ إحصائيات اليوم حسب الوردية</div>
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <div class="label">🌅 صباحي - شغل</div>
+        <div class="value" id="ovMorningWork">0</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">🌅 صباحي - مصروف</div>
+        <div class="value" id="ovMorningExp">0</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(139,92,246,0.5);">
+        <div class="label">🌙 مسائي - شغل</div>
+        <div class="value" id="ovEveningWork" style="color:#c4b5fd;text-shadow:0 0 12px rgba(139,92,246,0.7);">0</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(139,92,246,0.5);">
+        <div class="label">🌙 مسائي - مصروف</div>
+        <div class="value" id="ovEveningExp" style="color:#c4b5fd;text-shadow:0 0 12px rgba(139,92,246,0.7);">0</div>
+      </div>
+    </div>
+
+    <div class="section-title">آخر العمليات</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>الكابتن</th><th>النوع</th><th>الوردية</th><th>التصنيف</th><th>المبلغ</th><th>التاريخ</th></tr>
+        </thead>
+        <tbody id="ovRecentTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- الكباتن -->
+  <div id="tab-captains" class="tab-content">
+    <div class="section-title">➕ إضافة كابتن جديد</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>اسم الكابتن</label>
+        <input type="text" id="capName" placeholder="مثال: أحمد محمد">
+      </div>
+      <div class="form-group">
+        <label>رقم العربية</label>
+        <input type="text" id="capCar" placeholder="مثال: 1234 أ ب ج">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>اسم المستخدم</label>
+        <input type="text" id="capUser" placeholder="مثال: ahmed">
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="text" id="capPass" placeholder="مثال: 1234">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addCaptain()">➕ إضافة الكابتن</button>
+
+    <div class="section-title">قائمة الكباتن</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>الاسم</th><th>العربية</th><th>اليوزر</th><th>إيرادات</th><th>مصروفات</th><th>الصافي</th><th>إجراءات</th></tr>
+        </thead>
+        <tbody id="captainsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- العمليات -->
+  <div id="tab-trans" class="tab-content">
+    <div class="section-title">كل العمليات</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>فلترة حسب الكابتن</label>
+        <select id="filterCaptain" onchange="renderAllTransactions()">
+          <option value="all">الكل</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>فلترة حسب الوردية</label>
+        <select id="filterShift" onchange="renderAllTransactions()">
+          <option value="all">الكل</option>
+          <option value="morning">🌅 صباحي</option>
+          <option value="evening">🌙 مسائي</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>الكابتن</th><th>النوع</th><th>الوردية</th><th>التصنيف</th><th>المبلغ</th><th>التاريخ</th><th>إجراء</th></tr>
+        </thead>
+        <tbody id="allTransTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- التقارير -->
+  <div id="tab-reports" class="tab-content">
+    <div class="section-title">تقرير مالي لكل كابتن</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>الكابتن</th><th>العربية</th><th>شغل صباحي</th><th>شغل مسائي</th><th>إجمالي شغل</th><th>مصروف</th><th>الصافي</th></tr>
+        </thead>
+        <tbody id="reportTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ محتوى الكابتن ============ -->
+
+  <!-- رئيسية الكابتن -->
+  <div id="tab-myhome" class="tab-content">
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <div class="label">شغلي اليوم</div>
+        <div class="value" id="myTodayWork">0</div>
+      </div>
+      <div class="stat-card red">
+        <div class="label">مصروفي اليوم</div>
+        <div class="value" id="myTodayExp">0</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">صافي اليوم</div>
+        <div class="value" id="myTodayNet">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">رقم العربية</div>
+        <div class="value" id="myCar" style="font-size:14px;">-</div>
+      </div>
+    </div>
+
+    <div class="section-title">⚡ شغلي اليوم حسب الوردية</div>
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <div class="label">🌅 صباحي</div>
+        <div class="value" id="myTodayMorning">0</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(139,92,246,0.5);">
+        <div class="label">🌙 مسائي</div>
+        <div class="value" id="myTodayEvening" style="color:#c4b5fd;text-shadow:0 0 12px rgba(139,92,246,0.7);">0</div>
+      </div>
+    </div>
+
+    <div class="section-title">آخر عملياتي</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>النوع</th><th>الوردية</th><th>التصنيف</th><th>المبلغ</th><th>التاريخ</th></tr>
+        </thead>
+        <tbody id="myRecentTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- إضافة شغل -->
+  <div id="tab-addwork" class="tab-content">
+    <div class="section-title">🌅 تسجيل شغل جديد</div>
+    <div class="form-group">
+      <label>الوردية</label>
+      <div class="shift-picker">
+        <div class="shift-option morning" id="shiftMorningWork" onclick="selectShift('work','morning')">
+          <span class="emoji">🌅</span>صباحي
+        </div>
+        <div class="shift-option evening" id="shiftEveningWork" onclick="selectShift('work','evening')">
+          <span class="emoji">🌙</span>مسائي
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>المبلغ (جنيه)</label>
+      <input type="number" id="workAmount" placeholder="مثال: 250">
+    </div>
+    <div class="form-group">
+      <label>ملاحظات (اختياري)</label>
+      <input type="text" id="workNote" placeholder="مثال: مشوار المعادي">
+    </div>
+    <button class="btn btn-gold" onclick="addWork()">➕ تسجيل الشغل</button>
+  </div>
+
+  <!-- إضافة مصروف -->
+  <div id="tab-addexpense" class="tab-content">
+    <div class="section-title">💸 تسجيل مصروف جديد</div>
+    <div class="form-group">
+      <label>الوردية</label>
+      <div class="shift-picker">
+        <div class="shift-option morning" id="shiftMorningExp" onclick="selectShift('exp','morning')">
+          <span class="emoji">🌅</span>صباحي
+        </div>
+        <div class="shift-option evening" id="shiftEveningExp" onclick="selectShift('exp','evening')">
+          <span class="emoji">🌙</span>مسائي
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>نوع المصروف</label>
+      <select id="expCategory">
+        <option value="بنزين">⛽ بنزين</option>
+        <option value="صيانة">🔧 صيانة</option>
+        <option value="غسيل">🚿 غسيل</option>
+        <option value="مخالفات">🚨 مخالفات</option>
+        <option value="أخرى">📌 أخرى</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>المبلغ (جنيه)</label>
+      <input type="number" id="expAmount" placeholder="مثال: 150">
+    </div>
+    <div class="form-group">
+      <label>ملاحظات (اختياري)</label>
+      <input type="text" id="expNote" placeholder="ملاحظة">
+    </div>
+    <button class="btn btn-danger" onclick="addExpense()">➖ تسجيل المصروف</button>
+  </div>
+
+  <!-- سجل الكابتن -->
+  <div id="tab-mytrans" class="tab-content">
+    <div class="section-title">📋 كل عملياتي</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>النوع</th><th>الوردية</th><th>التصنيف</th><th>المبلغ</th><th>التاريخ</th></tr>
+        </thead>
+        <tbody id="myAllTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+<script>
+/* ============================================================
+   الجزء 1: البيانات والتخزين (localStorage)
+   ============================================================ */
+
+const KEY_CAPTAINS = 'mashwarak_captains_v2';
+const KEY_TRANS    = 'mashwarak_transactions_v2';
+const KEY_SESSION  = 'mashwarak_session_v2';
+const KEY_ADMIN    = 'mashwarak_admin_v2';
+
+let currentUser = null;
+
+// الورديات المختارة مؤقتاً
+let selectedWorkShift = null;
+let selectedExpShift  = null;
+
+function getCaptains() {
+  return JSON.parse(localStorage.getItem(KEY_CAPTAINS) || '[]');
+}
+function saveCaptains(arr) {
+  localStorage.setItem(KEY_CAPTAINS, JSON.stringify(arr));
+}
+
+function getTransactions() {
+  return JSON.parse(localStorage.getItem(KEY_TRANS) || '[]');
+}
+function saveTransactions(arr) {
+  localStorage.setItem(KEY_TRANS, JSON.stringify(arr));
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function shiftName(s) {
+  return s === 'morning' ? 'صباحي' : 'مسائي';
+}
+function shiftBadge(s) {
+  return s === 'morning'
+    ? '<span class="badge badge-morning">🌅 صباحي</span>'
+    : '<span class="badge badge-evening">🌙 مسائي</span>';
+}
+
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = isError ? 'show error' : 'show';
+  setTimeout(() => { t.className = ''; }, 2500);
+}
+
+function initData() {
+  if (!localStorage.getItem(KEY_CAPTAINS)) saveCaptains([]);
+  if (!localStorage.getItem(KEY_TRANS))    saveTransactions([]);
+
+  // الأدمن المطلوب
+  localStorage.setItem(KEY_ADMIN, JSON.stringify({
+    username: 'Abdallh',
+    password: 'Abdallh2027',
+    name: 'عبدالله (الأدمن)'
+  }));
+}
+
+/* ---------- اختيار الوردية ---------- */
+function selectShift(kind, shift) {
+  if (kind === 'work') {
+    selectedWorkShift = shift;
+    document.getElementById('shiftMorningWork').classList.remove('selected');
+    document.getElementById('shiftEveningWork').classList.remove('selected');
+    const el = shift === 'morning' ? 'shiftMorningWork' : 'shiftEveningWork';
+    document.getElementById(el).classList.add('selected');
+  } else {
+    selectedExpShift = shift;
+    document.getElementById('shiftMorningExp').classList.remove('selected');
+    document.getElementById('shiftEveningExp').classList.remove('selected');
+    const el = shift === 'morning' ? 'shiftMorningExp' : 'shiftEveningExp';
+    document.getElementById(el).classList.add('selected');
+  }
+}
+/* ============================================================
+   الجزء 2: تسجيل الدخول والتنقل
+   ============================================================ */
+
+function handleLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const err  = document.getElementById('loginError');
+  err.textContent = '';
+
+  if (!user || !pass) {
+    err.textContent = 'من فضلك اكتب اليوزر والباسورد';
+    return;
+  }
+
+  const admin = JSON.parse(localStorage.getItem(KEY_ADMIN));
+  if (user === admin.username && pass === admin.password) {
+    currentUser = { role:'admin', name:admin.name, username:admin.username };
+    localStorage.setItem(KEY_SESSION, JSON.stringify(currentUser));
+    enterDashboard();
+    return;
+  }
+
+  const captains = getCaptains();
+  const cap = captains.find(c => c.username === user && c.password === pass);
+  if (cap) {
+    currentUser = { role:'captain', id:cap.id, name:cap.name, car:cap.car, username:cap.username };
+    localStorage.setItem(KEY_SESSION, JSON.stringify(currentUser));
+    enterDashboard();
+    return;
+  }
+
+  err.textContent = '❌ بيانات الدخول غير صحيحة';
+}
+
+function logout() {
+  localStorage.removeItem(KEY_SESSION);
+  currentUser = null;
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'block';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
+function enterDashboard() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('currentUserName').textContent = currentUser.name;
+
+  if (currentUser.role === 'admin') {
+    document.getElementById('dashTitle').textContent = 'لوحة تحكم الأدمن';
+    document.getElementById('adminTabs').style.display = 'flex';
+    document.getElementById('captainTabs').style.display = 'none';
+    switchTab('tab-overview', document.querySelector('#adminTabs .tab-btn'));
+    renderAdmin();
+  } else {
+    document.getElementById('dashTitle').textContent = 'لوحة الكابتن';
+    document.getElementById('adminTabs').style.display = 'none';
+    document.getElementById('captainTabs').style.display = 'flex';
+    switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
+    renderCaptain();
+  }
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (currentUser && currentUser.role === 'admin') renderAdmin();
+  if (currentUser && currentUser.role === 'captain') renderCaptain();
+}
+/* ============================================================
+   الجزء 3: وظائف الأدمن
+   ============================================================ */
+
+function renderAdmin() {
+  renderOverview();
+  renderCaptainsTable();
+  renderAllTransactions();
+  renderReports();
+  fillCaptainFilter();
+}
+
+function addCaptain() {
+  const name = document.getElementById('capName').value.trim();
+  const car  = document.getElementById('capCar').value.trim();
+  const user = document.getElementById('capUser').value.trim();
+  const pass = document.getElementById('capPass').value.trim();
+
+  if (!name || !car || !user || !pass) {
+    toast('من فضلك اكمل كل البيانات', true);
+    return;
+  }
+  const captains = getCaptains();
+  if (captains.some(c => c.username === user)) {
+    toast('اسم المستخدم موجود بالفعل', true);
+    return;
+  }
+  captains.push({ id:genId(), name, car, username:user, password:pass, createdAt:todayStr() });
+  saveCaptains(captains);
+
+  document.getElementById('capName').value = '';
+  document.getElementById('capCar').value = '';
+  document.getElementById('capUser').value = '';
+  document.getElementById('capPass').value = '';
+
+  toast('✅ تم إضافة الكابتن بنجاح');
+  renderAdmin();
+}
+
+function deleteCaptain(id) {
+  if (!confirm('هل أنت متأكد من حذف الكابتن وكل عملياته؟')) return;
+  saveCaptains(getCaptains().filter(c => c.id !== id));
+  saveTransactions(getTransactions().filter(t => t.captainId !== id));
+  toast('🗑️ تم حذف الكابتن');
+  renderAdmin();
+}
+
+function editCaptain(id) {
+  const captains = getCaptains();
+  const c = captains.find(x => x.id === id);
+  if (!c) return;
+  const newName = prompt('اسم الكابتن:', c.name);
+  if (newName === null) return;
+  const newCar  = prompt('رقم العربية:', c.car);
+  if (newCar === null) return;
+  const newPass = prompt('كلمة المرور الجديدة:', c.password);
+  if (newPass === null) return;
+
+  c.name = newName.trim() || c.name;
+  c.car  = newCar.trim()  || c.car;
+  c.password = newPass.trim() || c.password;
+  saveCaptains(captains);
+  toast('✏️ تم تعديل بيانات الكابتن');
+  renderAdmin();
+}
+
+function captainStats(capId) {
+  const trans = getTransactions().filter(t => t.captainId === capId);
+  let rev = 0, exp = 0, morningWork = 0, eveningWork = 0;
+  trans.forEach(t => {
+    if (t.type === 'work') {
+      rev += t.amount;
+      if (t.shift === 'morning') morningWork += t.amount;
+      else eveningWork += t.amount;
+    } else exp += t.amount;
+  });
+  return { rev, exp, net: rev - exp, morningWork, eveningWork };
+}
+
+function renderCaptainsTable() {
+  const captains = getCaptains();
+  const tbody = document.getElementById('captainsTable');
+  tbody.innerHTML = '';
+
+  if (captains.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا يوجد كباتن بعد</td></tr>';
+    return;
+  }
+  captains.forEach(c => {
+    const s = captainStats(c.id);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.name}</td>
+      <td>${c.car}</td>
+      <td>${c.username}</td>
+      <td style="color:#4ade80;">${s.rev}</td>
+      <td style="color:#f87171;">${s.exp}</td>
+      <td style="color:#facc15;font-weight:bold;">${s.net}</td>
+      <td>
+        <button class="btn btn-outline btn-small" onclick="editCaptain('${c.id}')">تعديل</button>
+        <button class="btn btn-danger btn-small" onclick="deleteCaptain('${c.id}')">حذف</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderOverview() {
+  const trans = getTransactions();
+  const today = todayStr();
+
+  let rev = 0, exp = 0;
+  let mWork = 0, mExp = 0, eWork = 0, eExp = 0;
+
+  trans.forEach(t => {
+    if (t.type === 'work') rev += t.amount;
+    else exp += t.amount;
+
+    if (t.date === today) {
+      if (t.type === 'work') {
+        if (t.shift === 'morning') mWork += t.amount; else eWork += t.amount;
+      } else {
+        if (t.shift === 'morning') mExp += t.amount; else eExp += t.amount;
+      }
+    }
+  });
+
+  document.getElementById('ovRevenue').textContent = rev;
+  document.getElementById('ovExpense').textContent = exp;
+  document.getElementById('ovNet').textContent = rev - exp;
+  document.getElementById('ovCaptains').textContent = getCaptains().length;
+
+  document.getElementById('ovMorningWork').textContent = mWork;
+  document.getElementById('ovMorningExp').textContent = mExp;
+  document.getElementById('ovEveningWork').textContent = eWork;
+  document.getElementById('ovEveningExp').textContent = eExp;
+
+  const tbody = document.getElementById('ovRecentTable');
+  tbody.innerHTML = '';
+  const recent = trans.slice().reverse().slice(0, 6);
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">لا توجد عمليات</td></tr>';
+    return;
+  }
+  recent.forEach(t => {
+    const cap = getCaptains().find(c => c.id === t.captainId);
+    const typeBadge = t.type === 'work'
+      ? '<span class="badge badge-work">شغل</span>'
+      : '<span class="badge badge-exp">مصروف</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${cap ? cap.name : 'محذوف'}</td>
+      <td>${typeBadge}</td>
+      <td>${shiftBadge(t.shift)}</td>
+      <td>${t.category}</td>
+      <td>${t.amount}</td>
+      <td>${t.date}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function fillCaptainFilter() {
+  const sel = document.getElementById('filterCaptain');
+  const val = sel.value || 'all';
+  sel.innerHTML = '<option value="all">الكل</option>';
+  getCaptains().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  sel.value = val;
+}
+
+function renderAllTransactions() {
+  const filterCap   = document.getElementById('filterCaptain').value;
+  const filterShift = document.getElementById('filterShift').value;
+
+  let trans = getTransactions();
+  if (filterCap !== 'all') trans = trans.filter(t => t.captainId === filterCap);
+  if (filterShift !== 'all') trans = trans.filter(t => t.shift === filterShift);
+  trans = trans.slice().reverse();
+
+  const tbody = document.getElementById('allTransTable');
+  tbody.innerHTML = '';
+  if (trans.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا توجد عمليات</td></tr>';
+    return;
+  }
+  trans.forEach(t => {
+    const cap = getCaptains().find(c => c.id === t.captainId);
+    const typeBadge = t.type === 'work'
+      ? '<span class="badge badge-work">شغل</span>'
+      : '<span class="badge badge-exp">مصروف</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${cap ? cap.name : 'محذوف'}</td>
+      <td>${typeBadge}</td>
+      <td>${shiftBadge(t.shift)}</td>
+      <td>${t.category}</td>
+      <td>${t.amount}</td>
+      <td>${t.date}</td>
+      <td><button class="btn btn-danger btn-small" onclick="deleteTrans('${t.id}')">حذف</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function deleteTrans(id) {
+  if (!confirm('حذف هذه العملية؟')) return;
+  saveTransactions(getTransactions().filter(t => t.id !== id));
+  toast('🗑️ تم حذف العملية');
+  renderAdmin();
+}
+
+function renderReports() {
+  const tbody = document.getElementById('reportTable');
+  tbody.innerHTML = '';
+  const captains = getCaptains();
+  if (captains.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا يوجد بيانات</td></tr>';
+    return;
+  }
+  captains.forEach(c => {
+    const s = captainStats(c.id);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.name}</td>
+      <td>${c.car}</td>
+      <td style="color:#facc15;">${s.morningWork}</td>
+      <td style="color:#c4b5fd;">${s.eveningWork}</td>
+      <td style="color:#4ade80;">${s.rev}</td>
+      <td style="color:#f87171;">${s.exp}</td>
+      <td style="color:#38bdf8;font-weight:bold;">${s.net}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+/* ============================================================
+   الجزء 4: وظائف الكابتن
+   ============================================================ */
+
+function renderCaptain() {
+  renderMyHome();
+  renderMyTransactions();
+}
+
+function addWork() {
+  const amount = parseFloat(document.getElementById('workAmount').value);
+  const note   = document.getElementById('workNote').value.trim();
+
+  if (!selectedWorkShift) {
+    toast('اختر الوردية (صباحي / مسائي)', true);
+    return;
+  }
+  if (!amount || amount <= 0) {
+    toast('اكتب مبلغ صحيح', true);
+    return;
+  }
+
+  const trans = getTransactions();
+  trans.push({
+    id: genId(),
+    captainId: currentUser.id,
+    type: 'work',
+    category: 'شغل',
+    shift: selectedWorkShift,
+    amount: amount,
+    note: note,
+    date: todayStr()
+  });
+  saveTransactions(trans);
+
+  document.getElementById('workAmount').value = '';
+  document.getElementById('workNote').value = '';
+  selectedWorkShift = null;
+  document.getElementById('shiftMorningWork').classList.remove('selected');
+  document.getElementById('shiftEveningWork').classList.remove('selected');
+
+  toast('✅ تم تسجيل الشغل');
+  renderCaptain();
+}
+
+function addExpense() {
+  const cat    = document.getElementById('expCategory').value;
+  const amount = parseFloat(document.getElementById('expAmount').value);
+  const note   = document.getElementById('expNote').value.trim();
+
+  if (!selectedExpShift) {
+    toast('اختر الوردية (صباحي / مسائي)', true);
+    return;
+  }
+  if (!amount || amount <= 0) {
+    toast('اكتب مبلغ صحيح', true);
+    return;
+  }
+
+  const trans = getTransactions();
+  trans.push({
+    id: genId(),
+    captainId: currentUser.id,
+    type: 'expense',
+    category: cat,
+    shift: selectedExpShift,
+    amount: amount,
+    note: note,
+    date: todayStr()
+  });
+  saveTransactions(trans);
+
+  document.getElementById('expAmount').value = '';
+  document.getElementById('expNote').value = '';
+  selectedExpShift = null;
+  document.getElementById('shiftMorningExp').classList.remove('selected');
+  document.getElementById('shiftEveningExp').classList.remove('selected');
+
+  toast('✅ تم تسجيل المصروف');
+  renderCaptain();
+}
+
+function renderMyHome() {
+  const trans = getTransactions().filter(t => t.captainId === currentUser.id);
+  const today = todayStr();
+
+  let todayWork = 0, todayExp = 0;
+  let morningToday = 0, eveningToday = 0;
+
+  trans.forEach(t => {
+    if (t.date === today) {
+      if (t.type === 'work') {
+        todayWork += t.amount;
+        if (t.shift === 'morning') morningToday += t.amount;
+        else eveningToday += t.amount;
+      } else todayExp += t.amount;
+    }
+  });
+
+  document.getElementById('myTodayWork').textContent = todayWork;
+  document.getElementById('myTodayExp').textContent = todayExp;
+  document.getElementById('myTodayNet').textContent = todayWork - todayExp;
+  document.getElementById('myCar').textContent = currentUser.car;
+  document.getElementById('myTodayMorning').textContent = morningToday;
+  document.getElementById('myTodayEvening').textContent = eveningToday;
+
+  const tbody = document.getElementById('myRecentTable');
+  tbody.innerHTML = '';
+  const recent = trans.slice().reverse().slice(0, 6);
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد عمليات</td></tr>';
+    return;
+  }
+  recent.forEach(t => {
+    const typeBadge = t.type === 'work'
+      ? '<span class="badge badge-work">شغل</span>'
+      : '<span class="badge badge-exp">مصروف</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${typeBadge}</td>
+      <td>${shiftBadge(t.shift)}</td>
+      <td>${t.category}</td>
+      <td>${t.amount}</td>
+      <td>${t.date}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderMyTransactions() {
+  const trans = getTransactions().filter(t => t.captainId === currentUser.id).reverse();
+  const tbody = document.getElementById('myAllTable');
+  tbody.innerHTML = '';
+  if (trans.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد عمليات</td></tr>';
+    return;
+  }
+  trans.forEach(t => {
+    const typeBadge = t.type === 'work'
+      ? '<span class="badge badge-work">شغل</span>'
+      : '<span class="badge badge-exp">مصروف</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${typeBadge}</td>
+      <td>${shiftBadge(t.shift)}</td>
+      <td>${t.category}</td>
+      <td>${t.amount}</td>
+      <td>${t.date}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+/* ============================================================
+   الجزء 5: تشغيل البرنامج
+   ============================================================ */
+
+initData();
+
+const savedSession = localStorage.getItem(KEY_SESSION);
+if (savedSession) {
+  currentUser = JSON.parse(savedSession);
+  enterDashboard();
+}
+
+document.getElementById('loginPass').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') handleLogin();
+});
+document.getElementById('loginUser').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') handleLogin();
+});
+</script>
+
+</body>
+</html>
