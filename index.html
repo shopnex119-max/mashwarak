@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>مشوارك | نظام إدارة الأسطول</title>
+<title> مشوارك </title>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -34,11 +34,9 @@ const FAKE_DOMAIN = '@mashwarak.app';
 </script>
 
 <style>
-/* ============ الأساسيات ============ */
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Tahoma','Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent; }
 html, body { width:100%; min-height:100vh; overflow-x:hidden; }
 
-/* ============ الثيمات ============ */
 :root {
   --bg: #0A0A0A;
   --bg-card: linear-gradient(145deg, rgba(26,26,26,0.97), rgba(10,10,10,0.99));
@@ -83,7 +81,6 @@ body {
   min-height:100vh;
   transition:background 0.3s, color 0.3s;
 }
-
 body::before {
   content:'';
   position:fixed;
@@ -118,7 +115,6 @@ body::after {
   100% { background-position:100% 100%; }
 }
 
-/* ============ زر الإعدادات (ترس) ============ */
 #settingsBtn {
   position:fixed;
   top:14px;
@@ -196,7 +192,6 @@ body::after {
 }
 .settings-item button:hover { box-shadow:0 0 20px var(--shadow); }
 
-/* ============ شاشة الدخول ============ */
 #loginScreen {
   background:var(--bg-card);
   padding:32px 24px;
@@ -275,7 +270,6 @@ body::after {
   pointer-events:none;
 }
 
-/* ============ أزرار ============ */
 .btn {
   width:100%;
   padding:14px;
@@ -360,7 +354,6 @@ body::after {
 }
 .secure-note span { color:var(--gold); }
 
-/* ============ لوحة التحكم ============ */
 #dashboard {
   display:none;
   width:100%;
@@ -679,6 +672,36 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
   font-weight:bold;
 }
 
+/* مؤشر التحديث اللحظي */
+.realtime-badge {
+  position:fixed;
+  bottom:14px;
+  right:14px;
+  background:linear-gradient(135deg,#00C853,#009624);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:bold;
+  z-index:9990;
+  box-shadow:0 0 15px rgba(0,200,83,0.5);
+  display:none;
+  align-items:center;
+  gap:5px;
+}
+.realtime-badge.active { display:flex; }
+.realtime-badge .dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#fff;
+  animation:pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.5; transform:scale(1.3); }
+}
+
 @media (max-width:520px) {
   body { padding:8px; }
   #settingsBtn { width:42px; height:42px; font-size:20px; top:10px; left:10px; }
@@ -692,10 +715,17 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
   table th, table td { padding:8px 5px; }
   .btn { font-size:15px; padding:13px; }
   .system-picker { grid-template-columns:1fr; }
+  .realtime-badge { bottom:10px; right:10px; font-size:10px; padding:5px 10px; }
 }
 </style>
 </head>
 <body>
+
+<!-- مؤشر التحديث اللحظي -->
+<div id="realtimeBadge" class="realtime-badge">
+  <span class="dot"></span>
+  <span>مباشر</span>
+</div>
 
 <!-- شاشة التحميل -->
 <div id="loadingOverlay" class="loading-overlay">
@@ -867,7 +897,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
       </div>
       <div class="form-group">
         <label>كلمة المرور</label>
-        <input type="text" id="capPass" placeholder="مثال: 1234">
+        <input type="text" id="capPass" placeholder="مثال: 123456">
       </div>
     </div>
     <div class="form-row">
@@ -1538,6 +1568,7 @@ let selectedShift = null;
 let selectedStartLocation = null;
 let selectedEndLocation = null;
 let currentOpenShift = null;
+let unsubscribers = []; // 🔴 مستمعي التحديث اللحظي
 
 /* ============ أدوات مساعدة ============ */
 function genId() {
@@ -1768,6 +1799,133 @@ async function captainDebtBalance(capId) {
 }
 
 /* ============================================================
+   🔴 Real-time Listeners — التحديث اللحظي
+   ============================================================ */
+
+function stopRealtimeListeners() {
+  unsubscribers.forEach(unsub => {
+    try { unsub(); } catch(e) {}
+  });
+  unsubscribers = [];
+  const badge = document.getElementById('realtimeBadge');
+  if (badge) badge.classList.remove('active');
+  console.log('🔴 تم إيقاف المستمعين اللحظيين');
+}
+
+function startRealtimeListeners() {
+  // نظف أي مستمعين قدام
+  stopRealtimeListeners();
+
+  console.log('🟢 جاري تشغيل المستمعين اللحظيين...');
+
+  // ============ 1) الاستماع للشيفتات ============
+  const unsubTrans = db.collection(COL_TRANS)
+    .orderBy('createdAt', 'desc')
+    .onSnapshot(snapshot => {
+      const changes = snapshot.docChanges().length;
+      if (changes > 0) {
+        console.log('🔔 تغيير في الشيفتات:', changes, 'تغيير');
+        // لو الأدمن، حدّث شاشاته
+        if (currentUser && currentUser.role === 'admin') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-overview') renderOverview();
+          if (activeTab === 'tab-trans') renderAllTransactions();
+          if (activeTab === 'tab-reports') renderReports();
+          if (activeTab === 'tab-captains') renderCaptainsTable();
+        }
+        // لو الكابتن، حدّث شاشاته
+        if (currentUser && currentUser.role === 'captain') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-myhome') renderMyHome();
+          if (activeTab === 'tab-mytrans') renderMyTransactions();
+          if (activeTab === 'tab-closeshift') renderCloseShift();
+        }
+      }
+    }, err => console.error('خطأ في مستمع الشيفتات:', err));
+  unsubscribers.push(unsubTrans);
+
+  // ============ 2) الاستماع للمديونيات ============
+  const unsubDebts = db.collection(COL_DEBTS)
+    .orderBy('createdAt', 'desc')
+    .onSnapshot(snapshot => {
+      const changes = snapshot.docChanges().length;
+      if (changes > 0) {
+        console.log('🔔 تغيير في المديونيات');
+        if (currentUser && currentUser.role === 'admin') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-overview') renderOverview();
+          if (activeTab === 'tab-debts-admin') renderDebtsAdmin();
+          if (activeTab === 'tab-captains') renderCaptainsTable();
+        }
+        if (currentUser && currentUser.role === 'captain') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-debts') renderMyDebts();
+          if (activeTab === 'tab-myhome') renderMyHome();
+        }
+      }
+    }, err => console.error('خطأ في مستمع المديونيات:', err));
+  unsubscribers.push(unsubDebts);
+
+  // ============ 3) الاستماع للتسديدات ============
+  const unsubPayments = db.collection(COL_PAYMENTS)
+    .orderBy('createdAt', 'desc')
+    .onSnapshot(snapshot => {
+      const changes = snapshot.docChanges().length;
+      if (changes > 0) {
+        console.log('🔔 تغيير في التسديدات');
+        if (currentUser && currentUser.role === 'admin') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-debts-admin') renderDebtsAdmin();
+          if (activeTab === 'tab-overview') renderOverview();
+        }
+        if (currentUser && currentUser.role === 'captain') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-debts') renderMyDebts();
+        }
+      }
+    }, err => console.error('خطأ في مستمع التسديدات:', err));
+  unsubscribers.push(unsubPayments);
+
+  // ============ 4) الاستماع للسيارات ============
+  const unsubCars = db.collection(COL_CARS)
+    .onSnapshot(snapshot => {
+      const changes = snapshot.docChanges().length;
+      if (changes > 0) {
+        console.log('🔔 تغيير في السيارات');
+        if (currentUser && currentUser.role === 'admin') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-cars') renderCarsTable();
+        }
+        // حدّث القوائم المنسدلة
+        if (currentUser) fillCarDropdowns();
+      }
+    }, err => console.error('خطأ في مستمع السيارات:', err));
+  unsubscribers.push(unsubCars);
+
+  // ============ 5) الاستماع للكباتن ============
+  const unsubCaptains = db.collection(COL_CAPTAINS)
+    .onSnapshot(snapshot => {
+      const changes = snapshot.docChanges().length;
+      if (changes > 0) {
+        console.log('🔔 تغيير في الكباتن');
+        if (currentUser && currentUser.role === 'admin') {
+          const activeTab = document.querySelector('.tab-content.active')?.id;
+          if (activeTab === 'tab-captains') renderCaptainsTable();
+          if (activeTab === 'tab-overview') renderOverview();
+          if (activeTab === 'tab-reports') renderReports();
+        }
+      }
+    }, err => console.error('خطأ في مستمع الكباتن:', err));
+  unsubscribers.push(unsubCaptains);
+
+  // إظهار شارة "مباشر"
+  const badge = document.getElementById('realtimeBadge');
+  if (badge) badge.classList.add('active');
+
+  console.log('✅ تم تشغيل 5 مستمعين لحظيين');
+}
+
+/* ============================================================
    الثيم والإعدادات
    ============================================================ */
 
@@ -1910,7 +2068,6 @@ async function changeAdminPassword() {
     const admins = await getAdmins();
     const me = admins.find(a => a.id === currentUser.adminId);
     if (me) {
-      me.password = newPass;
       await updateAdminDB(me.id, { password: newPass });
     }
     toast('✅ تم تغيير كلمة المرور');
@@ -1930,7 +2087,7 @@ async function addNewAdmin() {
   if (!currentUser || currentUser.role !== 'admin') return;
   const name = prompt('اسم الأدمن الجديد:');
   if (!name) return;
-  const username = prompt('اسم المستخدم (بالإنجليزي بدون مسافات):');
+  const username = prompt('اسم المستخدم (إنجليزي بدون مسافات):');
   if (!username) return;
   if (!/^[a-zA-Z0-9_]+$/.test(username)) {
     toast('اسم المستخدم لازم إنجليزي وأرقام فقط', 'error');
@@ -1966,7 +2123,6 @@ async function addNewAdmin() {
       createdAt: todayStr()
     });
 
-    // نرجع الأدمن الأصلي
     await auth.updateCurrentUser(oldUser);
     toast('✅ تم إضافة الأدمن');
   } catch (e) {
@@ -2007,11 +2163,9 @@ async function handleLogin() {
   }
 
   disableBtn('loginBtn', '⏳ جاري الدخول...');
-  err.textContent = '';
 
   try {
     const userCred = await auth.signInWithEmailAndPassword(user + FAKE_DOMAIN, pass);
-    const uid = userCred.user.uid;
 
     // هل هو أدمن؟
     const admins = await getAdmins();
@@ -2033,7 +2187,6 @@ async function handleLogin() {
       return;
     }
 
-    // مستخدم غير معروف
     await auth.signOut();
     err.textContent = '❌ الحساب غير مرتبط بأي أدمن أو كابتن';
 
@@ -2054,6 +2207,9 @@ async function handleLogin() {
 }
 
 async function logout() {
+  // 🔴 أوقف المستمعين
+  stopRealtimeListeners();
+
   try { await auth.signOut(); } catch(e) {}
   localStorage.removeItem('mashwarak_session');
   currentUser = null;
@@ -2068,6 +2224,9 @@ function enterDashboard() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('currentUserName').textContent = currentUser.name;
+
+  // 🔴 شغّل المستمعين اللحظيين
+  startRealtimeListeners();
 
   if (currentUser.role === 'admin') {
     document.getElementById('dashTitle').textContent = 'لوحة تحكم الأدمن';
@@ -2196,14 +2355,12 @@ async function addCaptain() {
       return;
     }
 
-    // إنشاء حساب Auth
     const oldUser = auth.currentUser;
     const userCred = await auth.createUserWithEmailAndPassword(user + FAKE_DOMAIN, pass);
     const newUid = userCred.user.uid;
 
     const car = (await getCars()).find(c => c.id === carId);
 
-    // حفظ في Firestore
     await addCaptainDB({
       name, phone, username:user,
       password: pass,
@@ -2215,7 +2372,6 @@ async function addCaptain() {
       createdAt: todayStr()
     });
 
-    // نرجع الأدمن الأصلي
     await auth.updateCurrentUser(oldUser);
 
     document.getElementById('capName').value = '';
@@ -2815,7 +2971,6 @@ async function openShift() {
   showLoading('جاري بدء الشيفت...');
 
   try {
-    // التأكد من عدم وجود شيفت مفتوح
     const allTrans = await getTransactions();
     const existing = allTrans.find(t =>
       t.captainId === currentUser.id && t.status === 'open'
@@ -2847,7 +3002,6 @@ async function openShift() {
 
     await addTransactionDB(shift);
 
-    // reset
     selectedSystem = null;
     selectedShift = null;
     selectedStartLocation = null;
@@ -3077,8 +3231,8 @@ async function closeShift() {
       if (kmEnd <= kmStart)  { toast('❌ كيلوهات النهاية أكبر من البداية', 'error'); return; }
       if (!kmStartImg)       { toast('❌ صورة بداية العداد مطلوبة', 'error'); return; }
       if (!kmEndImg)         { toast('❌ صورة نهاية العداد مطلوبة', 'error'); return; }
-      if (!gasImgs || gasImgs.length === 0) { toast('❌ صور عداد الغاز مطلوبة (صورة واحدة على الأقل)', 'error'); return; }
-      if (!fuelImgs || fuelImgs.length === 0) { toast('❌ صور عداد البنزين مطلوبة (صورة واحدة على الأقل)', 'error'); return; }
+      if (!gasImgs || gasImgs.length === 0) { toast('❌ صور عداد الغاز مطلوبة', 'error'); return; }
+      if (!fuelImgs || fuelImgs.length === 0) { toast('❌ صور عداد البنزين مطلوبة', 'error'); return; }
 
       showLoading('جاري رفع صور التلت والتلتين...');
 
@@ -3392,7 +3546,7 @@ async function submitPayment() {
    التشغيل النهائي والأحداث
    ============================================================ */
 
-/* ============ تهيئة النظام ============ */
+/* ============ تهيئة الثيم ============ */
 applyTheme();
 
 /* ============ مراقبة حالة تسجيل الدخول ============ */
@@ -3418,10 +3572,8 @@ auth.onAuthStateChanged(async function(firebaseUser) {
 /* ============ أول مرة تشغيل — إنشاء الأدمن الافتراضي ============ */
 (async function initDefaultAdmin() {
   try {
-    // ننتظر تحميل الصفحة
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 800));
 
-    // هل يوجد أدمن؟
     const admins = await getAdmins();
     if (admins.length > 0) {
       console.log('✅ يوجد أدمن بالفعل:', admins.length);
@@ -3430,14 +3582,12 @@ auth.onAuthStateChanged(async function(firebaseUser) {
 
     console.log('⚠️ لا يوجد أدمن — جاري إنشاء الافتراضي...');
 
-    // إنشاء حساب الأدمن في Auth
     try {
       const userCred = await auth.createUserWithEmailAndPassword(
         'Abdallh' + FAKE_DOMAIN,
         'Abdallh2027'
       );
 
-      // حفظ في Firestore
       await addAdminDB({
         username: 'Abdallh',
         name: 'عبدالله (الأدمن الرئيسي)',
@@ -3452,10 +3602,7 @@ auth.onAuthStateChanged(async function(firebaseUser) {
 
     } catch (e) {
       if (e.code === 'auth/email-already-in-use') {
-        console.log('حساب الأدمن موجود في Auth — لكن مش في Firestore');
-        console.log('⚠️ قد تحتاج لمسح قاعدة البيانات أو استخدام حساب أدمن آخر');
-
-        // محاولة إصلاح: تسجيل دخول وإضافة للفايرستور
+        console.log('ℹ️ حساب الأدمن موجود في Auth');
         try {
           const cred = await auth.signInWithEmailAndPassword('Abdallh' + FAKE_DOMAIN, 'Abdallh2027');
           const existingAdmins = await getAdmins();
@@ -3468,14 +3615,14 @@ auth.onAuthStateChanged(async function(firebaseUser) {
               authUid: cred.user.uid,
               createdAt: todayStr()
             });
-            console.log('✅ تم إصلاح المشكلة');
+            console.log('✅ تم إصلاح سجل الأدمن');
           }
           await auth.signOut();
         } catch (e2) {
           console.error('فشل الإصلاح:', e2);
         }
       } else {
-        console.error('خطأ في إنشاء الأدمن:', e);
+        console.error('خطأ:', e);
       }
     }
   } catch (e) {
@@ -3504,13 +3651,10 @@ document.addEventListener('keydown', function(e) {
     const modal = document.getElementById('detailsModal');
     if (modal.style.display === 'block') closeDetails();
   }
-
-  // Ctrl + E = تصدير Excel
   if (e.ctrlKey && e.key === 'e' && currentUser) {
     e.preventDefault();
     exportExcel();
   }
-  // Ctrl + D = تبديل الثيم
   if (e.ctrlKey && e.key === 'd') {
     e.preventDefault();
     toggleTheme();
@@ -3572,15 +3716,14 @@ document.addEventListener('touchend', function(e) {
 /* ============ تشغيل أولي ============ */
 window.addEventListener('load', async function() {
   console.log('🚗 مشوارك — نظام إدارة الأسطول الذكي');
-  console.log('📅 الإصدار: v5.0 — Firebase + Cloudinary');
-  console.log('👤 الأدمن الافتراضي: Abdallh / Abdallh2027');
+  console.log('📅 الإصدار: v6.0 — Firebase + Cloudinary + Real-time');
+  console.log('👤 الأدمن: Abdallh / Abdallh2027');
   console.log('⌨️ اختصارات: Ctrl+E (Excel) | Ctrl+D (الثيم)');
+  console.log('🔴 Real-time: التحديث التلقائي مفعّل');
 
-  // إخفاء شاشة التحميل بعد التهيئة
   setTimeout(hideLoading, 800);
 });
 
-// إخفاء التحميل الأولي
 setTimeout(hideLoading, 1500);
 
 </script>
