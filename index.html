@@ -3,7 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>مشوارك | نظام إدارة </title>
+<title>مشوارك | نظام إدارة الأسطول</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ============ Firebase Config ============
+const firebaseConfig = {
+  apiKey: "AIzaSyCInSwEYBNFP0DSPS49CppkjNZKAq7GIQY",
+  authDomain: "mashwarak2027.firebaseapp.com",
+  projectId: "mashwarak2027",
+  storageBucket: "mashwarak2027.firebasestorage.app",
+  messagingSenderId: "222325737945",
+  appId: "1:222325737945:web:db50fc6a05bb53148171c8"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ============ Cloudinary Config ============
+const CLOUDINARY_CLOUD_NAME = 'majzvjb2';
+const CLOUDINARY_UPLOAD_PRESET = 'mashwarak_preset';
+
+// إيميل وهمي
+const FAKE_DOMAIN = '@mashwarak.app';
+</script>
+
 <style>
 /* ============ الأساسيات ============ */
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Tahoma','Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent; }
@@ -55,7 +84,6 @@ body {
   transition:background 0.3s, color 0.3s;
 }
 
-/* خلفية ذهبية/سوداء */
 body::before {
   content:'';
   position:fixed;
@@ -115,7 +143,6 @@ body::after {
   box-shadow:0 0 40px var(--shadow);
 }
 
-/* ============ لوحة الإعدادات ============ */
 #settingsPanel {
   position:fixed;
   inset:0;
@@ -368,7 +395,6 @@ body::after {
 .topbar .user-info { font-size:13px; color:var(--text-mute); }
 .topbar .user-info span { color:var(--gold); font-weight:bold; }
 
-/* ============ التبويبات ============ */
 .tabs {
   display:flex;
   gap:6px;
@@ -402,7 +428,6 @@ body::after {
 .tab-content { display:none; animation:fadeUp 0.3s ease; }
 .tab-content.active { display:block; }
 
-/* ============ كروت الإحصائيات ============ */
 .stats-grid {
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));
@@ -437,7 +462,6 @@ body.light-mode .stat-card {
 .stat-card.red .value { color:var(--red); }
 .stat-card.gold .value { color:var(--gold-light); }
 
-/* ============ النماذج ============ */
 .form-group { margin-bottom:12px; }
 .form-group label {
   display:block;
@@ -470,7 +494,6 @@ body.light-mode .stat-card {
   .form-row-3 { grid-template-columns:1fr; }
 }
 
-/* ============ اختيار الوردية ============ */
 .shift-picker { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
 .shift-option {
   padding:14px;
@@ -494,7 +517,6 @@ body.light-mode .stat-card {
   transform:translateY(-2px);
 }
 
-/* ============ نظام مختار ============ */
 .system-picker { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
 .system-option {
   padding:16px 10px;
@@ -516,7 +538,6 @@ body.light-mode .stat-card {
   box-shadow:0 0 30px var(--shadow);
 }
 
-/* ============ الجداول ============ */
 .table-wrap {
   overflow-x:auto;
   border-radius:14px;
@@ -548,7 +569,6 @@ table td {
 }
 table tr:hover td { background:rgba(255,193,7,0.06); }
 
-/* ============ الشارات ============ */
 .badge {
   display:inline-block;
   padding:3px 9px;
@@ -564,10 +584,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 .badge-third { background:rgba(255,152,0,0.15); color:#FFB74D; border:1px solid rgba(255,152,0,0.5); }
 .badge-open { background:rgba(0,230,118,0.15); color:#00E676; border:1px solid rgba(0,230,118,0.4); }
 .badge-closed { background:rgba(117,117,117,0.2); color:#9E9E9E; border:1px solid rgba(117,117,117,0.4); }
-.badge-paid { background:rgba(0,230,118,0.15); color:#00E676; border:1px solid rgba(0,230,118,0.4); }
-.badge-debt { background:rgba(239,83,80,0.15); color:#EF5350; border:1px solid rgba(239,83,80,0.4); }
 
-/* ============ التنبيهات ============ */
 #toast {
   position:fixed;
   top:20px;
@@ -604,7 +621,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
   font-size:13px;
 }
 
-/* ============ شريط الحالة ============ */
 .status-bar {
   display:flex;
   justify-content:space-between;
@@ -621,7 +637,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 .status-bar .status-item { color:var(--text-strong); }
 .status-bar .status-item strong { color:var(--gold); }
 
-/* ============ معاينة الصور ============ */
 .img-preview {
   margin-top:6px;
   display:flex;
@@ -637,9 +652,33 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
   background:#000;
 }
 
-input[type="range"] { width:100%; accent-color:var(--gold); }
+.loading-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  z-index:99999;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  gap:20px;
+}
+.loading-overlay.active { display:flex; }
+.loading-spinner {
+  width:60px;
+  height:60px;
+  border:5px solid rgba(255,193,7,0.2);
+  border-top-color:#FFC107;
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text {
+  color:#FFC107;
+  font-size:16px;
+  font-weight:bold;
+}
 
-/* ============ موبايل ============ */
 @media (max-width:520px) {
   body { padding:8px; }
   #settingsBtn { width:42px; height:42px; font-size:20px; top:10px; left:10px; }
@@ -658,10 +697,16 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
 </head>
 <body>
 
-<!-- ============ زر الإعدادات (ترس) ============ -->
+<!-- شاشة التحميل -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">جاري التحميل...</div>
+</div>
+
+<!-- زر الإعدادات (ترس) -->
 <button id="settingsBtn" onclick="toggleSettings()" title="الإعدادات">⚙️</button>
 
-<!-- ============ لوحة الإعدادات ============ -->
+<!-- لوحة الإعدادات -->
 <div id="settingsPanel" onclick="if(event.target===this) toggleSettings()">
   <div id="settingsBox">
     <h2>⚙️ الإعدادات</h2>
@@ -695,7 +740,7 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
   </div>
 </div>
 
-<!-- ============ شاشة الدخول ============ -->
+<!-- شاشة الدخول -->
 <div id="loginScreen">
   <img src="logo.png" alt="مشوارك" class="logo-img" onerror="this.style.display='none'">
   <div class="logo-text">مشوارك</div>
@@ -709,7 +754,7 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
     <input type="password" id="loginPass" placeholder="كلمة المرور">
     <span class="icon">🔒</span>
   </div>
-  <button class="btn btn-gold" onclick="handleLogin()">🚀 دخول النظام</button>
+  <button class="btn btn-gold" id="loginBtn" onclick="handleLogin()">🚀 دخول النظام</button>
   <div class="error-msg" id="loginError"></div>
 
   <div class="secure-note">
@@ -717,7 +762,7 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
   </div>
 </div>
 
-<!-- ============ لوحة التحكم ============ -->
+<!-- لوحة التحكم -->
 <div id="dashboard">
   <div class="topbar">
     <div>
@@ -1084,7 +1129,7 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
       <div id="startGpsInfo" style="margin-top:8px;font-size:12px;color:#9E9E9E;text-align:center;"></div>
     </div>
 
-    <button class="btn btn-gold" onclick="openShift()">🚀 بدء الشيفت</button>
+    <button class="btn btn-gold" id="openShiftBtn" onclick="openShift()">🚀 بدء الشيفت</button>
   </div>
 
   <!-- إغلاق الشيفت -->
@@ -1373,7 +1418,7 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
         <div id="endGpsInfo" style="margin-top:8px;font-size:12px;color:#9E9E9E;text-align:center;"></div>
       </div>
 
-      <button class="btn btn-danger" onclick="closeShift()">🔒 تأكيد إغلاق الشيفت</button>
+      <button class="btn btn-danger" id="closeShiftBtn" onclick="closeShift()">🔒 تأكيد إغلاق الشيفت</button>
     </div>
   </div>
 
@@ -1424,7 +1469,7 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
         <input type="text" id="payNote" placeholder="دفعة أولى">
       </div>
       <div id="payHint" style="font-size:12px;color:#9E9E9E;margin-bottom:8px;"></div>
-      <button class="btn btn-gold" onclick="submitPayment()">✅ تأكيد التسديد</button>
+      <button class="btn btn-gold" id="payBtn" onclick="submitPayment()">✅ تأكيد التسديد</button>
     </div>
 
     <div class="section-title">📤 سجل التحويلات (التسديدات)</div>
@@ -1477,17 +1522,15 @@ input[type="range"] { width:100%; accent-color:var(--gold); }
 </div>
 <script>
 /* ============================================================
-   الجزء 1: البيانات والتخزين
+   Firebase Data Layer
    ============================================================ */
 
-const KEY_CAPTAINS = 'mashwarak_captains_v4';
-const KEY_TRANS    = 'mashwarak_transactions_v4';
-const KEY_SESSION  = 'mashwarak_session_v4';
-const KEY_ADMINS   = 'mashwarak_admins_v4';
-const KEY_CARS     = 'mashwarak_cars_v4';
-const KEY_DEBTS    = 'mashwarak_debts_v4';
-const KEY_PAYMENTS = 'mashwarak_payments_v4';
-const KEY_THEME    = 'mashwarak_theme_v4';
+const COL_CAPTAINS = 'captains';
+const COL_TRANS = 'transactions';
+const COL_CARS = 'cars';
+const COL_ADMINS = 'admins';
+const COL_DEBTS = 'debts';
+const COL_PAYMENTS = 'payments';
 
 let currentUser = null;
 let selectedSystem = null;
@@ -1496,26 +1539,7 @@ let selectedStartLocation = null;
 let selectedEndLocation = null;
 let currentOpenShift = null;
 
-/* ============ Storage ============ */
-function getCaptains() { return JSON.parse(localStorage.getItem(KEY_CAPTAINS) || '[]'); }
-function saveCaptains(a) { localStorage.setItem(KEY_CAPTAINS, JSON.stringify(a)); }
-
-function getTransactions() { return JSON.parse(localStorage.getItem(KEY_TRANS) || '[]'); }
-function saveTransactions(a) { localStorage.setItem(KEY_TRANS, JSON.stringify(a)); }
-
-function getCars() { return JSON.parse(localStorage.getItem(KEY_CARS) || '[]'); }
-function saveCars(a) { localStorage.setItem(KEY_CARS, JSON.stringify(a)); }
-
-function getAdmins() { return JSON.parse(localStorage.getItem(KEY_ADMINS) || '[]'); }
-function saveAdmins(a) { localStorage.setItem(KEY_ADMINS, JSON.stringify(a)); }
-
-function getDebts() { return JSON.parse(localStorage.getItem(KEY_DEBTS) || '[]'); }
-function saveDebts(a) { localStorage.setItem(KEY_DEBTS, JSON.stringify(a)); }
-
-function getPayments() { return JSON.parse(localStorage.getItem(KEY_PAYMENTS) || '[]'); }
-function savePayments(a) { localStorage.setItem(KEY_PAYMENTS, JSON.stringify(a)); }
-
-/* ============ Helpers ============ */
+/* ============ أدوات مساعدة ============ */
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -1552,26 +1576,65 @@ function statusBadge(st) {
     ? '<span class="badge badge-open">🟢 مفتوح</span>'
     : '<span class="badge badge-closed">🔴 مغلق</span>';
 }
-
 function toast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'show' + (type === 'error' ? ' error' : (type === 'warn' ? ' warn' : ''));
   setTimeout(() => { t.className = ''; }, 2800);
 }
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) { resolve(null); return; }
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || 'جاري التحميل...';
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+function disableBtn(id, text) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = true;
+  b.dataset.oldText = b.textContent;
+  b.textContent = text || 'جاري...';
+  b.style.opacity = '0.6';
+}
+function enableBtn(id) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = false;
+  b.textContent = b.dataset.oldText || b.textContent;
+  b.style.opacity = '1';
 }
 
-function filesToBase64(files) {
-  return Promise.all(Array.from(files || []).map(f => fileToBase64(f)));
+/* ============ Cloudinary Upload ============ */
+async function uploadFile(file, folder) {
+  if (!file) return null;
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`;
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  if (folder) formData.append('folder', folder);
+
+  const res = await fetch(url, { method: 'POST', body: formData });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'فشل رفع الصورة');
+  }
+  const data = await res.json();
+  return data.secure_url;
+}
+
+async function uploadFiles(files, folder) {
+  if (!files || files.length === 0) return [];
+  const urls = [];
+  for (const f of Array.from(files)) {
+    try {
+      const u = await uploadFile(f, folder);
+      if (u) urls.push(u);
+    } catch (e) {
+      console.error('خطأ في رفع صورة:', e);
+    }
+  }
+  return urls;
 }
 
 function previewMulti(inputId, previewId) {
@@ -1591,41 +1654,134 @@ function previewMulti(inputId, previewId) {
   });
 }
 
-/* ============ Init Data ============ */
-function initData() {
-  if (!localStorage.getItem(KEY_CAPTAINS)) saveCaptains([]);
-  if (!localStorage.getItem(KEY_TRANS))    saveTransactions([]);
-  if (!localStorage.getItem(KEY_CARS))     saveCars([]);
-  if (!localStorage.getItem(KEY_DEBTS))    saveDebts([]);
-  if (!localStorage.getItem(KEY_PAYMENTS)) savePayments([]);
+/* ============ Captains ============ */
+async function getCaptains() {
+  const snap = await db.collection(COL_CAPTAINS).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function addCaptainDB(data) {
+  const ref = await db.collection(COL_CAPTAINS).add(data);
+  return ref.id;
+}
+async function updateCaptainDB(id, data) {
+  await db.collection(COL_CAPTAINS).doc(id).update(data);
+}
+async function deleteCaptainDB(id) {
+  await db.collection(COL_CAPTAINS).doc(id).delete();
+}
 
-  if (!localStorage.getItem(KEY_ADMINS)) {
-    saveAdmins([{
-      id: genId(),
-      username: 'Abdallh',
-      password: 'Abdallh2027',
-      name: 'عبدالله (الأدمن الرئيسي)',
-      main: true,
-      createdAt: todayStr()
-    }]);
+/* ============ Cars ============ */
+async function getCars() {
+  const snap = await db.collection(COL_CARS).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function addCarDB(data) {
+  const ref = await db.collection(COL_CARS).add(data);
+  return ref.id;
+}
+async function deleteCarDB(id) {
+  await db.collection(COL_CARS).doc(id).delete();
+}
+
+/* ============ Transactions ============ */
+async function getTransactions() {
+  const snap = await db.collection(COL_TRANS).orderBy('createdAt', 'desc').get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function addTransactionDB(data) {
+  const ref = await db.collection(COL_TRANS).add({
+    ...data,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  return ref.id;
+}
+async function updateTransactionDB(id, data) {
+  await db.collection(COL_TRANS).doc(id).update(data);
+}
+async function deleteTransactionDB(id) {
+  await db.collection(COL_TRANS).doc(id).delete();
+}
+
+/* ============ Admins ============ */
+async function getAdmins() {
+  const snap = await db.collection(COL_ADMINS).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function addAdminDB(data) {
+  const ref = await db.collection(COL_ADMINS).add(data);
+  return ref.id;
+}
+async function updateAdminDB(id, data) {
+  await db.collection(COL_ADMINS).doc(id).update(data);
+}
+
+/* ============ Debts ============ */
+async function getDebts() {
+  const snap = await db.collection(COL_DEBTS).orderBy('createdAt', 'desc').get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function addDebtDB(data) {
+  const ref = await db.collection(COL_DEBTS).add({
+    ...data,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  return ref.id;
+}
+
+/* ============ Payments ============ */
+async function getPayments() {
+  const snap = await db.collection(COL_PAYMENTS).orderBy('createdAt', 'desc').get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function addPaymentDB(data) {
+  const ref = await db.collection(COL_PAYMENTS).add({
+    ...data,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  return ref.id;
+}
+
+/* ============ حذف كابتن كامل ============ */
+async function deleteCaptainFull(id) {
+  const trans = await getTransactions();
+  for (const t of trans.filter(x => x.captainId === id)) {
+    await deleteTransactionDB(t.id);
   }
+  const debts = await getDebts();
+  for (const d of debts.filter(x => x.captainId === id)) {
+    await db.collection(COL_DEBTS).doc(d.id).delete();
+  }
+  const pays = await getPayments();
+  for (const p of pays.filter(x => x.captainId === id)) {
+    await db.collection(COL_PAYMENTS).doc(p.id).delete();
+  }
+  await deleteCaptainDB(id);
+}
+
+/* ============ حساب رصيد المديونية ============ */
+async function captainDebtBalance(capId) {
+  const debts = await getDebts();
+  const payments = await getPayments();
+  const totalAdd = debts.filter(d => d.captainId === capId).reduce((s, d) => s + (d.amount || 0), 0);
+  const totalPaid = payments.filter(p => p.captainId === capId).reduce((s, p) => s + (p.amount || 0), 0);
+  return { totalAdd, totalPaid, balance: Math.max(0, totalAdd - totalPaid) };
 }
 
 /* ============================================================
-   الجزء 2: الثيم والإعدادات
+   الثيم والإعدادات
    ============================================================ */
 
 function applyTheme() {
-  const theme = localStorage.getItem(KEY_THEME) || 'dark';
+  const theme = localStorage.getItem('mashwarak_theme') || 'dark';
   document.body.classList.toggle('light-mode', theme === 'light');
   const btn = document.getElementById('themeBtn');
   if (btn) btn.textContent = theme === 'light' ? '☀️ نهاري' : '🌙 ليلي';
 }
 
 function toggleTheme() {
-  const current = localStorage.getItem(KEY_THEME) || 'dark';
+  const current = localStorage.getItem('mashwarak_theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
-  localStorage.setItem(KEY_THEME, next);
+  localStorage.setItem('mashwarak_theme', next);
   applyTheme();
   toast(next === 'light' ? '☀️ الوضع النهاري' : '🌙 الوضع الليلي');
 }
@@ -1640,141 +1796,194 @@ function toggleSettings() {
 }
 
 /* ============ تصدير Excel ============ */
-function exportExcel() {
-  const trans = getTransactions();
-  const caps = getCaptains();
-  const debts = getDebts();
-  const payments = getPayments();
+async function exportExcel() {
+  showLoading('جاري تجهيز البيانات...');
+  try {
+    const trans = await getTransactions();
+    const caps = await getCaptains();
+    const debts = await getDebts();
+    const payments = await getPayments();
 
-  let csv = '\uFEFF'; // BOM للعربي
+    let csv = '\uFEFF';
 
-  // ورقة الشيفتات
-  csv += '=== الشيفتات ===\n';
-  csv += 'الكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل,كيلوهات بداية,كيلوهات نهاية,كيلوهات مستهلكة,السفر,مشاوير خاصة,دورات مدارس,دورات موظفين\n';
-  trans.forEach(s => {
-    const cap = caps.find(c => c.id === s.captainId);
-    csv += [
-      cap ? cap.name : 'محذوف',
-      s.system === 'fixed' ? 'ثابت' : 'تلت',
-      s.carPlate || '-',
-      s.date || '-',
-      shiftName(s.shift),
-      s.status === 'open' ? 'مفتوح' : 'مغلق',
-      s.revenue || 0,
-      s.expense || 0,
-      (s.revenue || 0) - (s.expense || 0),
-      s.transferred || 0,
-      s.remaining || 0,
-      s.transferMethod || '-',
-      s.kmStart || 0,
-      s.kmEnd || 0,
-      s.kmUsed || 0,
-      s.travel || 0,
-      s.privateTrips || 0,
-      s.schoolTrips || 0,
-      s.employeeTrips || 0
-    ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
-  });
+    csv += '=== الشيفتات ===\n';
+    csv += 'الكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل,كيلوهات بداية,كيلوهات نهاية,كيلوهات مستهلكة,السفر,مشاوير خاصة,دورات مدارس,دورات موظفين\n';
+    trans.forEach(s => {
+      const cap = caps.find(c => c.id === s.captainId);
+      csv += [
+        cap ? cap.name : 'محذوف',
+        s.system === 'fixed' ? 'ثابت' : 'تلت',
+        s.carPlate || '-',
+        s.date || '-',
+        shiftName(s.shift),
+        s.status === 'open' ? 'مفتوح' : 'مغلق',
+        s.revenue || 0,
+        s.expense || 0,
+        (s.revenue || 0) - (s.expense || 0),
+        s.transferred || 0,
+        s.remaining || 0,
+        s.transferMethod || '-',
+        s.kmStart || 0,
+        s.kmEnd || 0,
+        s.kmUsed || 0,
+        s.travel || 0,
+        s.privateTrips || 0,
+        s.schoolTrips || 0,
+        s.employeeTrips || 0
+      ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+    });
 
-  csv += '\n=== الكباتن ===\n';
-  csv += 'الاسم,اليوزر,النظام,السيارة,الهاتف\n';
-  caps.forEach(c => {
-    csv += [
-      c.name, c.username,
-      c.system === 'fixed' ? 'ثابت' : 'تلت',
-      c.carPlate || '-',
-      c.phone || '-'
-    ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
-  });
+    csv += '\n=== الكباتن ===\n';
+    csv += 'الاسم,اليوزر,النظام,السيارة,الهاتف\n';
+    caps.forEach(c => {
+      csv += [
+        c.name, c.username,
+        c.system === 'fixed' ? 'ثابت' : 'تلت',
+        c.carPlate || '-',
+        c.phone || '-'
+      ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+    });
 
-  csv += '\n=== المديونيات ===\n';
-  csv += 'الكابتن,التاريخ,النظام,المبلغ المضاف,الرصيد بعد\n';
-  debts.forEach(d => {
-    const cap = caps.find(c => c.id === d.captainId);
-    csv += [
-      cap ? cap.name : 'محذوف',
-      d.date, d.system === 'fixed' ? 'ثابت' : 'تلت',
-      d.amount, d.balanceAfter
-    ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
-  });
+    csv += '\n=== المديونيات ===\n';
+    csv += 'الكابتن,التاريخ,النظام,المبلغ المضاف,الرصيد بعد\n';
+    debts.forEach(d => {
+      const cap = caps.find(c => c.id === d.captainId);
+      csv += [
+        cap ? cap.name : 'محذوف',
+        d.date, d.system === 'fixed' ? 'ثابت' : 'تلت',
+        d.amount, d.balanceAfter
+      ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+    });
 
-  csv += '\n=== التسديدات ===\n';
-  csv += 'الكابتن,التاريخ,المبلغ,الطريقة,ملاحظات\n';
-  payments.forEach(p => {
-    const cap = caps.find(c => c.id === p.captainId);
-    csv += [
-      cap ? cap.name : 'محذوف',
-      p.date, p.amount, p.method, p.note || '-'
-    ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
-  });
+    csv += '\n=== التسديدات ===\n';
+    csv += 'الكابتن,التاريخ,المبلغ,الطريقة,ملاحظات\n';
+    payments.forEach(p => {
+      const cap = caps.find(c => c.id === p.captainId);
+      csv += [
+        cap ? cap.name : 'محذوف',
+        p.date, p.amount, p.method, p.note || '-'
+      ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+    });
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'mashwarak_export_' + todayStr() + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('✅ تم تصدير البيانات');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mashwarak_export_' + todayStr() + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ تم تصدير البيانات');
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ في التصدير', 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
 /* ============ إدارة الأدمن ============ */
-function changeAdminPassword() {
+async function changeAdminPassword() {
   if (!currentUser || currentUser.role !== 'admin') return;
   const oldPass = prompt('كلمة المرور الحالية:');
   if (oldPass === null) return;
-  const admins = getAdmins();
-  const me = admins.find(a => a.id === currentUser.adminId);
-  if (!me || me.password !== oldPass) {
-    toast('❌ كلمة المرور الحالية غير صحيحة', 'error');
-    return;
+
+  showLoading('جاري التحقق...');
+  try {
+    const cred = firebase.auth.EmailAuthProvider.credential(
+      currentUser.username + FAKE_DOMAIN,
+      oldPass
+    );
+    await auth.currentUser.reauthenticateWithCredential(cred);
+
+    const newPass = prompt('كلمة المرور الجديدة (6 أحرف على الأقل):');
+    if (!newPass || newPass.length < 6) {
+      toast('كلمة المرور قصيرة جداً (6 على الأقل)', 'error');
+      return;
+    }
+    const confirm = prompt('تأكيد كلمة المرور الجديدة:');
+    if (confirm !== newPass) {
+      toast('❌ كلمتا المرور غير متطابقتين', 'error');
+      return;
+    }
+
+    await auth.currentUser.updatePassword(newPass);
+    const admins = await getAdmins();
+    const me = admins.find(a => a.id === currentUser.adminId);
+    if (me) {
+      me.password = newPass;
+      await updateAdminDB(me.id, { password: newPass });
+    }
+    toast('✅ تم تغيير كلمة المرور');
+  } catch (e) {
+    console.error(e);
+    if (e.code === 'auth/wrong-password') {
+      toast('❌ كلمة المرور الحالية غير صحيحة', 'error');
+    } else {
+      toast('حدث خطأ: ' + e.message, 'error');
+    }
+  } finally {
+    hideLoading();
   }
-  const newPass = prompt('كلمة المرور الجديدة (4 أحرف على الأقل):');
-  if (!newPass || newPass.length < 4) {
-    toast('كلمة المرور قصيرة جداً', 'error');
-    return;
-  }
-  const confirm = prompt('تأكيد كلمة المرور الجديدة:');
-  if (confirm !== newPass) {
-    toast('❌ كلمتا المرور غير متطابقتين', 'error');
-    return;
-  }
-  me.password = newPass;
-  saveAdmins(admins);
-  toast('✅ تم تغيير كلمة المرور');
 }
 
-function addNewAdmin() {
+async function addNewAdmin() {
   if (!currentUser || currentUser.role !== 'admin') return;
   const name = prompt('اسم الأدمن الجديد:');
   if (!name) return;
-  const username = prompt('اسم المستخدم:');
+  const username = prompt('اسم المستخدم (بالإنجليزي بدون مسافات):');
   if (!username) return;
-  const admins = getAdmins();
-  if (admins.some(a => a.username === username)) {
-    toast('❌ اسم المستخدم موجود', 'error');
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    toast('اسم المستخدم لازم إنجليزي وأرقام فقط', 'error');
     return;
   }
-  const password = prompt('كلمة المرور (4 أحرف على الأقل):');
-  if (!password || password.length < 4) {
-    toast('كلمة المرور قصيرة', 'error');
+  const password = prompt('كلمة المرور (6 أحرف على الأقل):');
+  if (!password || password.length < 6) {
+    toast('كلمة المرور قصيرة (6 على الأقل)', 'error');
     return;
   }
-  admins.push({
-    id: genId(),
-    name: name.trim(),
-    username: username.trim(),
-    password: password.trim(),
-    main: false,
-    createdAt: todayStr()
-  });
-  saveAdmins(admins);
-  toast('✅ تم إضافة الأدمن');
+
+  showLoading('جاري إنشاء الحساب...');
+  try {
+    const admins = await getAdmins();
+    if (admins.some(a => a.username === username)) {
+      toast('❌ اسم المستخدم موجود', 'error');
+      return;
+    }
+
+    const oldUser = auth.currentUser;
+    const userCred = await auth.createUserWithEmailAndPassword(
+      username + FAKE_DOMAIN,
+      password
+    );
+    const newUid = userCred.user.uid;
+
+    await addAdminDB({
+      username: username,
+      name: name.trim(),
+      password: password,
+      main: false,
+      authUid: newUid,
+      createdAt: todayStr()
+    });
+
+    // نرجع الأدمن الأصلي
+    await auth.updateCurrentUser(oldUser);
+    toast('✅ تم إضافة الأدمن');
+  } catch (e) {
+    console.error(e);
+    if (e.code === 'auth/email-already-in-use') {
+      toast('❌ اسم المستخدم موجود بالفعل', 'error');
+    } else {
+      toast('حدث خطأ: ' + e.message, 'error');
+    }
+  } finally {
+    hideLoading();
+  }
 }
 
-function showAdminsList() {
+async function showAdminsList() {
   if (!currentUser || currentUser.role !== 'admin') return;
-  const admins = getAdmins();
+  const admins = await getAdmins();
   let msg = '📋 قائمة الأدمن:\n\n';
   admins.forEach((a, i) => {
     msg += `${i+1}. ${a.name} (${a.username})${a.main ? ' 👑' : ''}\n`;
@@ -1783,13 +1992,13 @@ function showAdminsList() {
 }
 
 /* ============================================================
-   الجزء 3: تسجيل الدخول والتنقل
+   تسجيل الدخول والتنقل
    ============================================================ */
 
-function handleLogin() {
+async function handleLogin() {
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
-  const err  = document.getElementById('loginError');
+  const err = document.getElementById('loginError');
   err.textContent = '';
 
   if (!user || !pass) {
@@ -1797,29 +2006,56 @@ function handleLogin() {
     return;
   }
 
-  const admins = getAdmins();
-  const admin = admins.find(a => a.username === user && a.password === pass);
-  if (admin) {
-    currentUser = { role:'admin', adminId: admin.id, name: admin.name, username: admin.username };
-    localStorage.setItem(KEY_SESSION, JSON.stringify(currentUser));
-    enterDashboard();
-    return;
-  }
+  disableBtn('loginBtn', '⏳ جاري الدخول...');
+  err.textContent = '';
 
-  const captains = getCaptains();
-  const cap = captains.find(c => c.username === user && c.password === pass);
-  if (cap) {
-    currentUser = { role:'captain', id:cap.id, name:cap.name, username:cap.username };
-    localStorage.setItem(KEY_SESSION, JSON.stringify(currentUser));
-    enterDashboard();
-    return;
-  }
+  try {
+    const userCred = await auth.signInWithEmailAndPassword(user + FAKE_DOMAIN, pass);
+    const uid = userCred.user.uid;
 
-  err.textContent = '❌ بيانات الدخول غير صحيحة';
+    // هل هو أدمن؟
+    const admins = await getAdmins();
+    const admin = admins.find(a => a.username === user);
+    if (admin) {
+      currentUser = { role:'admin', adminId: admin.id, name: admin.name, username: admin.username };
+      localStorage.setItem('mashwarak_session', JSON.stringify(currentUser));
+      enterDashboard();
+      return;
+    }
+
+    // هل هو كابتن؟
+    const captains = await getCaptains();
+    const cap = captains.find(c => c.username === user);
+    if (cap) {
+      currentUser = { role:'captain', id: cap.id, name: cap.name, username: cap.username };
+      localStorage.setItem('mashwarak_session', JSON.stringify(currentUser));
+      enterDashboard();
+      return;
+    }
+
+    // مستخدم غير معروف
+    await auth.signOut();
+    err.textContent = '❌ الحساب غير مرتبط بأي أدمن أو كابتن';
+
+  } catch (e) {
+    console.error(e);
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+      err.textContent = '❌ بيانات الدخول غير صحيحة';
+    } else if (e.code === 'auth/too-many-requests') {
+      err.textContent = '⚠️ محاولات كثيرة فاشلة، حاول لاحقاً';
+    } else if (e.code === 'auth/network-request-failed') {
+      err.textContent = '❌ فشل الاتصال بالإنترنت';
+    } else {
+      err.textContent = '❌ خطأ: ' + e.message;
+    }
+  } finally {
+    enableBtn('loginBtn');
+  }
 }
 
-function logout() {
-  localStorage.removeItem(KEY_SESSION);
+async function logout() {
+  try { await auth.signOut(); } catch(e) {}
+  localStorage.removeItem('mashwarak_session');
   currentUser = null;
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'block';
@@ -1838,17 +2074,15 @@ function enterDashboard() {
     document.getElementById('adminTabs').style.display = 'flex';
     document.getElementById('captainTabs').style.display = 'none';
     switchTab('tab-overview', document.querySelector('#adminTabs .tab-btn'));
-    renderAdmin();
   } else {
     document.getElementById('dashTitle').textContent = 'لوحة الكابتن';
     document.getElementById('adminTabs').style.display = 'none';
     document.getElementById('captainTabs').style.display = 'flex';
     switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
-    renderCaptain();
   }
 }
 
-function switchTab(tabId, btn) {
+async function switchTab(tabId, btn) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
 
@@ -1856,27 +2090,32 @@ function switchTab(tabId, btn) {
   parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  if (currentUser && currentUser.role === 'admin') renderAdmin();
-  if (currentUser && currentUser.role === 'captain') renderCaptain();
+  if (currentUser && currentUser.role === 'admin') await renderAdmin();
+  if (currentUser && currentUser.role === 'captain') await renderCaptain();
 }
 
 /* ============================================================
-   الجزء 4: وظائف الأدمن
+   وظائف الأدمن
    ============================================================ */
 
-function renderAdmin() {
-  renderOverview();
-  renderCaptainsTable();
-  renderCarsTable();
-  renderAllTransactions();
-  renderReports();
-  renderDebtsAdmin();
-  fillCaptainFilter();
-  fillCarDropdowns();
+async function renderAdmin() {
+  try {
+    await renderOverview();
+    await renderCaptainsTable();
+    await renderCarsTable();
+    await renderAllTransactions();
+    await renderReports();
+    await renderDebtsAdmin();
+    await fillCaptainFilter();
+    await fillCarDropdowns();
+  } catch (e) {
+    console.error(e);
+  }
 }
 
-function renderOverview() {
-  const shifts = getTransactions();
+async function renderOverview() {
+  const shifts = await getTransactions();
+  const captains = await getCaptains();
 
   let rev = 0, exp = 0;
   let fixedCount = 0, thirdCount = 0, openCount = 0;
@@ -1889,13 +2128,15 @@ function renderOverview() {
     if (s.status === 'open') openCount++;
   });
 
-  const totalDebts = getDebts().reduce((sum, d) => sum + (d.amount || 0), 0)
-                   - getPayments().reduce((sum, p) => sum + (p.amount || 0), 0);
+  const debts = await getDebts();
+  const payments = await getPayments();
+  const totalDebts = debts.reduce((s, d) => s + (d.amount || 0), 0)
+                   - payments.reduce((s, p) => s + (p.amount || 0), 0);
 
   document.getElementById('ovRevenue').textContent = rev;
   document.getElementById('ovExpense').textContent = exp;
   document.getElementById('ovNet').textContent = rev - exp;
-  document.getElementById('ovCaptains').textContent = getCaptains().length;
+  document.getElementById('ovCaptains').textContent = captains.length;
   document.getElementById('ovFixed').textContent = fixedCount;
   document.getElementById('ovThird').textContent = thirdCount;
   document.getElementById('ovOpen').textContent = openCount;
@@ -1903,13 +2144,13 @@ function renderOverview() {
 
   const tbody = document.getElementById('ovRecentTable');
   tbody.innerHTML = '';
-  const recent = shifts.slice().reverse().slice(0, 6);
+  const recent = shifts.slice(0, 6);
   if (recent.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">لا توجد عمليات</td></tr>';
     return;
   }
   recent.forEach(s => {
-    const cap = getCaptains().find(c => c.id === s.captainId);
+    const cap = captains.find(c => c.id === s.captainId);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${cap ? cap.name : 'محذوف'}</td>
@@ -1923,7 +2164,7 @@ function renderOverview() {
   });
 }
 
-function addCaptain() {
+async function addCaptain() {
   const name = document.getElementById('capName').value.trim();
   const phone = document.getElementById('capPhone').value.trim();
   const user = document.getElementById('capUser').value.trim();
@@ -1938,54 +2179,91 @@ function addCaptain() {
     toast('من فضلك اكمل البيانات الأساسية', 'error');
     return;
   }
-  const captains = getCaptains();
-  if (captains.some(c => c.username === user)) {
-    toast('اسم المستخدم موجود بالفعل', 'error');
+  if (!/^[a-zA-Z0-9_]+$/.test(user)) {
+    toast('اسم المستخدم لازم إنجليزي وأرقام فقط', 'error');
     return;
   }
-  const car = getCars().find(c => c.id === carId);
+  if (pass.length < 6) {
+    toast('كلمة المرور 6 أحرف على الأقل', 'error');
+    return;
+  }
 
-  captains.push({
-    id: genId(), name, phone, username:user, password:pass,
-    system, carId: carId || null, carPlate: car ? car.plate : '',
-    tiers: { t1: tier1, t2: tier2, t3: tier3 },
-    createdAt: todayStr()
-  });
-  saveCaptains(captains);
+  showLoading('جاري إنشاء حساب الكابتن...');
+  try {
+    const captains = await getCaptains();
+    if (captains.some(c => c.username === user)) {
+      toast('اسم المستخدم موجود بالفعل', 'error');
+      return;
+    }
 
-  document.getElementById('capName').value = '';
-  document.getElementById('capPhone').value = '';
-  document.getElementById('capUser').value = '';
-  document.getElementById('capPass').value = '';
-  document.getElementById('capCar').value = '';
-  document.getElementById('capTier1').value = '0';
-  document.getElementById('capTier2').value = '0';
-  document.getElementById('capTier3').value = '0';
+    // إنشاء حساب Auth
+    const oldUser = auth.currentUser;
+    const userCred = await auth.createUserWithEmailAndPassword(user + FAKE_DOMAIN, pass);
+    const newUid = userCred.user.uid;
 
-  toast('✅ تم إضافة الكابتن بنجاح');
-  renderAdmin();
+    const car = (await getCars()).find(c => c.id === carId);
+
+    // حفظ في Firestore
+    await addCaptainDB({
+      name, phone, username:user,
+      password: pass,
+      system,
+      carId: carId || null,
+      carPlate: car ? car.plate : '',
+      tiers: { t1: tier1, t2: tier2, t3: tier3 },
+      authUid: newUid,
+      createdAt: todayStr()
+    });
+
+    // نرجع الأدمن الأصلي
+    await auth.updateCurrentUser(oldUser);
+
+    document.getElementById('capName').value = '';
+    document.getElementById('capPhone').value = '';
+    document.getElementById('capUser').value = '';
+    document.getElementById('capPass').value = '';
+    document.getElementById('capCar').value = '';
+    document.getElementById('capTier1').value = '0';
+    document.getElementById('capTier2').value = '0';
+    document.getElementById('capTier3').value = '0';
+
+    toast('✅ تم إضافة الكابتن بنجاح');
+    await renderAdmin();
+  } catch (e) {
+    console.error(e);
+    if (e.code === 'auth/email-already-in-use') {
+      toast('اسم المستخدم موجود بالفعل', 'error');
+    } else {
+      toast('حدث خطأ: ' + e.message, 'error');
+    }
+  } finally {
+    hideLoading();
+  }
 }
 
-function deleteCaptain(id) {
+async function deleteCaptain(id) {
   if (!confirm('هل أنت متأكد من حذف الكابتن وكل شيفتاته ومديونياته؟')) return;
-  saveCaptains(getCaptains().filter(c => c.id !== id));
-  saveTransactions(getTransactions().filter(t => t.captainId !== id));
-  saveDebts(getDebts().filter(d => d.captainId !== id));
-  savePayments(getPayments().filter(p => p.captainId !== id));
-  toast('🗑️ تم حذف الكابتن');
-  renderAdmin();
+  showLoading('جاري الحذف...');
+  try {
+    await deleteCaptainFull(id);
+    toast('🗑️ تم حذف الكابتن');
+    await renderAdmin();
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ في الحذف', 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
-function editCaptain(id) {
-  const captains = getCaptains();
+async function editCaptain(id) {
+  const captains = await getCaptains();
   const c = captains.find(x => x.id === id);
   if (!c) return;
   const newName = prompt('اسم الكابتن:', c.name);
   if (newName === null) return;
   const newPhone = prompt('رقم الهاتف:', c.phone || '');
   if (newPhone === null) return;
-  const newPass = prompt('كلمة المرور الجديدة:', c.password);
-  if (newPass === null) return;
   const t1 = prompt('سعر الشريحة 1:', c.tiers ? c.tiers.t1 : 0);
   if (t1 === null) return;
   const t2 = prompt('سعر الشريحة 2:', c.tiers ? c.tiers.t2 : 0);
@@ -1993,17 +2271,25 @@ function editCaptain(id) {
   const t3 = prompt('سعر الشريحة 3:', c.tiers ? c.tiers.t3 : 0);
   if (t3 === null) return;
 
-  c.name = newName.trim() || c.name;
-  c.phone = newPhone.trim();
-  c.password = newPass.trim() || c.password;
-  c.tiers = { t1: parseFloat(t1)||0, t2: parseFloat(t2)||0, t3: parseFloat(t3)||0 };
-  saveCaptains(captains);
-  toast('✏️ تم تعديل البيانات');
-  renderAdmin();
+  showLoading('جاري التعديل...');
+  try {
+    await updateCaptainDB(id, {
+      name: newName.trim() || c.name,
+      phone: newPhone.trim(),
+      tiers: { t1: parseFloat(t1)||0, t2: parseFloat(t2)||0, t3: parseFloat(t3)||0 }
+    });
+    toast('✏️ تم تعديل البيانات');
+    await renderAdmin();
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ', 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
-function captainStats(capId) {
-  const shifts = getTransactions().filter(t => t.captainId === capId && t.status === 'closed');
+async function captainStats(capId) {
+  const shifts = (await getTransactions()).filter(t => t.captainId === capId && t.status === 'closed');
   let rev = 0, exp = 0;
   shifts.forEach(s => {
     rev += s.revenue || 0;
@@ -2012,14 +2298,8 @@ function captainStats(capId) {
   return { rev, exp, net: rev - exp, count: shifts.length };
 }
 
-function captainDebtBalance(capId) {
-  const totalAdd = getDebts().filter(d => d.captainId === capId).reduce((s, d) => s + (d.amount || 0), 0);
-  const totalPaid = getPayments().filter(p => p.captainId === capId).reduce((s, p) => s + (p.amount || 0), 0);
-  return { totalAdd, totalPaid, balance: Math.max(0, totalAdd - totalPaid) };
-}
-
-function renderCaptainsTable() {
-  const captains = getCaptains();
+async function renderCaptainsTable() {
+  const captains = await getCaptains();
   const tbody = document.getElementById('captainsTable');
   tbody.innerHTML = '';
 
@@ -2027,9 +2307,10 @@ function renderCaptainsTable() {
     tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">لا يوجد كباتن بعد</td></tr>';
     return;
   }
-  captains.forEach(c => {
-    const s = captainStats(c.id);
-    const d = captainDebtBalance(c.id);
+
+  for (const c of captains) {
+    const s = await captainStats(c.id);
+    const d = await captainDebtBalance(c.id);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${c.name}</td>
@@ -2046,10 +2327,10 @@ function renderCaptainsTable() {
       </td>
     `;
     tbody.appendChild(tr);
-  });
+  }
 }
 
-function addCar() {
+async function addCar() {
   const plate = document.getElementById('carPlate').value.trim();
   const model = document.getElementById('carModel').value.trim();
   const type  = document.getElementById('carType').value;
@@ -2059,31 +2340,46 @@ function addCar() {
     toast('اكتب رقم اللوحة والموديل', 'error');
     return;
   }
-  const cars = getCars();
-  if (cars.some(c => c.plate === plate)) {
-    toast('رقم اللوحة موجود بالفعل', 'error');
-    return;
+  showLoading('جاري الإضافة...');
+  try {
+    const cars = await getCars();
+    if (cars.some(c => c.plate === plate)) {
+      toast('رقم اللوحة موجود بالفعل', 'error');
+      return;
+    }
+    await addCarDB({ plate, model, type, color, createdAt: todayStr() });
+
+    document.getElementById('carPlate').value = '';
+    document.getElementById('carModel').value = '';
+    document.getElementById('carColor').value = '';
+
+    toast('✅ تم إضافة السيارة');
+    await renderAdmin();
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ', 'error');
+  } finally {
+    hideLoading();
   }
-  cars.push({ id: genId(), plate, model, type, color, createdAt: todayStr() });
-  saveCars(cars);
-
-  document.getElementById('carPlate').value = '';
-  document.getElementById('carModel').value = '';
-  document.getElementById('carColor').value = '';
-
-  toast('✅ تم إضافة السيارة');
-  renderAdmin();
 }
 
-function deleteCar(id) {
+async function deleteCar(id) {
   if (!confirm('حذف السيارة؟')) return;
-  saveCars(getCars().filter(c => c.id !== id));
-  toast('🗑️ تم حذف السيارة');
-  renderAdmin();
+  showLoading('جاري الحذف...');
+  try {
+    await deleteCarDB(id);
+    toast('🗑️ تم حذف السيارة');
+    await renderAdmin();
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ', 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
-function renderCarsTable() {
-  const cars = getCars();
+async function renderCarsTable() {
+  const cars = await getCars();
   const tbody = document.getElementById('carsTable');
   tbody.innerHTML = '';
   if (cars.length === 0) {
@@ -2103,12 +2399,14 @@ function renderCarsTable() {
   });
 }
 
-function fillCarDropdowns() {
+async function fillCarDropdowns() {
+  const cars = await getCars();
+
   const capSel = document.getElementById('capCar');
   if (capSel) {
     const val = capSel.value;
     capSel.innerHTML = '<option value="">-- بدون --</option>';
-    getCars().forEach(c => {
+    cars.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
       opt.textContent = c.plate + ' - ' + c.model;
@@ -2120,7 +2418,7 @@ function fillCarDropdowns() {
   if (openSel) {
     const val = openSel.value;
     openSel.innerHTML = '<option value="">-- اختر السيارة --</option>';
-    getCars().forEach(c => {
+    cars.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
       opt.textContent = c.plate + ' - ' + c.model;
@@ -2130,12 +2428,13 @@ function fillCarDropdowns() {
   }
 }
 
-function fillCaptainFilter() {
+async function fillCaptainFilter() {
   const sel = document.getElementById('filterCaptain');
   if (!sel) return;
   const val = sel.value || 'all';
   sel.innerHTML = '<option value="all">الكل</option>';
-  getCaptains().forEach(c => {
+  const captains = await getCaptains();
+  captains.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
     opt.textContent = c.name;
@@ -2144,17 +2443,17 @@ function fillCaptainFilter() {
   sel.value = val;
 }
 
-function renderAllTransactions() {
+async function renderAllTransactions() {
   const filterCap    = document.getElementById('filterCaptain').value;
   const filterSystem = document.getElementById('filterSystem').value;
   const filterStatus = document.getElementById('filterStatus').value;
 
-  let shifts = getTransactions();
+  let shifts = await getTransactions();
   if (filterCap !== 'all')    shifts = shifts.filter(s => s.captainId === filterCap);
   if (filterSystem !== 'all') shifts = shifts.filter(s => s.system === filterSystem);
   if (filterStatus !== 'all') shifts = shifts.filter(s => s.status === filterStatus);
-  shifts = shifts.slice().reverse();
 
+  const captains = await getCaptains();
   const tbody = document.getElementById('allTransTable');
   tbody.innerHTML = '';
   if (shifts.length === 0) {
@@ -2162,7 +2461,7 @@ function renderAllTransactions() {
     return;
   }
   shifts.forEach(s => {
-    const cap = getCaptains().find(c => c.id === s.captainId);
+    const cap = captains.find(c => c.id === s.captainId);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${cap ? cap.name : 'محذوف'}</td>
@@ -2180,45 +2479,51 @@ function renderAllTransactions() {
   });
 }
 
-function deleteTrans(id) {
+async function deleteTrans(id) {
   if (!confirm('حذف هذا الشيفت؟')) return;
-  saveTransactions(getTransactions().filter(t => t.id !== id));
-  toast('🗑️ تم حذف الشيفت');
-  renderAdmin();
+  showLoading('جاري الحذف...');
+  try {
+    await deleteTransactionDB(id);
+    toast('🗑️ تم حذف الشيفت');
+    await renderAdmin();
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ', 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
-function renderDebtsAdmin() {
+async function renderDebtsAdmin() {
+  const captains = await getCaptains();
   const tbody = document.getElementById('debtsAdminTable');
   tbody.innerHTML = '';
-  const captains = getCaptains();
   if (captains.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا يوجد كباتن</td></tr>';
   } else {
-    captains.forEach(c => {
-      const d = captainDebtBalance(c.id);
+    for (const c of captains) {
+      const d = await captainDebtBalance(c.id);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${c.name}</td>
         <td style="color:#FFC107;">${d.totalAdd}</td>
         <td style="color:#00E676;">${d.totalPaid}</td>
         <td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td>
-        <td>
-          <button class="btn btn-outline btn-small" onclick="showCaptainDebts('${c.id}')">تفاصيل</button>
-        </td>
+        <td><button class="btn btn-outline btn-small" onclick="showCaptainDebts('${c.id}')">تفاصيل</button></td>
       `;
       tbody.appendChild(tr);
-    });
+    }
   }
 
   const payTbody = document.getElementById('allPaymentsTable');
   payTbody.innerHTML = '';
-  const payments = getPayments().slice().reverse();
+  const payments = await getPayments();
   if (payments.length === 0) {
     payTbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد تسديدات</td></tr>';
     return;
   }
   payments.forEach(p => {
-    const cap = getCaptains().find(c => c.id === p.captainId);
+    const cap = captains.find(c => c.id === p.captainId);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${cap ? cap.name : 'محذوف'}</td>
@@ -2231,11 +2536,11 @@ function renderDebtsAdmin() {
   });
 }
 
-function showCaptainDebts(capId) {
-  const cap = getCaptains().find(c => c.id === capId);
-  const debts = getDebts().filter(d => d.captainId === capId);
-  const payments = getPayments().filter(p => p.captainId === capId);
-  const bal = captainDebtBalance(capId);
+async function showCaptainDebts(capId) {
+  const cap = (await getCaptains()).find(c => c.id === capId);
+  const debts = (await getDebts()).filter(d => d.captainId === capId);
+  const payments = (await getPayments()).filter(p => p.captainId === capId);
+  const bal = await captainDebtBalance(capId);
 
   let msg = `💰 مديونيات ${cap.name}\n\n`;
   msg += `إجمالي التراكم: ${bal.totalAdd} ج\n`;
@@ -2246,17 +2551,17 @@ function showCaptainDebts(capId) {
   alert(msg);
 }
 
-function renderReports() {
+async function renderReports() {
   const tbody = document.getElementById('reportTable');
   tbody.innerHTML = '';
-  const captains = getCaptains();
+  const captains = await getCaptains();
   if (captains.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا يوجد بيانات</td></tr>';
     return;
   }
-  captains.forEach(c => {
-    const s = captainStats(c.id);
-    const d = captainDebtBalance(c.id);
+  for (const c of captains) {
+    const s = await captainStats(c.id);
+    const d = await captainDebtBalance(c.id);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${c.name}</td>
@@ -2268,13 +2573,14 @@ function renderReports() {
       <td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td>
     `;
     tbody.appendChild(tr);
-  });
+  }
 }
 
-function showDetails(id) {
-  const s = getTransactions().find(t => t.id === id);
+async function showDetails(id) {
+  const shifts = await getTransactions();
+  const s = shifts.find(t => t.id === id);
   if (!s) return;
-  const cap = getCaptains().find(c => c.id === s.captainId);
+  const cap = (await getCaptains()).find(c => c.id === s.captainId);
 
   let html = `
     <div style="color:#BDBDBD;font-size:13px;line-height:2;">
@@ -2322,7 +2628,6 @@ function showDetails(id) {
     `;
   }
 
-  // الصور الفردية
   const imgs = [
     { key: 'transferImg', label: 'صورة التحويل' },
     { key: 'kmStartImg', label: 'صورة بداية العداد' },
@@ -2331,24 +2636,22 @@ function showDetails(id) {
   const imgHtml = imgs.filter(i => s[i.key]).map(i =>
     `<div style="margin-top:8px;">
        <div style="color:#FFC107;font-size:12px;margin-bottom:4px;">${i.label}:</div>
-       <img src="${s[i.key]}" style="width:100%;max-width:220px;border-radius:12px;border:1.5px solid rgba(255,193,7,0.4);">
+       <img src="${s[i.key]}" style="width:100%;max-width:220px;border-radius:12px;border:1.5px solid rgba(255,193,7,0.4);cursor:pointer;" onclick="window.open('${s[i.key]}')">
      </div>`
   ).join('');
   if (imgHtml) html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">` + imgHtml;
 
-  // صور متعددة (غاز/بنزين)
   if (s.gasImgs && s.gasImgs.length > 0) {
     html += `<div style="margin-top:10px;"><div style="color:#FFC107;font-size:12px;margin-bottom:6px;">⛽ صور عداد الغاز (${s.gasImgs.length}):</div><div style="display:flex;gap:6px;flex-wrap:wrap;">`;
-    s.gasImgs.forEach(img => { html += `<img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1.5px solid rgba(255,193,7,0.4);">`; });
+    s.gasImgs.forEach(img => { html += `<img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1.5px solid rgba(255,193,7,0.4);cursor:pointer;" onclick="window.open('${img}')">`; });
     html += `</div></div>`;
   }
   if (s.fuelImgs && s.fuelImgs.length > 0) {
     html += `<div style="margin-top:10px;"><div style="color:#FFC107;font-size:12px;margin-bottom:6px;">⛽ صور عداد البنزين (${s.fuelImgs.length}):</div><div style="display:flex;gap:6px;flex-wrap:wrap;">`;
-    s.fuelImgs.forEach(img => { html += `<img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1.5px solid rgba(255,193,7,0.4);">`; });
+    s.fuelImgs.forEach(img => { html += `<img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1.5px solid rgba(255,193,7,0.4);cursor:pointer;" onclick="window.open('${img}')">`; });
     html += `</div></div>`;
   }
 
-  // المواقع
   if (s.startLocation) {
     html += `<div style="margin-top:10px;color:#00E676;font-size:12px;">
       📍 <strong>بداية الشيفت:</strong> ${s.startLocation.lat.toFixed(5)}, ${s.startLocation.lng.toFixed(5)}
@@ -2374,15 +2677,19 @@ function closeDetails() {
 </script>
 <script>
 /* ============================================================
-   الجزء 5: وظائف الكابتن
+   وظائف الكابتن
    ============================================================ */
 
-function renderCaptain() {
-  fillCarDropdowns();
-  renderMyHome();
-  renderMyTransactions();
-  renderCloseShift();
-  renderMyDebts();
+async function renderCaptain() {
+  try {
+    await fillCarDropdowns();
+    await renderMyHome();
+    await renderMyTransactions();
+    await renderCloseShift();
+    await renderMyDebts();
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 /* ============ اختيار النظام ============ */
@@ -2485,7 +2792,7 @@ function captureEndLocation() {
 }
 
 /* ============ بدء الشيفت ============ */
-function openShift() {
+async function openShift() {
   if (!selectedSystem) {
     toast('اختر نظام الشغل أولاً', 'error');
     return;
@@ -2504,57 +2811,70 @@ function openShift() {
     return;
   }
 
-  const existing = getTransactions().find(t =>
-    t.captainId === currentUser.id && t.status === 'open'
-  );
-  if (existing) {
-    toast('لديك شيفت مفتوح بالفعل! أغلقه أولاً', 'error');
-    return;
+  disableBtn('openShiftBtn', '⏳ جاري بدء الشيفت...');
+  showLoading('جاري بدء الشيفت...');
+
+  try {
+    // التأكد من عدم وجود شيفت مفتوح
+    const allTrans = await getTransactions();
+    const existing = allTrans.find(t =>
+      t.captainId === currentUser.id && t.status === 'open'
+    );
+    if (existing) {
+      toast('لديك شيفت مفتوح بالفعل! أغلقه أولاً', 'error');
+      return;
+    }
+
+    const cars = await getCars();
+    const car = cars.find(c => c.id === carId);
+    const note = document.getElementById('openNote').value.trim();
+
+    const shift = {
+      captainId: currentUser.id,
+      system: selectedSystem,
+      shift: selectedSystem === 'fixed' ? selectedShift : null,
+      carId: carId,
+      carPlate: car ? car.plate : '-',
+      carModel: car ? car.model : '-',
+      startTime: nowFull(),
+      startLocation: selectedStartLocation,
+      note: note,
+      status: 'open',
+      date: todayStr(),
+      revenue: 0,
+      expense: 0
+    };
+
+    await addTransactionDB(shift);
+
+    // reset
+    selectedSystem = null;
+    selectedShift = null;
+    selectedStartLocation = null;
+    document.getElementById('sysFixed').classList.remove('selected');
+    document.getElementById('sysThird').classList.remove('selected');
+    document.getElementById('shiftMorning').classList.remove('selected');
+    document.getElementById('shiftEvening').classList.remove('selected');
+    document.getElementById('openCar').value = '';
+    document.getElementById('openNote').value = '';
+    document.getElementById('btnStartGps').classList.remove('gps-done');
+    document.getElementById('btnStartGps').textContent = '📍 إرسال موقعي الحالي — بداية الشيفت';
+    document.getElementById('startGpsInfo').textContent = '';
+
+    toast('✅ تم بدء الشيفت بنجاح!');
+    await renderCaptain();
+    switchTab('tab-closeshift', document.querySelector('#captainTabs .tab-btn:nth-child(3)'));
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ: ' + e.message, 'error');
+  } finally {
+    enableBtn('openShiftBtn');
+    hideLoading();
   }
-
-  const car = getCars().find(c => c.id === carId);
-  const note = document.getElementById('openNote').value.trim();
-
-  const shift = {
-    id: genId(),
-    captainId: currentUser.id,
-    system: selectedSystem,
-    shift: selectedSystem === 'fixed' ? selectedShift : null,
-    carId: carId,
-    carPlate: car ? car.plate : '-',
-    carModel: car ? car.model : '-',
-    startTime: nowFull(),
-    startLocation: selectedStartLocation,
-    note: note,
-    status: 'open',
-    date: todayStr()
-  };
-
-  const trans = getTransactions();
-  trans.push(shift);
-  saveTransactions(trans);
-
-  // reset
-  selectedSystem = null;
-  selectedShift = null;
-  selectedStartLocation = null;
-  document.getElementById('sysFixed').classList.remove('selected');
-  document.getElementById('sysThird').classList.remove('selected');
-  document.getElementById('shiftMorning').classList.remove('selected');
-  document.getElementById('shiftEvening').classList.remove('selected');
-  document.getElementById('openCar').value = '';
-  document.getElementById('openNote').value = '';
-  document.getElementById('btnStartGps').classList.remove('gps-done');
-  document.getElementById('btnStartGps').textContent = '📍 إرسال موقعي الحالي — بداية الشيفت';
-  document.getElementById('startGpsInfo').textContent = '';
-
-  toast('✅ تم بدء الشيفت بنجاح!');
-  renderCaptain();
-  switchTab('tab-closeshift', document.querySelector('#captainTabs .tab-btn:nth-child(3)'));
 }
 
 /* ============ حساب الشيفت الثابت ============ */
-function calcFixed() {
+async function calcFixed() {
   const rev    = parseFloat(document.getElementById('fsRevenue').value) || 0;
   const trans  = parseFloat(document.getElementById('fsTransferred').value) || 0;
   const kmS    = parseFloat(document.getElementById('fsKmStart').value) || 0;
@@ -2565,7 +2885,8 @@ function calcFixed() {
   const kmUsed = (kmE > kmS) ? (kmE - kmS) : 0;
   document.getElementById('fsKmUsed').value = kmUsed;
 
-  const cap = getCaptains().find(c => c.id === currentUser.id);
+  const captains = await getCaptains();
+  const cap = captains.find(c => c.id === currentUser.id);
   const tiers = cap && cap.tiers ? cap.tiers : { t1:0, t2:0, t3:0 };
   let tierLabel = '-';
   let tierPrice = 0;
@@ -2598,8 +2919,6 @@ function calcThird() {
   const net      = totalRev - totalExp;
   const captainShare = net / 3;
   const carShare     = (net * 2) / 3;
-
-  // المتبقي: الإيراد − نصيب الكابتن − المحول − (غاز+بنزين)
   const remaining = totalRev - captainShare - trans - totalExp;
 
   document.getElementById('tsTotalRevenue').value = totalRev;
@@ -2612,8 +2931,9 @@ function calcThird() {
 }
 
 /* ============ إظهار نموذج الإغلاق ============ */
-function renderCloseShift() {
-  const openShift = getTransactions().find(t =>
+async function renderCloseShift() {
+  const allTrans = await getTransactions();
+  const openShift = allTrans.find(t =>
     t.captainId === currentUser.id && t.status === 'open'
   );
   currentOpenShift = openShift;
@@ -2643,9 +2963,11 @@ function renderCloseShift() {
 
   selectedEndLocation = null;
   const btnE = document.getElementById('btnEndGps');
-  btnE.classList.remove('gps-done');
-  btnE.textContent = '📍 إرسال موقعي الحالي — نهاية الشيفت';
-  btnE.disabled = false;
+  if (btnE) {
+    btnE.classList.remove('gps-done');
+    btnE.textContent = '📍 إرسال موقعي الحالي — نهاية الشيفت';
+    btnE.disabled = false;
+  }
   document.getElementById('endGpsInfo').textContent = '';
 }
 
@@ -2661,6 +2983,7 @@ async function closeShift() {
   }
 
   const shift = { ...currentOpenShift };
+  disableBtn('closeShiftBtn', '⏳ جاري الحفظ ورفع الصور...');
 
   try {
     if (shift.system === 'fixed') {
@@ -2690,22 +3013,27 @@ async function closeShift() {
       if (!kmStartImg)       { toast('❌ صورة بداية العداد مطلوبة', 'error'); return; }
       if (!kmEndImg)         { toast('❌ صورة نهاية العداد مطلوبة', 'error'); return; }
 
-      shift.revenue        = revenue;
-      shift.expense        = 0;
-      shift.transferred    = transferred;
-      shift.remaining      = remaining;
-      shift.transferMethod = transferMethod;
-      shift.transferImg    = await fileToBase64(transferImg);
-      shift.kmStart        = kmStart;
-      shift.kmEnd          = kmEnd;
-      shift.kmUsed         = kmUsed;
-      shift.tier           = tier;
-      shift.kmStartImg     = await fileToBase64(kmStartImg);
-      shift.kmEndImg       = await fileToBase64(kmEndImg);
-      shift.travel         = travel;
-      shift.privateTrips   = privateTrips;
-      shift.schoolTrips    = schoolTrips;
-      shift.employeeTrips  = employeeTrips;
+      showLoading('جاري رفع صور الشيفت الثابت...');
+
+      const transferUrl = await uploadFile(transferImg, 'transfers');
+      const kmStartUrl = await uploadFile(kmStartImg, 'km');
+      const kmEndUrl = await uploadFile(kmEndImg, 'km');
+
+      const updateData = {
+        revenue, transferred, remaining, transferMethod,
+        transferImg: transferUrl,
+        kmStart, kmEnd, kmUsed, tier,
+        kmStartImg: kmStartUrl,
+        kmEndImg: kmEndUrl,
+        travel, privateTrips, schoolTrips, employeeTrips,
+        expense: 0,
+        endLocation: selectedEndLocation,
+        endTime: nowFull(),
+        status: 'closed',
+        closedAt: nowFull()
+      };
+
+      await updateTransactionDB(shift.id, updateData);
 
     } else {
       const uber           = parseFloat(document.getElementById('tsUber').value) || 0;
@@ -2752,69 +3080,66 @@ async function closeShift() {
       if (!gasImgs || gasImgs.length === 0) { toast('❌ صور عداد الغاز مطلوبة (صورة واحدة على الأقل)', 'error'); return; }
       if (!fuelImgs || fuelImgs.length === 0) { toast('❌ صور عداد البنزين مطلوبة (صورة واحدة على الأقل)', 'error'); return; }
 
-      shift.revenue        = totalRevenue;
-      shift.expense        = gas + fuel;
-      shift.uber           = uber;
-      shift.didi           = didi;
-      shift.indriver       = indriver;
-      shift.external       = external;
-      shift.travel         = travel;
-      shift.privateTrips   = privateTrips;
-      shift.schoolTrips    = schoolTrips;
-      shift.employeeTrips  = employeeTrips;
-      shift.gas            = gas;
-      shift.fuel           = fuel;
-      shift.captainShare   = captainShare;
-      shift.carShare       = carShare;
-      shift.transferred    = transferred;
-      shift.remaining      = remaining;
-      shift.transferMethod = transferMethod;
-      shift.transferImg    = await fileToBase64(transferImg);
-      shift.kmStart        = kmStart;
-      shift.kmEnd          = kmEnd;
-      shift.kmUsed         = kmUsed;
-      shift.kmStartImg     = await fileToBase64(kmStartImg);
-      shift.kmEndImg       = await fileToBase64(kmEndImg);
-      shift.gasImgs        = await filesToBase64(gasImgs);
-      shift.fuelImgs       = await filesToBase64(fuelImgs);
+      showLoading('جاري رفع صور التلت والتلتين...');
+
+      const transferUrl = await uploadFile(transferImg, 'transfers');
+      const kmStartUrl = await uploadFile(kmStartImg, 'km');
+      const kmEndUrl = await uploadFile(kmEndImg, 'km');
+      const gasUrls = await uploadFiles(gasImgs, 'gas');
+      const fuelUrls = await uploadFiles(fuelImgs, 'fuel');
+
+      const updateData = {
+        revenue: totalRevenue,
+        expense: gas + fuel,
+        uber, didi, indriver, external,
+        travel, privateTrips, schoolTrips, employeeTrips,
+        gas, fuel,
+        captainShare, carShare,
+        transferred, remaining, transferMethod,
+        transferImg: transferUrl,
+        kmStart, kmEnd, kmUsed,
+        kmStartImg: kmStartUrl,
+        kmEndImg: kmEndUrl,
+        gasImgs: gasUrls,
+        fuelImgs: fuelUrls,
+        endLocation: selectedEndLocation,
+        endTime: nowFull(),
+        status: 'closed',
+        closedAt: nowFull()
+      };
+
+      await updateTransactionDB(shift.id, updateData);
     }
 
-    shift.endLocation = selectedEndLocation;
-    shift.endTime     = nowFull();
-    shift.status      = 'closed';
-    shift.closedAt    = nowFull();
+    // إضافة المديونية إذا كان فيه متبقي
+    const rem = parseFloat(shift.system === 'fixed' ? document.getElementById('fsRemaining').value : document.getElementById('tsRemaining').value) || 0;
 
-    const trans = getTransactions().map(t => t.id === shift.id ? shift : t);
-    saveTransactions(trans);
-
-    // ============ إضافة المديونية إذا كان فيه متبقي ============
-    const rem = parseFloat(shift.remaining) || 0;
     if (rem > 0) {
-      const debts = getDebts();
-      const prevBalance = captainDebtBalance(currentUser.id).balance;
-      const newBalance = prevBalance + rem;
-      debts.push({
-        id: genId(),
+      const bal = await captainDebtBalance(currentUser.id);
+      const newBalance = bal.balance + rem;
+
+      await addDebtDB({
         captainId: currentUser.id,
         shiftId: shift.id,
         date: todayStr(),
         system: shift.system,
         amount: rem,
-        balanceAfter: newBalance,
-        createdAt: nowFull()
+        balanceAfter: newBalance
       });
-      saveDebts(debts);
     }
 
     resetCloseForms();
 
     toast('✅ تم إغلاق الشيفت بنجاح!');
-    renderCaptain();
+    await renderCaptain();
     switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
 
-  } catch (err) {
-    console.error(err);
-    toast('حدث خطأ أثناء الحفظ', 'error');
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ: ' + e.message, 'error');
+  } finally {
+    enableBtn('closeShiftBtn');
+    hideLoading();
   }
 }
 
@@ -2851,8 +3176,9 @@ function resetCloseForms() {
 }
 
 /* ============ رئيسية الكابتن ============ */
-function renderMyHome() {
-  const shifts = getTransactions().filter(t => t.captainId === currentUser.id && t.status === 'closed');
+async function renderMyHome() {
+  const allTrans = await getTransactions();
+  const shifts = allTrans.filter(t => t.captainId === currentUser.id && t.status === 'closed');
   const today = todayStr();
 
   let todayWork = 0, todayExp = 0;
@@ -2867,23 +3193,23 @@ function renderMyHome() {
   document.getElementById('myTodayExp').textContent = todayExp;
   document.getElementById('myTodayNet').textContent = todayWork - todayExp;
 
-  const cap = getCaptains().find(c => c.id === currentUser.id);
+  const captains = await getCaptains();
+  const cap = captains.find(c => c.id === currentUser.id);
   document.getElementById('mySystem').textContent = cap ? systemName(cap.system) : '-';
   document.getElementById('myCar').textContent = cap ? (cap.carPlate || '-') : '-';
 
-  const openShift = getTransactions().find(t => t.captainId === currentUser.id && t.status === 'open');
+  const openShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'open');
   document.getElementById('myShiftStatus').textContent = openShift ? '🟢 مفتوح' : '🔴 مغلق';
   document.getElementById('myLastShift').textContent = shifts.length > 0
     ? shifts[shifts.length - 1].date
     : '-';
 
-  // المديونية
-  const d = captainDebtBalance(currentUser.id);
+  const d = await captainDebtBalance(currentUser.id);
   document.getElementById('myDebtTotal').textContent = d.balance;
 
   const tbody = document.getElementById('myRecentTable');
   tbody.innerHTML = '';
-  const recent = shifts.slice().reverse().slice(0, 5);
+  const recent = shifts.slice(0, 5);
   if (recent.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد شيفتات</td></tr>';
     return;
@@ -2901,8 +3227,9 @@ function renderMyHome() {
   });
 }
 
-function renderMyTransactions() {
-  const shifts = getTransactions().filter(t => t.captainId === currentUser.id).reverse();
+async function renderMyTransactions() {
+  const allTrans = await getTransactions();
+  const shifts = allTrans.filter(t => t.captainId === currentUser.id);
   const tbody = document.getElementById('myAllTable');
   tbody.innerHTML = '';
   if (shifts.length === 0) {
@@ -2924,17 +3251,17 @@ function renderMyTransactions() {
   });
 }
 
-/* ============ شاشة المديونيات للكابتن ============ */
-function renderMyDebts() {
-  const bal = captainDebtBalance(currentUser.id);
+/* ============ المديونيات للكابتن ============ */
+async function renderMyDebts() {
+  const bal = await captainDebtBalance(currentUser.id);
   document.getElementById('debtCurrentBalance').textContent = bal.balance;
   document.getElementById('debtTotalAccum').textContent = bal.totalAdd;
   document.getElementById('debtTotalPaid').textContent = bal.totalPaid;
 
-  // سجل التسديدات
   const payTbody = document.getElementById('paymentsTable');
   payTbody.innerHTML = '';
-  const myPays = getPayments().filter(p => p.captainId === currentUser.id).reverse();
+  const allPays = await getPayments();
+  const myPays = allPays.filter(p => p.captainId === currentUser.id);
   if (myPays.length === 0) {
     payTbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد تسديدات</td></tr>';
   } else {
@@ -2954,10 +3281,10 @@ function renderMyDebts() {
     });
   }
 
-  // سجل المديونيات
   const debtTbody = document.getElementById('debtsTable');
   debtTbody.innerHTML = '';
-  const myDebts = getDebts().filter(d => d.captainId === currentUser.id).reverse();
+  const allDebts = await getDebts();
+  const myDebts = allDebts.filter(d => d.captainId === currentUser.id);
   if (myDebts.length === 0) {
     debtTbody.innerHTML = '<tr><td colspan="4" class="empty-msg">لا توجد مديونيات مسجلة</td></tr>';
   } else {
@@ -2973,12 +3300,11 @@ function renderMyDebts() {
     });
   }
 
-  // تحديث hint التسديد
-  updatePayHint();
+  await updatePayHint();
 }
 
-function updatePayHint() {
-  const bal = captainDebtBalance(currentUser.id).balance;
+async function updatePayHint() {
+  const bal = (await captainDebtBalance(currentUser.id)).balance;
   const hint = document.getElementById('payHint');
   if (bal <= 0) {
     hint.innerHTML = '<span style="color:#00E676;">✅ لا يوجد مديونية حالياً</span>';
@@ -2987,8 +3313,8 @@ function updatePayHint() {
   }
 }
 
-function validatePayAmount() {
-  const bal = captainDebtBalance(currentUser.id).balance;
+async function validatePayAmount() {
+  const bal = (await captainDebtBalance(currentUser.id)).balance;
   const amount = parseFloat(document.getElementById('payAmount').value) || 0;
   const hint = document.getElementById('payHint');
   if (amount > bal) {
@@ -2996,7 +3322,7 @@ function validatePayAmount() {
   } else if (amount > 0) {
     hint.innerHTML = `<span style="color:#00E676;">✅ صحيح — سيتبقى ${(bal - amount).toFixed(0)} ج</span>`;
   } else {
-    updatePayHint();
+    await updatePayHint();
   }
 }
 
@@ -3006,7 +3332,7 @@ async function submitPayment() {
   const note   = document.getElementById('payNote').value.trim();
   const imgFile = document.getElementById('payImg').files[0];
 
-  const bal = captainDebtBalance(currentUser.id).balance;
+  const bal = (await captainDebtBalance(currentUser.id)).balance;
 
   if (bal <= 0) {
     toast('❌ لا يوجد مديونية للتسديد', 'error');
@@ -3029,51 +3355,133 @@ async function submitPayment() {
     return;
   }
 
-  const img = await fileToBase64(imgFile);
+  disableBtn('payBtn', '⏳ جاري الرفع والحفظ...');
+  showLoading('جاري رفع صورة الإثبات...');
 
-  const payments = getPayments();
-  payments.push({
-    id: genId(),
-    captainId: currentUser.id,
-    date: todayStr(),
-    amount: amount,
-    method: method,
-    note: note,
-    img: img,
-    createdAt: nowFull()
-  });
-  savePayments(payments);
+  try {
+    const imgUrl = await uploadFile(imgFile, 'payments');
 
-  document.getElementById('payAmount').value = '';
-  document.getElementById('payMethod').value = '';
-  document.getElementById('payNote').value = '';
-  document.getElementById('payImg').value = '';
+    await addPaymentDB({
+      captainId: currentUser.id,
+      date: todayStr(),
+      amount: amount,
+      method: method,
+      note: note,
+      img: imgUrl
+    });
 
-  toast('✅ تم تسجيل التسديد بنجاح');
-  renderMyDebts();
-  renderMyHome();
+    document.getElementById('payAmount').value = '';
+    document.getElementById('payMethod').value = '';
+    document.getElementById('payNote').value = '';
+    document.getElementById('payImg').value = '';
+
+    toast('✅ تم تسجيل التسديد بنجاح');
+    await renderMyDebts();
+    await renderMyHome();
+  } catch (e) {
+    console.error(e);
+    toast('حدث خطأ: ' + e.message, 'error');
+  } finally {
+    enableBtn('payBtn');
+    hideLoading();
+  }
 }
 </script>
 <script>
 /* ============================================================
-   الجزء 6: التشغيل النهائي والأحداث
+   التشغيل النهائي والأحداث
    ============================================================ */
 
 /* ============ تهيئة النظام ============ */
-initData();
 applyTheme();
 
-/* ============ استرجاع الجلسة ============ */
-const savedSession = localStorage.getItem(KEY_SESSION);
-if (savedSession) {
-  try {
-    currentUser = JSON.parse(savedSession);
-    enterDashboard();
-  } catch (e) {
-    localStorage.removeItem(KEY_SESSION);
+/* ============ مراقبة حالة تسجيل الدخول ============ */
+auth.onAuthStateChanged(async function(firebaseUser) {
+  if (firebaseUser) {
+    const savedSession = localStorage.getItem('mashwarak_session');
+    if (savedSession) {
+      try {
+        currentUser = JSON.parse(savedSession);
+        enterDashboard();
+      } catch (e) {
+        console.error('خطأ في استرجاع الجلسة:', e);
+      }
+    }
+  } else {
     currentUser = null;
+    localStorage.removeItem('mashwarak_session');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'block';
   }
-}
+});
+
+/* ============ أول مرة تشغيل — إنشاء الأدمن الافتراضي ============ */
+(async function initDefaultAdmin() {
+  try {
+    // ننتظر تحميل الصفحة
+    await new Promise(r => setTimeout(r, 500));
+
+    // هل يوجد أدمن؟
+    const admins = await getAdmins();
+    if (admins.length > 0) {
+      console.log('✅ يوجد أدمن بالفعل:', admins.length);
+      return;
+    }
+
+    console.log('⚠️ لا يوجد أدمن — جاري إنشاء الافتراضي...');
+
+    // إنشاء حساب الأدمن في Auth
+    try {
+      const userCred = await auth.createUserWithEmailAndPassword(
+        'Abdallh' + FAKE_DOMAIN,
+        'Abdallh2027'
+      );
+
+      // حفظ في Firestore
+      await addAdminDB({
+        username: 'Abdallh',
+        name: 'عبدالله (الأدمن الرئيسي)',
+        password: 'Abdallh2027',
+        main: true,
+        authUid: userCred.user.uid,
+        createdAt: todayStr()
+      });
+
+      console.log('✅ تم إنشاء الأدمن الافتراضي');
+      await auth.signOut();
+
+    } catch (e) {
+      if (e.code === 'auth/email-already-in-use') {
+        console.log('حساب الأدمن موجود في Auth — لكن مش في Firestore');
+        console.log('⚠️ قد تحتاج لمسح قاعدة البيانات أو استخدام حساب أدمن آخر');
+
+        // محاولة إصلاح: تسجيل دخول وإضافة للفايرستور
+        try {
+          const cred = await auth.signInWithEmailAndPassword('Abdallh' + FAKE_DOMAIN, 'Abdallh2027');
+          const existingAdmins = await getAdmins();
+          if (existingAdmins.length === 0) {
+            await addAdminDB({
+              username: 'Abdallh',
+              name: 'عبدالله (الأدمن الرئيسي)',
+              password: 'Abdallh2027',
+              main: true,
+              authUid: cred.user.uid,
+              createdAt: todayStr()
+            });
+            console.log('✅ تم إصلاح المشكلة');
+          }
+          await auth.signOut();
+        } catch (e2) {
+          console.error('فشل الإصلاح:', e2);
+        }
+      } else {
+        console.error('خطأ في إنشاء الأدمن:', e);
+      }
+    }
+  } catch (e) {
+    console.error('خطأ في التهيئة:', e);
+  }
+})();
 
 /* ============ أحداث شاشة الدخول ============ */
 document.getElementById('loginPass').addEventListener('keypress', function(e) {
@@ -3083,22 +3491,29 @@ document.getElementById('loginUser').addEventListener('keypress', function(e) {
   if (e.key === 'Enter') handleLogin();
 });
 
-/* ============ إغلاق Modal التفاصيل عند الضغط بره ============ */
+/* ============ إغلاق Modal التفاصيل ============ */
 document.getElementById('detailsModal').addEventListener('click', function(e) {
   if (e.target === this) closeDetails();
 });
 
-/* ============ إغلاق لوحة الإعدادات بـ ESC ============ */
+/* ============ اختصارات لوحة المفاتيح ============ */
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     const panel = document.getElementById('settingsPanel');
-    if (panel.classList.contains('open')) {
-      toggleSettings();
-    }
+    if (panel.classList.contains('open')) toggleSettings();
     const modal = document.getElementById('detailsModal');
-    if (modal.style.display === 'block') {
-      closeDetails();
-    }
+    if (modal.style.display === 'block') closeDetails();
+  }
+
+  // Ctrl + E = تصدير Excel
+  if (e.ctrlKey && e.key === 'e' && currentUser) {
+    e.preventDefault();
+    exportExcel();
+  }
+  // Ctrl + D = تبديل الثيم
+  if (e.ctrlKey && e.key === 'd') {
+    e.preventDefault();
+    toggleTheme();
   }
 });
 
@@ -3113,7 +3528,7 @@ if (capSystemSelect) {
   });
 }
 
-/* ============ منع إدخال قيم سالبة في حقول الأرقام ============ */
+/* ============ منع القيم السالبة ============ */
 document.addEventListener('input', function(e) {
   if (e.target.type === 'number') {
     const val = parseFloat(e.target.value);
@@ -3121,70 +3536,53 @@ document.addEventListener('input', function(e) {
   }
 });
 
-/* ============ إغلاق تلقائي للتنبيهات القديمة ============ */
-window.addEventListener('load', function() {
-  const toastEl = document.getElementById('toast');
-  if (toastEl) toastEl.className = '';
-
-  // إذا كانت الجلسة موجودة، نحدّث الشاشة
-  if (currentUser) {
-    if (currentUser.role === 'admin') renderAdmin();
-    else renderCaptain();
-  }
-});
-
-/* ============ اختصارات لوحة المفاتيح ============ */
-document.addEventListener('keydown', function(e) {
-  // Ctrl + E لتصدير Excel
-  if (e.ctrlKey && e.key === 'e' && currentUser) {
-    e.preventDefault();
-    exportExcel();
-  }
-  // Ctrl + D للتبديل بين الوضع الليلي والنهاري
-  if (e.ctrlKey && e.key === 'd') {
-    e.preventDefault();
-    toggleTheme();
-  }
-});
-
-/* ============ معالجة أخطاء الاتصال ============ */
+/* ============ كشف الاتصال ============ */
 window.addEventListener('offline', function() {
-  toast('⚠️ انقطع الاتصال بالإنترنت — بعض الميزات معطلة', 'warn');
+  toast('⚠️ انقطع الاتصال بالإنترنت', 'warn');
 });
 window.addEventListener('online', function() {
   toast('✅ عاد الاتصال بالإنترنت');
 });
 
-/* ============ تحذير عند إغلاق الصفحة أثناء شيفت مفتوح ============ */
-window.addEventListener('beforeunload', function(e) {
+/* ============ تحذير قبل إغلاق الصفحة ============ */
+window.addEventListener('beforeunload', async function(e) {
   if (currentUser && currentUser.role === 'captain') {
-    const openShift = getTransactions().find(t =>
-      t.captainId === currentUser.id && t.status === 'open'
-    );
-    if (openShift) {
-      e.preventDefault();
-      e.returnValue = 'لديك شيفت مفتوح! هل أنت متأكد من مغادرة الصفحة؟';
-      return e.returnValue;
-    }
+    try {
+      const allTrans = await getTransactions();
+      const openShift = allTrans.find(t =>
+        t.captainId === currentUser.id && t.status === 'open'
+      );
+      if (openShift) {
+        e.preventDefault();
+        e.returnValue = 'لديك شيفت مفتوح! هل أنت متأكد من مغادرة الصفحة؟';
+        return e.returnValue;
+      }
+    } catch (err) {}
   }
 });
 
-/* ============ تحسين تجربة المستخدم على الموبايل ============ */
-// منع الزووم بالضغط المزدوج
+/* ============ منع الزووم المزدوج على الموبايل ============ */
 let lastTouchEnd = 0;
 document.addEventListener('touchend', function(e) {
   const now = Date.now();
-  if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
-  }
+  if (now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
 
-/* ============ نهاية النظام ============ */
-console.log('🚗 مشوارك — نظام إدارة الأسطول الذكي');
-console.log('📅 الإصدار: v4.0');
-console.log('👤 الأدمن الافتراضي: Abdallh / Abdallh2027');
-console.log('⌨️ اختصارات: Ctrl+E (Excel) | Ctrl+D (الثيم)');
+/* ============ تشغيل أولي ============ */
+window.addEventListener('load', async function() {
+  console.log('🚗 مشوارك — نظام إدارة الأسطول الذكي');
+  console.log('📅 الإصدار: v5.0 — Firebase + Cloudinary');
+  console.log('👤 الأدمن الافتراضي: Abdallh / Abdallh2027');
+  console.log('⌨️ اختصارات: Ctrl+E (Excel) | Ctrl+D (الثيم)');
+
+  // إخفاء شاشة التحميل بعد التهيئة
+  setTimeout(hideLoading, 800);
+});
+
+// إخفاء التحميل الأولي
+setTimeout(hideLoading, 1500);
+
 </script>
 
 </body>
