@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title> مشوارك </title>
+<title>مشوارك | نظام إدارة الأسطول</title>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ============ Firebase Config ============
 const firebaseConfig = {
   apiKey: "AIzaSyCInSwEYBNFP0DSPS49CppkjNZKAq7GIQY",
   authDomain: "mashwarak2027.firebaseapp.com",
@@ -25,11 +23,8 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// ============ Cloudinary Config ============
 const CLOUDINARY_CLOUD_NAME = 'majzvjb2';
 const CLOUDINARY_UPLOAD_PRESET = 'mashwarak_preset';
-
-// إيميل وهمي
 const FAKE_DOMAIN = '@mashwarak.app';
 </script>
 
@@ -672,7 +667,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
   font-weight:bold;
 }
 
-/* مؤشر التحديث اللحظي */
 .realtime-badge {
   position:fixed;
   bottom:14px;
@@ -774,6 +768,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 <div id="loginScreen">
   <img src="logo.png" alt="مشوارك" class="logo-img" onerror="this.style.display='none'">
   <div class="logo-text">مشوارك</div>
+  <p class="subtitle"></p>
 
   <div class="input-wrap">
     <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
@@ -1181,38 +1176,11 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
       <div id="fixedForm" style="display:none;">
         <div class="section-title">💰 بيانات الشيفت الثابت</div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>الإيراد الكلي (جنيه) *</label>
-            <input type="number" id="fsRevenue" placeholder="1500" oninput="calcFixed()">
+        <div style="background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.3);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="color:#FFC107;font-weight:bold;font-size:13px;margin-bottom:8px;">🧮 معادلة الحساب:</div>
+          <div style="color:#BDBDBD;font-size:12px;line-height:1.8;">
+            إيرادات الشيفت = <strong style="color:#FFD54F;">قيمة الشريحة</strong> + مشاوير خاصة + مشاوير سفر + دورات موظفين + دورات مدارس
           </div>
-          <div class="form-group">
-            <label>المبلغ المحول (جنيه) *</label>
-            <input type="number" id="fsTransferred" placeholder="1000" oninput="calcFixed()">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>المبلغ المتبقي (تلقائي)</label>
-            <input type="number" id="fsRemaining" placeholder="0" readonly style="background:rgba(0,230,118,0.1);color:#00E676;font-weight:bold;">
-          </div>
-          <div class="form-group">
-            <label>طريقة التحويل *</label>
-            <select id="fsTransferMethod">
-              <option value="">-- اختر --</option>
-              <option value="فودافون كاش">فودافون كاش</option>
-              <option value="انستاباي">انستاباي</option>
-              <option value="تحويل بنكي">تحويل بنكي</option>
-              <option value="كاش">كاش</option>
-              <option value="أخرى">أخرى</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>صورة التحويل *</label>
-          <input type="file" id="fsTransferImg" accept="image/*">
         </div>
 
         <div class="section-title">🛣️ عداد الكيلوهات</div>
@@ -1253,21 +1221,63 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
         <div class="section-title">🚗 مشاوير إضافية</div>
         <div class="form-row-3">
           <div class="form-group">
-            <label>السفر (جنيه)</label>
-            <input type="number" id="fsTravel" placeholder="0" value="0">
+            <label>مشاوير سفر (جنيه)</label>
+            <input type="number" id="fsTravel" placeholder="0" value="0" oninput="calcFixed()">
           </div>
           <div class="form-group">
             <label>مشاوير خاصة</label>
-            <input type="number" id="fsPrivate" placeholder="0" value="0">
+            <input type="number" id="fsPrivate" placeholder="0" value="0" oninput="calcFixed()">
           </div>
           <div class="form-group">
             <label>دورات مدارس</label>
-            <input type="number" id="fsSchools" placeholder="0" value="0">
+            <input type="number" id="fsSchools" placeholder="0" value="0" oninput="calcFixed()">
           </div>
         </div>
         <div class="form-group">
           <label>دورات موظفين</label>
-          <input type="number" id="fsEmployees" placeholder="0" value="0">
+          <input type="number" id="fsEmployees" placeholder="0" value="0" oninput="calcFixed()">
+        </div>
+
+        <div class="section-title">💰 الإيرادات</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>قيمة الشريحة (تلقائي)</label>
+            <input type="number" id="fsTierValue" placeholder="0" readonly style="background:rgba(255,193,7,0.1);color:#FFC107;font-weight:bold;">
+          </div>
+          <div class="form-group">
+            <label>إيرادات الشيفت (تلقائي)</label>
+            <input type="number" id="fsRevenue" placeholder="0" readonly style="background:rgba(0,230,118,0.15);color:#00E676;font-weight:bold;font-size:15px;">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>المبلغ المحول (جنيه) *</label>
+            <input type="number" id="fsTransferred" placeholder="1000" oninput="calcFixed()">
+          </div>
+          <div class="form-group">
+            <label>المبلغ المتبقي (تلقائي)</label>
+            <input type="number" id="fsRemaining" placeholder="0" readonly style="background:rgba(0,230,118,0.1);color:#00E676;font-weight:bold;">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>طريقة التحويل *</label>
+            <select id="fsTransferMethod">
+              <option value="">-- اختر --</option>
+              <option value="محفظة">محفظة</option>
+              <option value="انستاباي">انستاباي</option>
+              <option value="تحويل بنكي">تحويل بنكي</option>
+              <option value="كاش">كاش</option>
+              <option value="أخرى">أخرى</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>صورة التحويل *</label>
+            <input type="file" id="fsTransferImg" accept="image/*">
+          </div>
         </div>
       </div>
 
@@ -1312,7 +1322,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
         <div class="section-title">🚗 مشاوير إضافية (تضاف للإيراد)</div>
         <div class="form-row-3">
           <div class="form-group">
-            <label>السفر (جنيه)</label>
+            <label>مشاوير سفر (جنيه)</label>
             <input type="number" id="tsTravel" placeholder="0" value="0" oninput="calcThird()">
           </div>
           <div class="form-group">
@@ -1391,7 +1401,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
             <label>طريقة التحويل *</label>
             <select id="tsTransferMethod">
               <option value="">-- اختر --</option>
-              <option value="فودافون كاش">فودافون كاش</option>
+              <option value="محفظة">محفظة</option>
               <option value="انستاباي">انستاباي</option>
               <option value="تحويل بنكي">تحويل بنكي</option>
               <option value="كاش">كاش</option>
@@ -1481,7 +1491,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <label>طريقة الدفع *</label>
           <select id="payMethod">
             <option value="">-- اختر --</option>
-            <option value="فودافون كاش">فودافون كاش</option>
+            <option value="محفظة">محفظة</option>
             <option value="انستاباي">انستاباي</option>
             <option value="تحويل بنكي">تحويل بنكي</option>
             <option value="كاش">كاش</option>
@@ -1567,7 +1577,7 @@ let selectedShift = null;
 let selectedStartLocation = null;
 let selectedEndLocation = null;
 let currentOpenShift = null;
-let unsubscribers = []; // 🔴 مستمعي التحديث اللحظي
+let unsubscribers = [];
 
 /* ============ أدوات مساعدة ============ */
 function genId() {
@@ -1798,7 +1808,7 @@ async function captainDebtBalance(capId) {
 }
 
 /* ============================================================
-   🔴 Real-time Listeners — التحديث اللحظي
+   Real-time Listeners
    ============================================================ */
 
 function stopRealtimeListeners() {
@@ -1812,19 +1822,15 @@ function stopRealtimeListeners() {
 }
 
 function startRealtimeListeners() {
-  // نظف أي مستمعين قدام
   stopRealtimeListeners();
-
   console.log('🟢 جاري تشغيل المستمعين اللحظيين...');
 
-  // ============ 1) الاستماع للشيفتات ============
   const unsubTrans = db.collection(COL_TRANS)
     .orderBy('createdAt', 'desc')
     .onSnapshot(snapshot => {
       const changes = snapshot.docChanges().length;
       if (changes > 0) {
-        console.log('🔔 تغيير في الشيفتات:', changes, 'تغيير');
-        // لو الأدمن، حدّث شاشاته
+        console.log('🔔 تغيير في الشيفتات:', changes);
         if (currentUser && currentUser.role === 'admin') {
           const activeTab = document.querySelector('.tab-content.active')?.id;
           if (activeTab === 'tab-overview') renderOverview();
@@ -1832,7 +1838,6 @@ function startRealtimeListeners() {
           if (activeTab === 'tab-reports') renderReports();
           if (activeTab === 'tab-captains') renderCaptainsTable();
         }
-        // لو الكابتن، حدّث شاشاته
         if (currentUser && currentUser.role === 'captain') {
           const activeTab = document.querySelector('.tab-content.active')?.id;
           if (activeTab === 'tab-myhome') renderMyHome();
@@ -1843,7 +1848,6 @@ function startRealtimeListeners() {
     }, err => console.error('خطأ في مستمع الشيفتات:', err));
   unsubscribers.push(unsubTrans);
 
-  // ============ 2) الاستماع للمديونيات ============
   const unsubDebts = db.collection(COL_DEBTS)
     .orderBy('createdAt', 'desc')
     .onSnapshot(snapshot => {
@@ -1865,7 +1869,6 @@ function startRealtimeListeners() {
     }, err => console.error('خطأ في مستمع المديونيات:', err));
   unsubscribers.push(unsubDebts);
 
-  // ============ 3) الاستماع للتسديدات ============
   const unsubPayments = db.collection(COL_PAYMENTS)
     .orderBy('createdAt', 'desc')
     .onSnapshot(snapshot => {
@@ -1885,7 +1888,6 @@ function startRealtimeListeners() {
     }, err => console.error('خطأ في مستمع التسديدات:', err));
   unsubscribers.push(unsubPayments);
 
-  // ============ 4) الاستماع للسيارات ============
   const unsubCars = db.collection(COL_CARS)
     .onSnapshot(snapshot => {
       const changes = snapshot.docChanges().length;
@@ -1895,13 +1897,11 @@ function startRealtimeListeners() {
           const activeTab = document.querySelector('.tab-content.active')?.id;
           if (activeTab === 'tab-cars') renderCarsTable();
         }
-        // حدّث القوائم المنسدلة
         if (currentUser) fillCarDropdowns();
       }
     }, err => console.error('خطأ في مستمع السيارات:', err));
   unsubscribers.push(unsubCars);
 
-  // ============ 5) الاستماع للكباتن ============
   const unsubCaptains = db.collection(COL_CAPTAINS)
     .onSnapshot(snapshot => {
       const changes = snapshot.docChanges().length;
@@ -1917,7 +1917,6 @@ function startRealtimeListeners() {
     }, err => console.error('خطأ في مستمع الكباتن:', err));
   unsubscribers.push(unsubCaptains);
 
-  // إظهار شارة "مباشر"
   const badge = document.getElementById('realtimeBadge');
   if (badge) badge.classList.add('active');
 
@@ -1964,7 +1963,7 @@ async function exportExcel() {
     let csv = '\uFEFF';
 
     csv += '=== الشيفتات ===\n';
-    csv += 'الكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل,كيلوهات بداية,كيلوهات نهاية,كيلوهات مستهلكة,السفر,مشاوير خاصة,دورات مدارس,دورات موظفين\n';
+    csv += 'الكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل,كيلوهات بداية,كيلوهات نهاية,كيلوهات مستهلكة,مشاوير سفر,مشاوير خاصة,دورات مدارس,دورات موظفيين\n';
     trans.forEach(s => {
       const cap = caps.find(c => c.id === s.captainId);
       csv += [
@@ -2164,9 +2163,8 @@ async function handleLogin() {
   disableBtn('loginBtn', '⏳ جاري الدخول...');
 
   try {
-    const userCred = await auth.signInWithEmailAndPassword(user + FAKE_DOMAIN, pass);
+    await auth.signInWithEmailAndPassword(user + FAKE_DOMAIN, pass);
 
-    // هل هو أدمن؟
     const admins = await getAdmins();
     const admin = admins.find(a => a.username === user);
     if (admin) {
@@ -2176,7 +2174,6 @@ async function handleLogin() {
       return;
     }
 
-    // هل هو كابتن؟
     const captains = await getCaptains();
     const cap = captains.find(c => c.username === user);
     if (cap) {
@@ -2206,9 +2203,7 @@ async function handleLogin() {
 }
 
 async function logout() {
-  // 🔴 أوقف المستمعين
   stopRealtimeListeners();
-
   try { await auth.signOut(); } catch(e) {}
   localStorage.removeItem('mashwarak_session');
   currentUser = null;
@@ -2224,7 +2219,6 @@ function enterDashboard() {
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('currentUserName').textContent = currentUser.name;
 
-  // 🔴 شغّل المستمعين اللحظيين
   startRealtimeListeners();
 
   if (currentUser.role === 'admin') {
@@ -2761,10 +2755,11 @@ async function showDetails(id) {
       <hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">
       <div style="color:#BDBDBD;font-size:13px;line-height:2;">
         <div><strong style="color:#FFC107;">الشريحة:</strong> ${s.tier || '-'}</div>
-        <div><strong style="color:#FFC107;">السفر:</strong> ${s.travel || 0}</div>
+        <div><strong style="color:#FFC107;">قيمة الشريحة:</strong> ${s.tierValue || 0} ج</div>
+        <div><strong style="color:#FFC107;">مشاوير سفر:</strong> ${s.travel || 0}</div>
         <div><strong style="color:#FFC107;">مشاوير خاصة:</strong> ${s.privateTrips || 0}</div>
         <div><strong style="color:#FFC107;">دورات مدارس:</strong> ${s.schoolTrips || 0}</div>
-        <div><strong style="color:#FFC107;">دورات موظفين:</strong> ${s.employeeTrips || 0}</div>
+        <div><strong style="color:#FFC107;">دورات موظفيين:</strong> ${s.employeeTrips || 0}</div>
       </div>
     `;
   } else {
@@ -3026,29 +3021,50 @@ async function openShift() {
   }
 }
 
-/* ============ حساب الشيفت الثابت ============ */
+/* ============================================================
+   🆕 حساب الشيفت الثابت (بعد التعديل)
+   ============================================================
+   - قيمة الشريحة بتتحسب من الكيلوهات (تلقائي)
+   - إيرادات الشيفت = قيمة الشريحة + المشاوير الإضافية (تلقائي)
+   - المتبقي = إيرادات الشيفت − المحول
+   ============================================================ */
+
 async function calcFixed() {
-  const rev    = parseFloat(document.getElementById('fsRevenue').value) || 0;
-  const trans  = parseFloat(document.getElementById('fsTransferred').value) || 0;
-  const kmS    = parseFloat(document.getElementById('fsKmStart').value) || 0;
-  const kmE    = parseFloat(document.getElementById('fsKmEnd').value) || 0;
+  // قراءة القيم
+  const kmStart  = parseFloat(document.getElementById('fsKmStart').value) || 0;
+  const kmEnd    = parseFloat(document.getElementById('fsKmEnd').value) || 0;
+  const travel   = parseFloat(document.getElementById('fsTravel').value) || 0;
+  const privateT = parseFloat(document.getElementById('fsPrivate').value) || 0;
+  const schools  = parseFloat(document.getElementById('fsSchools').value) || 0;
+  const employees= parseFloat(document.getElementById('fsEmployees').value) || 0;
+  const trans    = parseFloat(document.getElementById('fsTransferred').value) || 0;
 
-  document.getElementById('fsRemaining').value = Math.max(0, rev - trans);
-
-  const kmUsed = (kmE > kmS) ? (kmE - kmS) : 0;
+  // حساب الكيلوهات المستهلكة
+  const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0;
   document.getElementById('fsKmUsed').value = kmUsed;
 
+  // حساب الشريحة (من بيانات الكابتن)
   const captains = await getCaptains();
   const cap = captains.find(c => c.id === currentUser.id);
   const tiers = cap && cap.tiers ? cap.tiers : { t1:0, t2:0, t3:0 };
+
   let tierLabel = '-';
   let tierPrice = 0;
-  if (kmUsed > 0 && kmUsed <= 350)        { tierLabel = 'الأولى (1-350 كم)'; tierPrice = tiers.t1; }
-  else if (kmUsed > 350 && kmUsed <= 420) { tierLabel = 'الثانية (350-420 كم)'; tierPrice = tiers.t2; }
-  else if (kmUsed > 420 && kmUsed <= 500) { tierLabel = 'الثالثة (420-500 كم)'; tierPrice = tiers.t3; }
+  if (kmUsed > 0 && kmUsed <= 350)        { tierLabel = 'الأولى (1-350 كم)'; tierPrice = tiers.t1 || 0; }
+  else if (kmUsed > 350 && kmUsed <= 420) { tierLabel = 'الثانية (350-420 كم)'; tierPrice = tiers.t2 || 0; }
+  else if (kmUsed > 420 && kmUsed <= 500) { tierLabel = 'الثالثة (420-500 كم)'; tierPrice = tiers.t3 || 0; }
   else if (kmUsed > 500)                  { tierLabel = 'خارج الشرائح (>500 كم)'; tierPrice = 0; }
 
-  document.getElementById('fsTier').value = tierLabel + (tierPrice > 0 ? ' - ' + tierPrice + ' ج' : '');
+  document.getElementById('fsTier').value = tierLabel;
+  document.getElementById('fsTierValue').value = tierPrice;
+
+  // 🆕 حساب إيرادات الشيفت = قيمة الشريحة + المشاوير الإضافية
+  const totalRevenue = tierPrice + travel + privateT + schools + employees;
+  document.getElementById('fsRevenue').value = totalRevenue;
+
+  // المتبقي = إيرادات الشيفت − المحول
+  const remaining = Math.max(0, totalRevenue - trans);
+  document.getElementById('fsRemaining').value = remaining;
 }
 
 /* ============ حساب التلت والتلتين ============ */
@@ -3140,15 +3156,17 @@ async function closeShift() {
 
   try {
     if (shift.system === 'fixed') {
+      // ===== الشيفت الثابت =====
+      const kmStart         = parseFloat(document.getElementById('fsKmStart').value) || 0;
+      const kmEnd           = parseFloat(document.getElementById('fsKmEnd').value) || 0;
+      const kmUsed          = parseFloat(document.getElementById('fsKmUsed').value) || 0;
+      const tier            = document.getElementById('fsTier').value;
+      const tierValue       = parseFloat(document.getElementById('fsTierValue').value) || 0;
       const revenue         = parseFloat(document.getElementById('fsRevenue').value) || 0;
       const transferred     = parseFloat(document.getElementById('fsTransferred').value) || 0;
       const remaining       = parseFloat(document.getElementById('fsRemaining').value) || 0;
       const transferMethod  = document.getElementById('fsTransferMethod').value;
       const transferImg     = document.getElementById('fsTransferImg').files[0];
-      const kmStart         = parseFloat(document.getElementById('fsKmStart').value) || 0;
-      const kmEnd           = parseFloat(document.getElementById('fsKmEnd').value) || 0;
-      const kmUsed          = parseFloat(document.getElementById('fsKmUsed').value) || 0;
-      const tier            = document.getElementById('fsTier').value;
       const kmStartImg      = document.getElementById('fsKmStartImg').files[0];
       const kmEndImg        = document.getElementById('fsKmEndImg').files[0];
       const travel          = parseFloat(document.getElementById('fsTravel').value) || 0;
@@ -3156,15 +3174,16 @@ async function closeShift() {
       const schoolTrips     = parseFloat(document.getElementById('fsSchools').value) || 0;
       const employeeTrips   = parseFloat(document.getElementById('fsEmployees').value) || 0;
 
-      if (!revenue)          { toast('❌ الإيراد مطلوب', 'error'); return; }
-      if (!transferred)      { toast('❌ المبلغ المحول مطلوب', 'error'); return; }
-      if (!transferMethod)   { toast('❌ طريقة التحويل مطلوبة', 'error'); return; }
-      if (!transferImg)      { toast('❌ صورة التحويل مطلوبة', 'error'); return; }
+      // التحقق
       if (!kmStart)          { toast('❌ كيلوهات البداية مطلوبة', 'error'); return; }
       if (!kmEnd)            { toast('❌ كيلوهات النهاية مطلوبة', 'error'); return; }
       if (kmEnd <= kmStart)  { toast('❌ كيلوهات النهاية أكبر من البداية', 'error'); return; }
       if (!kmStartImg)       { toast('❌ صورة بداية العداد مطلوبة', 'error'); return; }
       if (!kmEndImg)         { toast('❌ صورة نهاية العداد مطلوبة', 'error'); return; }
+      if (!tierValue)        { toast('❌ لم يتم تحديد قيمة الشريحة — تأكد من الكيلوهات', 'error'); return; }
+      if (!transferred)      { toast('❌ المبلغ المحول مطلوب', 'error'); return; }
+      if (!transferMethod)   { toast('❌ طريقة التحويل مطلوبة', 'error'); return; }
+      if (!transferImg)      { toast('❌ صورة التحويل مطلوبة', 'error'); return; }
 
       showLoading('جاري رفع صور الشيفت الثابت...');
 
@@ -3173,9 +3192,14 @@ async function closeShift() {
       const kmEndUrl = await uploadFile(kmEndImg, 'km');
 
       const updateData = {
-        revenue, transferred, remaining, transferMethod,
+        revenue,               // 🆕 إيرادات الشيفت (تلقائي)
+        tier,                  // 🆕 اسم الشريحة
+        tierValue,             // 🆕 قيمة الشريحة
+        transferred,
+        remaining,
+        transferMethod,
         transferImg: transferUrl,
-        kmStart, kmEnd, kmUsed, tier,
+        kmStart, kmEnd, kmUsed,
         kmStartImg: kmStartUrl,
         kmEndImg: kmEndUrl,
         travel, privateTrips, schoolTrips, employeeTrips,
@@ -3189,6 +3213,7 @@ async function closeShift() {
       await updateTransactionDB(shift.id, updateData);
 
     } else {
+      // ===== التلت والتلتين =====
       const uber           = parseFloat(document.getElementById('tsUber').value) || 0;
       const didi           = parseFloat(document.getElementById('tsDidi').value) || 0;
       const indriver       = parseFloat(document.getElementById('tsIndriver').value) || 0;
@@ -3297,12 +3322,15 @@ async function closeShift() {
 }
 
 function resetCloseForms() {
-  ['fsRevenue','fsTransferred','fsRemaining','fsKmStart','fsKmEnd','fsKmUsed','fsTravel','fsPrivate','fsSchools','fsEmployees'].forEach(id => {
+  ['fsKmStart','fsKmEnd','fsKmUsed','fsTransferred','fsRemaining','fsTier','fsTierValue','fsRevenue'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.value = (id === 'fsTravel' || id === 'fsPrivate' || id === 'fsSchools' || id === 'fsEmployees') ? '0' : '';
+    if (el) el.value = '';
+  });
+  ['fsTravel','fsPrivate','fsSchools','fsEmployees'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '0';
   });
   document.getElementById('fsTransferMethod').value = '';
-  document.getElementById('fsTier').value = '';
   ['fsTransferImg','fsKmStartImg','fsKmEndImg'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3715,10 +3743,11 @@ document.addEventListener('touchend', function(e) {
 /* ============ تشغيل أولي ============ */
 window.addEventListener('load', async function() {
   console.log('🚗 مشوارك — نظام إدارة الأسطول الذكي');
-  console.log('📅 الإصدار: v6.0 — Firebase + Cloudinary + Real-time');
+  console.log('📅 الإصدار: v7.0 — Firebase + Cloudinary + Real-time');
   console.log('👤 الأدمن: Abdallh / Abdallh2027');
   console.log('⌨️ اختصارات: Ctrl+E (Excel) | Ctrl+D (الثيم)');
   console.log('🔴 Real-time: التحديث التلقائي مفعّل');
+  console.log('🆕 التعديلات: حساب إيرادات الشيفت تلقائي + محفظة');
 
   setTimeout(hideLoading, 800);
 });
