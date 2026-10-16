@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>مشوارك | نظام إدارة الأسطول</title>
 
-<!-- PWA Meta Tags -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FFC107">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +13,6 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -1117,21 +1115,9 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     </div>
   </div>
 
-  <!-- بدء الشيفت -->
+  <!-- بدء الشيفت (بدون اختيار نظام) -->
   <div id="tab-openshift" class="tab-content">
     <div class="section-title">🔓 بدء شيفت جديد</div>
-
-    <div class="form-group">
-      <label>نظام الشغل</label>
-      <div class="system-picker">
-        <div class="system-option" id="sysFixed" onclick="selectSystem('fixed')">
-          <span class="emoji">🔒</span>شيفت ثابت
-        </div>
-        <div class="system-option" id="sysThird" onclick="selectSystem('third')">
-          <span class="emoji">⚖️</span>التلت والتلتين
-        </div>
-      </div>
-    </div>
 
     <div class="form-group">
       <label>السيارة (رقم اللوحة)</label>
@@ -1168,7 +1154,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <button class="btn btn-gold" id="openShiftBtn" onclick="openShift()">🚀 بدء الشيفت</button>
   </div>
 
-  <!-- إغلاق الشيفت -->
+  <!-- إغلاق الشيفت (مع اختيار النظام) -->
   <div id="tab-closeshift" class="tab-content">
     <div id="noOpenShiftMsg" class="empty-msg" style="display:none;">
       ⚠️ لا يوجد شيفت مفتوح حالياً. ابدأ شيفت جديد أولاً.
@@ -1177,11 +1163,29 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <div id="closeShiftBox" style="display:none;">
       <div class="section-title">🔒 إغلاق الشيفت الحالي</div>
 
+      <!-- شريط معلومات الشيفت (بدون نظام) -->
       <div class="status-bar">
-        <div class="status-item">النظام: <strong id="csSystem">-</strong></div>
         <div class="status-item">السيارة: <strong id="csCar">-</strong></div>
         <div class="status-item">الوردية: <strong id="csShift">-</strong></div>
         <div class="status-item">بدأ: <strong id="csStartTime">-</strong></div>
+      </div>
+
+      <!-- 🆕 اختيار نظام الإغلاق -->
+      <div id="closeShiftSystemPicker" style="background:rgba(255,193,7,0.08);border:2px solid rgba(255,193,7,0.4);border-radius:14px;padding:14px;margin-bottom:14px;">
+        <div style="color:#FFC107;font-weight:bold;font-size:14px;margin-bottom:10px;text-align:center;">
+          🔄 اختر نظام الإغلاق
+        </div>
+        <div class="system-picker" style="margin-bottom:0;">
+          <div class="system-option" id="closeSysFixed" onclick="selectCloseSystem('fixed')">
+            <span class="emoji">🔒</span>شيفت ثابت
+          </div>
+          <div class="system-option" id="closeSysThird" onclick="selectCloseSystem('third')">
+            <span class="emoji">⚖️</span>التلت والتلتين
+          </div>
+        </div>
+        <div id="closeSystemHint" style="color:#9E9E9E;font-size:12px;text-align:center;margin-top:8px;">
+          ⚠️ لازم تختار النظام الأول عشان يظهر الفورم
+        </div>
       </div>
 
       <!-- شيفت ثابت -->
@@ -1584,7 +1588,6 @@ const COL_DEBTS = 'debts';
 const COL_PAYMENTS = 'payments';
 
 let currentUser = null;
-let selectedSystem = null;
 let selectedShift = null;
 let selectedStartLocation = null;
 let selectedEndLocation = null;
@@ -1621,7 +1624,7 @@ function systemName(sys) {
 function systemBadge(sys) {
   if (sys === 'fixed') return '<span class="badge badge-fixed">🔒 ثابت</span>';
   if (sys === 'third') return '<span class="badge badge-third">⚖️ تلت</span>';
-  return '-';
+  return '<span class="badge badge-closed">-</span>';
 }
 function statusBadge(st) {
   return st === 'open'
@@ -1980,7 +1983,7 @@ async function exportExcel() {
       const cap = caps.find(c => c.id === s.captainId);
       csv += [
         cap ? cap.name : 'محذوف',
-        s.system === 'fixed' ? 'ثابت' : 'تلت',
+        s.system === 'fixed' ? 'ثابت' : (s.system === 'third' ? 'تلت' : '-'),
         s.carPlate || '-',
         s.date || '-',
         shiftName(s.shift),
@@ -2018,7 +2021,7 @@ async function exportExcel() {
       const cap = caps.find(c => c.id === d.captainId);
       csv += [
         cap ? cap.name : 'محذوف',
-        d.date, d.system === 'fixed' ? 'ثابت' : 'تلت',
+        d.date, d.system === 'fixed' ? 'ثابت' : (d.system === 'third' ? 'تلت' : '-'),
         d.amount, d.balanceAfter
       ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
     });
@@ -2774,7 +2777,7 @@ async function showDetails(id) {
         <div><strong style="color:#FFC107;">دورات موظفيين:</strong> ${s.employeeTrips || 0}</div>
       </div>
     `;
-  } else {
+  } else if (s.system === 'third') {
     html += `
       <hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">
       <div style="color:#BDBDBD;font-size:13px;line-height:2;">
@@ -2854,24 +2857,40 @@ async function renderCaptain() {
   }
 }
 
-/* ============ اختيار النظام ============ */
-function selectSystem(sys) {
-  selectedSystem = sys;
-  document.getElementById('sysFixed').classList.toggle('selected', sys === 'fixed');
-  document.getElementById('sysThird').classList.toggle('selected', sys === 'third');
-
-  document.getElementById('shiftPickerBox').style.display = (sys === 'fixed') ? 'block' : 'none';
-  if (sys !== 'fixed') {
-    selectedShift = null;
-    document.getElementById('shiftMorning').classList.remove('selected');
-    document.getElementById('shiftEvening').classList.remove('selected');
-  }
-}
-
+/* ============ اختيار الوردية ============ */
 function selectShift(shift) {
   selectedShift = shift;
   document.getElementById('shiftMorning').classList.toggle('selected', shift === 'morning');
   document.getElementById('shiftEvening').classList.toggle('selected', shift === 'evening');
+}
+
+/* ============ 🆕 اختيار نظام الإغلاق ============ */
+function selectCloseSystem(sys) {
+  if (!currentOpenShift) return;
+
+  // حفظ الاختيار
+  currentOpenShift.closeSystem = sys;
+
+  // تحديث الأزرار
+  document.getElementById('closeSysFixed').classList.toggle('selected', sys === 'fixed');
+  document.getElementById('closeSysThird').classList.toggle('selected', sys === 'third');
+
+  // تحديث الـ hint
+  const hint = document.getElementById('closeSystemHint');
+  hint.innerHTML = `✅ تم اختيار: <strong style="color:#FFC107;">${sys === 'fixed' ? 'شيفت ثابت' : 'التلت والتلتين'}</strong>`;
+  hint.style.color = '#00E676';
+
+  // إظهار/إخفاء الفورم
+  if (sys === 'fixed') {
+    document.getElementById('fixedForm').style.display = 'block';
+    document.getElementById('thirdForm').style.display = 'none';
+    calcFixed();
+  } else {
+    document.getElementById('fixedForm').style.display = 'none';
+    document.getElementById('thirdForm').style.display = 'block';
+    document.getElementById('tsDate').value = nowFull();
+    calcThird();
+  }
 }
 
 /* ============ GPS ============ */
@@ -2953,18 +2972,14 @@ function captureEndLocation() {
   );
 }
 
-/* ============ بدء الشيفت ============ */
+/* ============ بدء الشيفت (بدون نظام) ============ */
 async function openShift() {
-  if (!selectedSystem) {
-    toast('اختر نظام الشغل أولاً', 'error');
-    return;
-  }
   const carId = document.getElementById('openCar').value;
   if (!carId) {
     toast('اختر السيارة', 'error');
     return;
   }
-  if (selectedSystem === 'fixed' && !selectedShift) {
+  if (!selectedShift) {
     toast('اختر الوردية (صباحي / مسائي)', 'error');
     return;
   }
@@ -2992,8 +3007,8 @@ async function openShift() {
 
     const shift = {
       captainId: currentUser.id,
-      system: selectedSystem,
-      shift: selectedSystem === 'fixed' ? selectedShift : null,
+      system: null,                     // 🆕 النظام يتحدد وقت الإغلاق
+      shift: selectedShift,             // الوردية محفوظة
       carId: carId,
       carPlate: car ? car.plate : '-',
       carModel: car ? car.model : '-',
@@ -3008,11 +3023,8 @@ async function openShift() {
 
     await addTransactionDB(shift);
 
-    selectedSystem = null;
     selectedShift = null;
     selectedStartLocation = null;
-    document.getElementById('sysFixed').classList.remove('selected');
-    document.getElementById('sysThird').classList.remove('selected');
     document.getElementById('shiftMorning').classList.remove('selected');
     document.getElementById('shiftEvening').classList.remove('selected');
     document.getElementById('openCar').value = '';
@@ -3102,7 +3114,7 @@ function calcThird() {
   document.getElementById('tsKmUsed').value = kmUsed;
 }
 
-/* ============ إظهار نموذج الإغلاق ============ */
+/* ============ إظهار شاشة الإغلاق ============ */
 async function renderCloseShift() {
   const allTrans = await getTransactions();
   const openShift = allTrans.find(t =>
@@ -3119,19 +3131,20 @@ async function renderCloseShift() {
   document.getElementById('noOpenShiftMsg').style.display = 'none';
   document.getElementById('closeShiftBox').style.display = 'block';
 
-  document.getElementById('csSystem').textContent = systemName(openShift.system);
+  // شريط المعلومات (بدون نظام)
   document.getElementById('csCar').textContent = openShift.carPlate + ' - ' + (openShift.carModel || '');
   document.getElementById('csShift').textContent = shiftName(openShift.shift);
   document.getElementById('csStartTime').textContent = openShift.startTime;
 
-  if (openShift.system === 'fixed') {
-    document.getElementById('fixedForm').style.display = 'block';
-    document.getElementById('thirdForm').style.display = 'none';
-  } else {
-    document.getElementById('fixedForm').style.display = 'none';
-    document.getElementById('thirdForm').style.display = 'block';
-    document.getElementById('tsDate').value = nowFull();
-  }
+  // 🆕 إعادة تعيين اختيار النظام
+  openShift.closeSystem = null;
+  document.getElementById('closeSysFixed').classList.remove('selected');
+  document.getElementById('closeSysThird').classList.remove('selected');
+  document.getElementById('fixedForm').style.display = 'none';
+  document.getElementById('thirdForm').style.display = 'none';
+  const hint = document.getElementById('closeSystemHint');
+  hint.innerHTML = '⚠️ لازم تختار النظام الأول عشان يظهر الفورم';
+  hint.style.color = '#9E9E9E';
 
   selectedEndLocation = null;
   const btnE = document.getElementById('btnEndGps');
@@ -3149,12 +3162,22 @@ async function closeShift() {
     toast('لا يوجد شيفت مفتوح', 'error');
     return;
   }
+
+  // 🆕 التحقق من اختيار النظام
+  const closeSystem = currentOpenShift.closeSystem;
+  if (!closeSystem) {
+    toast('❌ اختر نظام الإغلاق أولاً (ثابت أو تلت)', 'error');
+    return;
+  }
+
   if (!selectedEndLocation) {
     toast('📍 اضغط زر إرسال موقع نهاية الشيفت أولاً', 'warn');
     return;
   }
 
   const shift = { ...currentOpenShift };
+  shift.system = closeSystem; // 🆕 حفظ النظام المختار
+
   disableBtn('closeShiftBtn', '⏳ جاري الحفظ ورفع الصور...');
 
   try {
@@ -3209,7 +3232,7 @@ async function closeShift() {
 
       await updateTransactionDB(shift.id, updateData);
 
-    } else {
+    } else if (shift.system === 'third') {
       const uber           = parseFloat(document.getElementById('tsUber').value) || 0;
       const didi           = parseFloat(document.getElementById('tsDidi').value) || 0;
       const indriver       = parseFloat(document.getElementById('tsIndriver').value) || 0;
@@ -3285,7 +3308,10 @@ async function closeShift() {
       await updateTransactionDB(shift.id, updateData);
     }
 
-    const rem = parseFloat(shift.system === 'fixed' ? document.getElementById('fsRemaining').value : document.getElementById('tsRemaining').value) || 0;
+    // إضافة المديونية إذا كان فيه متبقي
+    const rem = parseFloat(shift.system === 'fixed'
+      ? document.getElementById('fsRemaining').value
+      : document.getElementById('tsRemaining').value) || 0;
 
     if (rem > 0) {
       const bal = await captainDebtBalance(currentUser.id);
@@ -3347,6 +3373,11 @@ function resetCloseForms() {
   document.getElementById('tsDate').value = '';
   document.getElementById('tsGasPreview').innerHTML = '';
   document.getElementById('tsFuelPreview').innerHTML = '';
+
+  document.getElementById('closeSysFixed').classList.remove('selected');
+  document.getElementById('closeSysThird').classList.remove('selected');
+  document.getElementById('fixedForm').style.display = 'none';
+  document.getElementById('thirdForm').style.display = 'none';
 
   selectedEndLocation = null;
 }
@@ -3738,11 +3769,12 @@ document.addEventListener('touchend', function(e) {
 /* ============ تشغيل أولي ============ */
 window.addEventListener('load', async function() {
   console.log('🚗 مشوارك — نظام إدارة الأسطول الذكي');
-  console.log('📅 الإصدار: v8.0 — PWA + Firebase + Cloudinary');
+  console.log('📅 الإصدار: v9.0 — PWA + Real-time + اختيار نظام الإغلاق');
   console.log('👤 الأدمن: Abdallh / Abdallh2027');
   console.log('⌨️ اختصارات: Ctrl+E (Excel) | Ctrl+D (الثيم)');
   console.log('🔴 Real-time: التحديث التلقائي مفعّل');
   console.log('📱 PWA: قابل للتثبيت على الموبايل');
+  console.log('🆕 جديد: الكابتن يختار نظام الإغلاق (ثابت / تلت)');
 
   setTimeout(hideLoading, 800);
 });
