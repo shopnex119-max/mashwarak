@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>مشوارك | نظام إدارة الأسطول</title>
 
+<!-- PWA Meta Tags -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FFC107">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,6 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
 
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -1163,7 +1165,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <div id="closeShiftBox" style="display:none;">
       <div class="section-title">🔒 إغلاق الشيفت الحالي</div>
 
-      <!-- شريط معلومات الشيفت (بدون نظام) -->
+      <!-- شريط معلومات الشيفت -->
       <div class="status-bar">
         <div class="status-item">السيارة: <strong id="csCar">-</strong></div>
         <div class="status-item">الوردية: <strong id="csShift">-</strong></div>
@@ -1278,10 +1280,11 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           </div>
         </div>
 
+        <!-- 🆕 تعديل: طريقة التحويل تخفي الصورة لو كاش -->
         <div class="form-row">
           <div class="form-group">
             <label>طريقة التحويل *</label>
-            <select id="fsTransferMethod">
+            <select id="fsTransferMethod" onchange="toggleTransferImg('fs')">
               <option value="">-- اختر --</option>
               <option value="محفظة">محفظة</option>
               <option value="انستاباي">انستاباي</option>
@@ -1290,7 +1293,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
               <option value="أخرى">أخرى</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="fsTransferImgBox">
             <label>صورة التحويل *</label>
             <input type="file" id="fsTransferImg" accept="image/*">
           </div>
@@ -1412,10 +1415,11 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           </div>
         </div>
 
+        <!-- 🆕 تعديل: طريقة التحويل تخفي الصورة لو كاش -->
         <div class="form-row">
           <div class="form-group">
             <label>طريقة التحويل *</label>
-            <select id="tsTransferMethod">
+            <select id="tsTransferMethod" onchange="toggleTransferImg('ts')">
               <option value="">-- اختر --</option>
               <option value="محفظة">محفظة</option>
               <option value="انستاباي">انستاباي</option>
@@ -1424,7 +1428,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
               <option value="أخرى">أخرى</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="tsTransferImgBox">
             <label>صورة التحويل *</label>
             <input type="file" id="tsTransferImg" accept="image/*">
           </div>
@@ -2864,7 +2868,7 @@ function selectShift(shift) {
   document.getElementById('shiftEvening').classList.toggle('selected', shift === 'evening');
 }
 
-/* ============ 🆕 اختيار نظام الإغلاق ============ */
+/* ============ اختيار نظام الإغلاق ============ */
 function selectCloseSystem(sys) {
   if (!currentOpenShift) return;
 
@@ -2890,6 +2894,22 @@ function selectCloseSystem(sys) {
     document.getElementById('thirdForm').style.display = 'block';
     document.getElementById('tsDate').value = nowFull();
     calcThird();
+  }
+}
+
+/* ============ 🆕 إظهار/إخفاء صورة التحويل ============ */
+function toggleTransferImg(prefix) {
+  const methodSelect = document.getElementById(prefix + 'TransferMethod');
+  const imgBox = document.getElementById(prefix + 'TransferImgBox');
+  const imgInput = document.getElementById(prefix + 'TransferImg');
+
+  if (!methodSelect || !imgBox) return;
+
+  if (methodSelect.value === 'كاش') {
+    imgBox.style.display = 'none';
+    if (imgInput) imgInput.value = '';
+  } else {
+    imgBox.style.display = 'block';
   }
 }
 
@@ -2972,7 +2992,7 @@ function captureEndLocation() {
   );
 }
 
-/* ============ بدء الشيفت (بدون نظام) ============ */
+/* ============ بدء الشيفت ============ */
 async function openShift() {
   const carId = document.getElementById('openCar').value;
   if (!carId) {
@@ -3007,8 +3027,8 @@ async function openShift() {
 
     const shift = {
       captainId: currentUser.id,
-      system: null,                     // 🆕 النظام يتحدد وقت الإغلاق
-      shift: selectedShift,             // الوردية محفوظة
+      system: null,
+      shift: selectedShift,
       carId: carId,
       carPlate: car ? car.plate : '-',
       carModel: car ? car.model : '-',
@@ -3046,7 +3066,7 @@ async function openShift() {
 }
 
 /* ============================================================
-   حساب الشيفت الثابت (تلقائي)
+   حساب الشيفت الثابت
    ============================================================ */
 
 async function calcFixed() {
@@ -3131,12 +3151,10 @@ async function renderCloseShift() {
   document.getElementById('noOpenShiftMsg').style.display = 'none';
   document.getElementById('closeShiftBox').style.display = 'block';
 
-  // شريط المعلومات (بدون نظام)
   document.getElementById('csCar').textContent = openShift.carPlate + ' - ' + (openShift.carModel || '');
   document.getElementById('csShift').textContent = shiftName(openShift.shift);
   document.getElementById('csStartTime').textContent = openShift.startTime;
 
-  // 🆕 إعادة تعيين اختيار النظام
   openShift.closeSystem = null;
   document.getElementById('closeSysFixed').classList.remove('selected');
   document.getElementById('closeSysThird').classList.remove('selected');
@@ -3163,7 +3181,6 @@ async function closeShift() {
     return;
   }
 
-  // 🆕 التحقق من اختيار النظام
   const closeSystem = currentOpenShift.closeSystem;
   if (!closeSystem) {
     toast('❌ اختر نظام الإغلاق أولاً (ثابت أو تلت)', 'error');
@@ -3176,7 +3193,7 @@ async function closeShift() {
   }
 
   const shift = { ...currentOpenShift };
-  shift.system = closeSystem; // 🆕 حفظ النظام المختار
+  shift.system = closeSystem;
 
   disableBtn('closeShiftBtn', '⏳ جاري الحفظ ورفع الصور...');
 
@@ -3207,11 +3224,17 @@ async function closeShift() {
       if (!tierValue)        { toast('❌ لم يتم تحديد قيمة الشريحة — تأكد من الكيلوهات', 'error'); return; }
       if (!transferred)      { toast('❌ المبلغ المحول مطلوب', 'error'); return; }
       if (!transferMethod)   { toast('❌ طريقة التحويل مطلوبة', 'error'); return; }
-      if (!transferImg)      { toast('❌ صورة التحويل مطلوبة', 'error'); return; }
+      
+      // 🆕 التحقق من الصورة بناءً على طريقة الدفع
+      if (transferMethod !== 'كاش' && !transferImg) {
+        toast('❌ صورة التحويل مطلوبة (إلا في حالة الدفع كاش)', 'error');
+        return;
+      }
 
       showLoading('جاري رفع صور الشيفت الثابت...');
 
-      const transferUrl = await uploadFile(transferImg, 'transfers');
+      // 🆕 رفع الصورة فقط لو مش كاش
+      const transferUrl = transferImg ? await uploadFile(transferImg, 'transfers') : null;
       const kmStartUrl = await uploadFile(kmStartImg, 'km');
       const kmEndUrl = await uploadFile(kmEndImg, 'km');
 
@@ -3268,7 +3291,13 @@ async function closeShift() {
       }
       if (!transferred)      { toast('❌ المبلغ المحول مطلوب', 'error'); return; }
       if (!transferMethod)   { toast('❌ طريقة التحويل مطلوبة', 'error'); return; }
-      if (!transferImg)      { toast('❌ صورة التحويل مطلوبة', 'error'); return; }
+      
+      // 🆕 التحقق من الصورة بناءً على طريقة الدفع
+      if (transferMethod !== 'كاش' && !transferImg) {
+        toast('❌ صورة التحويل مطلوبة (إلا في حالة الدفع كاش)', 'error');
+        return;
+      }
+
       if (!kmStart)          { toast('❌ كيلوهات البداية مطلوبة', 'error'); return; }
       if (!kmEnd)            { toast('❌ كيلوهات النهاية مطلوبة', 'error'); return; }
       if (kmEnd <= kmStart)  { toast('❌ كيلوهات النهاية أكبر من البداية', 'error'); return; }
@@ -3279,7 +3308,8 @@ async function closeShift() {
 
       showLoading('جاري رفع صور التلت والتلتين...');
 
-      const transferUrl = await uploadFile(transferImg, 'transfers');
+      // 🆕 رفع الصورة فقط لو مش كاش
+      const transferUrl = transferImg ? await uploadFile(transferImg, 'transfers') : null;
       const kmStartUrl = await uploadFile(kmStartImg, 'km');
       const kmEndUrl = await uploadFile(kmEndImg, 'km');
       const gasUrls = await uploadFiles(gasImgs, 'gas');
@@ -3308,7 +3338,6 @@ async function closeShift() {
       await updateTransactionDB(shift.id, updateData);
     }
 
-    // إضافة المديونية إذا كان فيه متبقي
     const rem = parseFloat(shift.system === 'fixed'
       ? document.getElementById('fsRemaining').value
       : document.getElementById('tsRemaining').value) || 0;
@@ -3352,6 +3381,7 @@ function resetCloseForms() {
     if (el) el.value = '0';
   });
   document.getElementById('fsTransferMethod').value = '';
+  document.getElementById('fsTransferImgBox').style.display = 'block';
   ['fsTransferImg','fsKmStartImg','fsKmEndImg'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3366,6 +3396,7 @@ function resetCloseForms() {
     if (el) el.value = '';
   });
   document.getElementById('tsTransferMethod').value = '';
+  document.getElementById('tsTransferImgBox').style.display = 'block';
   ['tsTransferImg','tsKmStartImg','tsKmEndImg','tsGasImgs','tsFuelImgs'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3769,12 +3800,12 @@ document.addEventListener('touchend', function(e) {
 /* ============ تشغيل أولي ============ */
 window.addEventListener('load', async function() {
   console.log('🚗 مشوارك — نظام إدارة الأسطول الذكي');
-  console.log('📅 الإصدار: v9.0 — PWA + Real-time + اختيار نظام الإغلاق');
+  console.log('📅 الإصدار: v10.0 — PWA + Real-time + اختيار نظام الإغلاق + كاش بدون صورة');
   console.log('👤 الأدمن: Abdallh / Abdallh2027');
   console.log('⌨️ اختصارات: Ctrl+E (Excel) | Ctrl+D (الثيم)');
   console.log('🔴 Real-time: التحديث التلقائي مفعّل');
   console.log('📱 PWA: قابل للتثبيت على الموبايل');
-  console.log('🆕 جديد: الكابتن يختار نظام الإغلاق (ثابت / تلت)');
+  console.log('🆕 جديد: كاش بدون صورة تحويل');
 
   setTimeout(hideLoading, 800);
 });
