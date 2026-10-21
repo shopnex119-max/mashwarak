@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>مشوارك | نظام إدارة الأسطول</title>
 
-<!-- PWA Meta Tags -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FFC107">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +13,6 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -1117,7 +1115,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     </div>
   </div>
 
-  <!-- بدء الشيفت (بدون اختيار نظام) -->
+  <!-- بدء الشيفت -->
   <div id="tab-openshift" class="tab-content">
     <div class="section-title">🔓 بدء شيفت جديد</div>
 
@@ -1156,7 +1154,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <button class="btn btn-gold" id="openShiftBtn" onclick="openShift()">🚀 بدء الشيفت</button>
   </div>
 
-  <!-- إغلاق الشيفت (مع اختيار النظام) -->
+  <!-- إغلاق الشيفت -->
   <div id="tab-closeshift" class="tab-content">
     <div id="noOpenShiftMsg" class="empty-msg" style="display:none;">
       ⚠️ لا يوجد شيفت مفتوح حالياً. ابدأ شيفت جديد أولاً.
@@ -1165,14 +1163,13 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <div id="closeShiftBox" style="display:none;">
       <div class="section-title">🔒 إغلاق الشيفت الحالي</div>
 
-      <!-- شريط معلومات الشيفت -->
       <div class="status-bar">
         <div class="status-item">السيارة: <strong id="csCar">-</strong></div>
         <div class="status-item">الوردية: <strong id="csShift">-</strong></div>
         <div class="status-item">بدأ: <strong id="csStartTime">-</strong></div>
       </div>
 
-      <!-- 🆕 اختيار نظام الإغلاق -->
+      <!-- اختيار نظام الإغلاق -->
       <div id="closeShiftSystemPicker" style="background:rgba(255,193,7,0.08);border:2px solid rgba(255,193,7,0.4);border-radius:14px;padding:14px;margin-bottom:14px;">
         <div style="color:#FFC107;font-weight:bold;font-size:14px;margin-bottom:10px;text-align:center;">
           🔄 اختر نظام الإغلاق
@@ -1198,6 +1195,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <div style="color:#FFC107;font-weight:bold;font-size:13px;margin-bottom:8px;">🧮 معادلة الحساب:</div>
           <div style="color:#BDBDBD;font-size:12px;line-height:1.8;">
             إيرادات الشيفت = <strong style="color:#FFD54F;">قيمة الشريحة</strong> + مشاوير خاصة + مشاوير سفر + دورات موظفيين + دورات مدارس
+            <br>المتبقي = إيرادات الشيفت − المحول − (المصروفات الإضافية)
           </div>
         </div>
 
@@ -1280,7 +1278,30 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           </div>
         </div>
 
-        <!-- 🆕 تعديل: طريقة التحويل تخفي الصورة لو كاش -->
+        <!-- 🆕 مصروفات إضافية (ثابت) -->
+        <div class="section-title">💸 مصروفات إضافية (تتخصم من المتبقي)</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>مصروف بنزين (جنيه)</label>
+            <input type="number" id="fsExtraFuel" placeholder="0" value="0" oninput="calcFixed()">
+          </div>
+          <div class="form-group">
+            <label>مصروف غاز (جنيه)</label>
+            <input type="number" id="fsExtraGas" placeholder="0" value="0" oninput="calcFixed()">
+          </div>
+        </div>
+
+        <div style="background:rgba(239,83,80,0.05);border:1px solid rgba(239,83,80,0.2);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="color:#EF5350;font-weight:bold;font-size:13px;margin-bottom:8px;">➕ مصروفات أخرى</div>
+          <div id="fsExtraExpensesList"></div>
+          <button type="button" class="btn btn-outline btn-small" onclick="addExtraExpense('fs')" style="margin-top:8px;">➕ إضافة مصروف</button>
+        </div>
+
+        <div class="form-group">
+          <label>إجمالي المصروفات الإضافية (تلقائي)</label>
+          <input type="number" id="fsTotalExtraExpense" placeholder="0" readonly style="background:rgba(239,83,80,0.1);color:#EF5350;font-weight:bold;">
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>طريقة التحويل *</label>
@@ -1358,7 +1379,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <input type="number" id="tsEmployees" placeholder="0" value="0" oninput="calcThird()">
         </div>
 
-        <div class="section-title">⛽ المصروفات</div>
+        <div class="section-title">⛽ المصروفات (غاز وبنزين)</div>
 
         <div class="form-row">
           <div class="form-group">
@@ -1397,11 +1418,35 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           </div>
         </div>
 
+        <!-- 🆕 مصروفات إضافية (تلت) -->
+        <div class="section-title">💸 مصروفات إضافية (تتخصم من المتبقي)</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>مصروف بنزين إضافي (جنيه)</label>
+            <input type="number" id="tsExtraFuel" placeholder="0" value="0" oninput="calcThird()">
+          </div>
+          <div class="form-group">
+            <label>مصروف غاز إضافي (جنيه)</label>
+            <input type="number" id="tsExtraGas" placeholder="0" value="0" oninput="calcThird()">
+          </div>
+        </div>
+
+        <div style="background:rgba(239,83,80,0.05);border:1px solid rgba(239,83,80,0.2);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="color:#EF5350;font-weight:bold;font-size:13px;margin-bottom:8px;">➕ مصروفات أخرى</div>
+          <div id="tsExtraExpensesList"></div>
+          <button type="button" class="btn btn-outline btn-small" onclick="addExtraExpense('ts')" style="margin-top:8px;">➕ إضافة مصروف</button>
+        </div>
+
+        <div class="form-group">
+          <label>إجمالي المصروفات الإضافية (تلقائي)</label>
+          <input type="number" id="tsTotalExtraExpense" placeholder="0" readonly style="background:rgba(239,83,80,0.1);color:#EF5350;font-weight:bold;">
+        </div>
+
         <div class="section-title">💳 التحويل</div>
 
         <div style="background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.3);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;color:#FFC107;line-height:1.8;">
           <strong>ℹ️ معادلة المتبقي:</strong><br>
-          الإيراد الكلي − نصيب الكابتن − المحول − (غاز + بنزين)
+          الإيراد الكلي − نصيب الكابتن − المحول − (غاز + بنزين) − (مصروفات إضافية)
         </div>
 
         <div class="form-row">
@@ -1415,7 +1460,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           </div>
         </div>
 
-        <!-- 🆕 تعديل: طريقة التحويل تخفي الصورة لو كاش -->
         <div class="form-row">
           <div class="form-group">
             <label>طريقة التحويل *</label>
@@ -1982,7 +2026,7 @@ async function exportExcel() {
     let csv = '\uFEFF';
 
     csv += '=== الشيفتات ===\n';
-    csv += 'الكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل,كيلوهات بداية,كيلوهات نهاية,كيلوهات مستهلكة,مشاوير سفر,مشاوير خاصة,دورات مدارس,دورات موظفيين\n';
+    csv += 'الكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل,كيلوهات بداية,كيلوهات نهاية,كيلوهات مستهلكة,مشاوير سفر,مشاوير خاصة,دورات مدارس,دورات موظفيين,مصروفات إضافية\n';
     trans.forEach(s => {
       const cap = caps.find(c => c.id === s.captainId);
       csv += [
@@ -2004,7 +2048,8 @@ async function exportExcel() {
         s.travel || 0,
         s.privateTrips || 0,
         s.schoolTrips || 0,
-        s.employeeTrips || 0
+        s.employeeTrips || 0,
+        s.extraExpenseTotal || 0
       ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
     });
 
@@ -2797,6 +2842,26 @@ async function showDetails(id) {
     `;
   }
 
+  // 🆕 عرض المصروفات الإضافية
+  if (s.extraExpenseTotal > 0) {
+    html += `
+      <hr style="border-color:rgba(239,83,80,0.2);margin:10px 0;">
+      <div style="color:#EF5350;font-size:13px;margin-top:8px;">
+        <div style="color:#EF5350;font-weight:bold;margin-bottom:4px;">💸 المصروفات الإضافية:</div>
+        <div>بنزين: ${s.extraFuel || 0} ج</div>
+        <div>غاز: ${s.extraGas || 0} ج</div>
+      </div>
+    `;
+    if (s.extraExpenses && s.extraExpenses.length > 0) {
+      html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;"><strong>مصروفات أخرى:</strong><br>`;
+      s.extraExpenses.forEach(e => {
+        html += `• ${e.name}: ${e.amount} ج<br>`;
+      });
+      html += `</div>`;
+    }
+    html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;font-weight:bold;">إجمالي المصروفات الإضافية: ${s.extraExpenseTotal} ج</div>`;
+  }
+
   const imgs = [
     { key: 'transferImg', label: 'صورة التحويل' },
     { key: 'kmStartImg', label: 'صورة بداية العداد' },
@@ -2872,19 +2937,15 @@ function selectShift(shift) {
 function selectCloseSystem(sys) {
   if (!currentOpenShift) return;
 
-  // حفظ الاختيار
   currentOpenShift.closeSystem = sys;
 
-  // تحديث الأزرار
   document.getElementById('closeSysFixed').classList.toggle('selected', sys === 'fixed');
   document.getElementById('closeSysThird').classList.toggle('selected', sys === 'third');
 
-  // تحديث الـ hint
   const hint = document.getElementById('closeSystemHint');
   hint.innerHTML = `✅ تم اختيار: <strong style="color:#FFC107;">${sys === 'fixed' ? 'شيفت ثابت' : 'التلت والتلتين'}</strong>`;
   hint.style.color = '#00E676';
 
-  // إظهار/إخفاء الفورم
   if (sys === 'fixed') {
     document.getElementById('fixedForm').style.display = 'block';
     document.getElementById('thirdForm').style.display = 'none';
@@ -2897,7 +2958,7 @@ function selectCloseSystem(sys) {
   }
 }
 
-/* ============ 🆕 إظهار/إخفاء صورة التحويل ============ */
+/* ============ إظهار/إخفاء صورة التحويل ============ */
 function toggleTransferImg(prefix) {
   const methodSelect = document.getElementById(prefix + 'TransferMethod');
   const imgBox = document.getElementById(prefix + 'TransferImgBox');
@@ -2911,6 +2972,62 @@ function toggleTransferImg(prefix) {
   } else {
     imgBox.style.display = 'block';
   }
+}
+
+/* ============================================================
+   🆕 إدارة المصروفات الإضافية
+   ============================================================ */
+let fsExtraExpenses = [];
+let tsExtraExpenses = [];
+
+function addExtraExpense(prefix) {
+  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
+  list.push({ name: '', amount: 0 });
+  renderExtraExpenses(prefix);
+}
+
+function removeExtraExpense(prefix, index) {
+  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
+  list.splice(index, 1);
+  renderExtraExpenses(prefix);
+  if (prefix === 'fs') calcFixed(); else calcThird();
+}
+
+function updateExtraExpense(prefix, index, field, value) {
+  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
+  if (field === 'amount') {
+    list[index].amount = parseFloat(value) || 0;
+  } else {
+    list[index].name = value;
+  }
+  if (prefix === 'fs') calcFixed(); else calcThird();
+}
+
+function renderExtraExpenses(prefix) {
+  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
+  const container = document.getElementById(prefix + 'ExtraExpensesList');
+  if (!container) return;
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="color:#9E9E9E;font-size:12px;text-align:center;">لا توجد مصروفات إضافية</div>';
+    return;
+  }
+
+  container.innerHTML = list.map((item, i) => `
+    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
+      <input type="text" value="${item.name}" placeholder="اسم المصروف" onchange="updateExtraExpense('${prefix}', ${i}, 'name', this.value)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,193,7,0.2);background:rgba(20,20,20,0.9);color:#fff;font-size:12px;">
+      <input type="number" value="${item.amount}" placeholder="0" onchange="updateExtraExpense('${prefix}', ${i}, 'amount', this.value)" style="width:80px;padding:8px;border-radius:8px;border:1px solid rgba(255,193,7,0.2);background:rgba(20,20,20,0.9);color:#fff;font-size:12px;">
+      <button type="button" onclick="removeExtraExpense('${prefix}', ${i})" style="background:#EF5350;color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function getExtraExpensesTotal(prefix) {
+  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
+  const manual = list.reduce((s, e) => s + (e.amount || 0), 0);
+  const fuel = parseFloat(document.getElementById(prefix + 'ExtraFuel')?.value) || 0;
+  const gas = parseFloat(document.getElementById(prefix + 'ExtraGas')?.value) || 0;
+  return { manual, fuel, gas, total: manual + fuel + gas, list };
 }
 
 /* ============ GPS ============ */
@@ -3098,7 +3215,12 @@ async function calcFixed() {
   const totalRevenue = tierPrice + travel + privateT + schools + employees;
   document.getElementById('fsRevenue').value = totalRevenue;
 
-  const remaining = Math.max(0, totalRevenue - trans);
+  // 🆕 إجمالي المصروفات الإضافية
+  const extra = getExtraExpensesTotal('fs');
+  const totalExtraEl = document.getElementById('fsTotalExtraExpense');
+  if (totalExtraEl) totalExtraEl.value = extra.total;
+
+  const remaining = Math.max(0, totalRevenue - trans - extra.total);
   document.getElementById('fsRemaining').value = remaining;
 }
 
@@ -3123,7 +3245,13 @@ function calcThird() {
   const net      = totalRev - totalExp;
   const captainShare = net / 3;
   const carShare     = (net * 2) / 3;
-  const remaining = totalRev - captainShare - trans - totalExp;
+  
+  // 🆕 إجمالي المصروفات الإضافية
+  const extra = getExtraExpensesTotal('ts');
+  const totalExtraEl = document.getElementById('tsTotalExtraExpense');
+  if (totalExtraEl) totalExtraEl.value = extra.total;
+
+  const remaining = totalRev - captainShare - trans - totalExp - extra.total;
 
   document.getElementById('tsTotalRevenue').value = totalRev;
   document.getElementById('tsCaptainShare').value = captainShare.toFixed(2);
@@ -3163,6 +3291,12 @@ async function renderCloseShift() {
   const hint = document.getElementById('closeSystemHint');
   hint.innerHTML = '⚠️ لازم تختار النظام الأول عشان يظهر الفورم';
   hint.style.color = '#9E9E9E';
+
+  // إعادة تعيين المصروفات
+  fsExtraExpenses = [];
+  tsExtraExpenses = [];
+  renderExtraExpenses('fs');
+  renderExtraExpenses('ts');
 
   selectedEndLocation = null;
   const btnE = document.getElementById('btnEndGps');
@@ -3216,6 +3350,10 @@ async function closeShift() {
       const schoolTrips     = parseFloat(document.getElementById('fsSchools').value) || 0;
       const employeeTrips   = parseFloat(document.getElementById('fsEmployees').value) || 0;
 
+      // 🆕 المصروفات الإضافية
+      const extraExp = getExtraExpensesTotal('fs');
+      const extraExpensesList = extraExp.list.filter(e => e.name && e.amount > 0);
+
       if (!kmStart)          { toast('❌ كيلوهات البداية مطلوبة', 'error'); return; }
       if (!kmEnd)            { toast('❌ كيلوهات النهاية مطلوبة', 'error'); return; }
       if (kmEnd <= kmStart)  { toast('❌ كيلوهات النهاية أكبر من البداية', 'error'); return; }
@@ -3225,7 +3363,6 @@ async function closeShift() {
       if (!transferred)      { toast('❌ المبلغ المحول مطلوب', 'error'); return; }
       if (!transferMethod)   { toast('❌ طريقة التحويل مطلوبة', 'error'); return; }
       
-      // 🆕 التحقق من الصورة بناءً على طريقة الدفع
       if (transferMethod !== 'كاش' && !transferImg) {
         toast('❌ صورة التحويل مطلوبة (إلا في حالة الدفع كاش)', 'error');
         return;
@@ -3233,7 +3370,6 @@ async function closeShift() {
 
       showLoading('جاري رفع صور الشيفت الثابت...');
 
-      // 🆕 رفع الصورة فقط لو مش كاش
       const transferUrl = transferImg ? await uploadFile(transferImg, 'transfers') : null;
       const kmStartUrl = await uploadFile(kmStartImg, 'km');
       const kmEndUrl = await uploadFile(kmEndImg, 'km');
@@ -3246,7 +3382,11 @@ async function closeShift() {
         kmStartImg: kmStartUrl,
         kmEndImg: kmEndUrl,
         travel, privateTrips, schoolTrips, employeeTrips,
-        expense: 0,
+        extraExpenses: extraExpensesList,
+        extraExpenseTotal: extraExp.total,
+        extraFuel: extraExp.fuel,
+        extraGas: extraExp.gas,
+        expense: extraExp.total, // إجمالي المصروفات
         endLocation: selectedEndLocation,
         endTime: nowFull(),
         status: 'closed',
@@ -3281,6 +3421,10 @@ async function closeShift() {
       const gasImgs        = document.getElementById('tsGasImgs').files;
       const fuelImgs       = document.getElementById('tsFuelImgs').files;
 
+      // 🆕 المصروفات الإضافية
+      const extraExp = getExtraExpensesTotal('ts');
+      const extraExpensesList = extraExp.list.filter(e => e.name && e.amount > 0);
+
       if (totalRevenue < 1000) {
         toast('❌ الحد الأدنى للإيراد 1000 جم', 'error');
         return;
@@ -3292,7 +3436,6 @@ async function closeShift() {
       if (!transferred)      { toast('❌ المبلغ المحول مطلوب', 'error'); return; }
       if (!transferMethod)   { toast('❌ طريقة التحويل مطلوبة', 'error'); return; }
       
-      // 🆕 التحقق من الصورة بناءً على طريقة الدفع
       if (transferMethod !== 'كاش' && !transferImg) {
         toast('❌ صورة التحويل مطلوبة (إلا في حالة الدفع كاش)', 'error');
         return;
@@ -3308,7 +3451,6 @@ async function closeShift() {
 
       showLoading('جاري رفع صور التلت والتلتين...');
 
-      // 🆕 رفع الصورة فقط لو مش كاش
       const transferUrl = transferImg ? await uploadFile(transferImg, 'transfers') : null;
       const kmStartUrl = await uploadFile(kmStartImg, 'km');
       const kmEndUrl = await uploadFile(kmEndImg, 'km');
@@ -3317,7 +3459,7 @@ async function closeShift() {
 
       const updateData = {
         revenue: totalRevenue,
-        expense: gas + fuel,
+        expense: gas + fuel + extraExp.total,
         uber, didi, indriver, external,
         travel, privateTrips, schoolTrips, employeeTrips,
         gas, fuel,
@@ -3329,6 +3471,10 @@ async function closeShift() {
         kmEndImg: kmEndUrl,
         gasImgs: gasUrls,
         fuelImgs: fuelUrls,
+        extraExpenses: extraExpensesList,
+        extraExpenseTotal: extraExp.total,
+        extraFuel: extraExp.fuel,
+        extraGas: extraExp.gas,
         endLocation: selectedEndLocation,
         endTime: nowFull(),
         status: 'closed',
@@ -3372,7 +3518,7 @@ async function closeShift() {
 }
 
 function resetCloseForms() {
-  ['fsKmStart','fsKmEnd','fsKmUsed','fsTransferred','fsRemaining','fsTier','fsTierValue','fsRevenue'].forEach(id => {
+  ['fsKmStart','fsKmEnd','fsKmUsed','fsTransferred','fsRemaining','fsTier','fsTierValue','fsRevenue','fsExtraFuel','fsExtraGas','fsTotalExtraExpense'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -3387,7 +3533,7 @@ function resetCloseForms() {
     if (el) el.value = '';
   });
 
-  ['tsUber','tsDidi','tsIndriver','tsExternal','tsGas','tsFuel','tsTravel','tsPrivate','tsSchools','tsEmployees'].forEach(id => {
+  ['tsUber','tsDidi','tsIndriver','tsExternal','tsGas','tsFuel','tsTravel','tsPrivate','tsSchools','tsEmployees','tsExtraFuel','tsExtraGas','tsTotalExtraExpense'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '0';
   });
@@ -3404,6 +3550,11 @@ function resetCloseForms() {
   document.getElementById('tsDate').value = '';
   document.getElementById('tsGasPreview').innerHTML = '';
   document.getElementById('tsFuelPreview').innerHTML = '';
+
+  fsExtraExpenses = [];
+  tsExtraExpenses = [];
+  renderExtraExpenses('fs');
+  renderExtraExpenses('ts');
 
   document.getElementById('closeSysFixed').classList.remove('selected');
   document.getElementById('closeSysThird').classList.remove('selected');
@@ -3800,12 +3951,12 @@ document.addEventListener('touchend', function(e) {
 /* ============ تشغيل أولي ============ */
 window.addEventListener('load', async function() {
   console.log('🚗 مشوارك — نظام إدارة الأسطول الذكي');
-  console.log('📅 الإصدار: v10.0 — PWA + Real-time + اختيار نظام الإغلاق + كاش بدون صورة');
+  console.log('📅 الإصدار: v11.0 — PWA + Real-time + مصروفات إضافية');
   console.log('👤 الأدمن: Abdallh / Abdallh2027');
   console.log('⌨️ اختصارات: Ctrl+E (Excel) | Ctrl+D (الثيم)');
   console.log('🔴 Real-time: التحديث التلقائي مفعّل');
   console.log('📱 PWA: قابل للتثبيت على الموبايل');
-  console.log('🆕 جديد: كاش بدون صورة تحويل');
+  console.log('🆕 جديد: مصروفات إضافية (بنزين + غاز + إضافة يدوية)');
 
   setTimeout(hideLoading, 800);
 });
