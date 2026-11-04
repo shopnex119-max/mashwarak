@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>مشوارك | نظام إدارة الأسطول</title>
 
-<!-- PWA Meta Tags -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FFC107">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,16 +13,12 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<!-- Tesseract.js للذكاء الاصطناعي (قراءة الأرقام) -->
+<!-- مكتبة القراءة -->
 <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-
-<!-- html5-qrcode للكاميرا -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -43,7 +38,6 @@ const CLOUDINARY_CLOUD_NAME = 'majzvjb2';
 const CLOUDINARY_UPLOAD_PRESET = 'mashwarak_preset';
 const FAKE_DOMAIN = '@mashwarak.app';
 
-// حالة النظام
 let currentUser = null;
 let selectedShift = null;
 let selectedStartLocation = null;
@@ -64,7 +58,6 @@ let isReading = false;
 </script>
 
 <style>
-/* ============ الأساسيات ============ */
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Tahoma','Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent; }
 html, body { width:100%; min-height:100vh; overflow-x:hidden; }
 
@@ -149,7 +142,6 @@ body::after {
   100% { background-position:100% 100%; }
 }
 
-/* ============ الأزرار والإعدادات ============ */
 #settingsBtn {
   position:fixed;
   top:14px;
@@ -169,435 +161,129 @@ body::after {
   align-items:center;
   justify-content:center;
 }
-#settingsBtn:hover {
-  transform:rotate(90deg);
-  box-shadow:0 0 40px var(--shadow);
-}
+#settingsBtn:hover { transform:rotate(90deg); box-shadow:0 0 40px var(--shadow); }
 
 #settingsPanel {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.85);
-  z-index:9998;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  padding:20px;
-  overflow-y:auto;
+  position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9998;
+  display:none; justify-content:center; align-items:center; padding:20px; overflow-y:auto;
 }
 #settingsPanel.open { display:flex; }
 #settingsBox {
-  background:var(--bg-card);
-  border:1.5px solid var(--border-strong);
-  border-radius:22px;
-  padding:24px;
-  max-width:480px;
-  width:100%;
-  box-shadow:0 0 60px var(--shadow);
-  animation:fadeUp 0.3s ease;
+  background:var(--bg-card); border:1.5px solid var(--border-strong);
+  border-radius:22px; padding:24px; max-width:480px; width:100%;
+  box-shadow:0 0 60px var(--shadow); animation:fadeUp 0.3s ease;
 }
-#settingsBox h2 {
-  color:var(--gold);
-  font-size:20px;
-  margin-bottom:16px;
-  text-align:center;
-}
+#settingsBox h2 { color:var(--gold); font-size:20px; margin-bottom:16px; text-align:center; }
 .settings-item {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:12px;
-  border-radius:12px;
-  background:var(--bg-input);
-  border:1px solid var(--border);
-  margin-bottom:10px;
-  gap:10px;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px; border-radius:12px; background:var(--bg-input);
+  border:1px solid var(--border); margin-bottom:10px; gap:10px;
 }
 .settings-item span { color:var(--text-strong); font-size:14px; font-weight:bold; }
 .settings-item button {
-  padding:8px 14px;
-  border-radius:10px;
-  border:none;
-  font-size:13px;
-  font-weight:bold;
-  cursor:pointer;
-  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
-  color:#0A0A0A;
-  transition:0.3s;
+  padding:8px 14px; border-radius:10px; border:none; font-size:13px; font-weight:bold;
+  cursor:pointer; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; transition:0.3s;
 }
-.settings-item button:hover { box-shadow:0 0 20px var(--shadow); }
 
-/* ============ شاشة الدخول ============ */
 #loginScreen {
-  background:var(--bg-card);
-  padding:32px 24px;
-  border-radius:24px;
-  width:100%;
-  max-width:420px;
-  box-shadow:0 0 60px var(--shadow), inset 0 0 40px rgba(255,193,7,0.05);
-  border:1px solid var(--border-strong);
-  text-align:center;
-  margin-top:20px;
-  backdrop-filter:blur(10px);
-  animation:fadeUp 0.6s ease;
+  background:var(--bg-card); padding:32px 24px; border-radius:24px;
+  width:100%; max-width:420px; box-shadow:0 0 60px var(--shadow);
+  border:1px solid var(--border-strong); text-align:center; margin-top:20px;
+  backdrop-filter:blur(10px); animation:fadeUp 0.6s ease;
 }
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(20px); }
-  to   { opacity:1; transform:translateY(0); }
-}
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
 .logo-img {
-  width:180px;
-  height:180px;
-  object-fit:contain;
-  margin:0 auto 12px;
-  display:block;
-  border-radius:20px;
-  box-shadow:0 0 40px var(--shadow);
-  background:var(--bg);
-  padding:8px;
+  width:180px; height:180px; object-fit:contain; margin:0 auto 12px;
+  display:block; border-radius:20px; box-shadow:0 0 40px var(--shadow); background:var(--bg); padding:8px;
 }
-
 .logo-text {
-  font-size:34px;
-  font-weight:900;
-  background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold));
-  background-size:200% auto;
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  letter-spacing:2px;
-  margin-bottom:6px;
-  animation:shine 3s linear infinite;
-  text-shadow:0 0 30px var(--shadow);
+  font-size:34px; font-weight:900; background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold));
+  background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+  letter-spacing:2px; margin-bottom:6px; animation:shine 3s linear infinite;
 }
 @keyframes shine { to { background-position:200% center; } }
-
-.subtitle {
-  color:var(--text-mute);
-  font-size:13px;
-  margin-bottom:24px;
-  letter-spacing:1px;
-}
+.subtitle { color:var(--text-mute); font-size:13px; margin-bottom:24px; letter-spacing:1px; }
 
 .input-wrap { position:relative; margin:12px 0; }
 .input-wrap input {
-  width:100%;
-  padding:14px 45px 14px 14px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  background:var(--bg-input);
-  color:var(--text);
-  font-size:15px;
-  transition:0.3s;
+  width:100%; padding:14px 45px 14px 14px; border-radius:14px;
+  border:1px solid var(--border); background:var(--bg-input); color:var(--text); font-size:15px; transition:0.3s;
 }
-.input-wrap input:focus {
-  outline:none;
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(255,193,7,0.15), 0 0 20px var(--shadow);
-}
-.input-wrap .icon {
-  position:absolute;
-  top:50%;
-  right:14px;
-  transform:translateY(-50%);
-  font-size:16px;
-  color:var(--gold);
-  pointer-events:none;
-}
+.input-wrap input:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,193,7,0.15); }
+.input-wrap .icon { position:absolute; top:50%; right:14px; transform:translateY(-50%); font-size:16px; color:var(--gold); pointer-events:none; }
 
-/* ============ أزرار ============ */
 .btn {
-  width:100%;
-  padding:14px;
-  margin-top:12px;
-  border:none;
-  border-radius:14px;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.3s;
-  position:relative;
-  overflow:hidden;
+  width:100%; padding:14px; margin-top:12px; border:none; border-radius:14px;
+  font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s;
 }
-.btn-primary {
-  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
-  color:#0A0A0A;
-  box-shadow:0 0 25px var(--shadow);
-}
-.btn-primary:hover, .btn-primary:active {
-  box-shadow:0 0 35px var(--shadow);
-  transform:translateY(-2px);
-}
-.btn-gold {
-  background:linear-gradient(135deg,var(--gold-light),var(--gold));
-  color:#0A0A0A;
-  box-shadow:0 0 25px var(--shadow);
-}
-.btn-gold:hover { box-shadow:0 0 35px var(--shadow); transform:translateY(-2px); }
-.btn-danger {
-  background:linear-gradient(135deg,#EF5350,#B71C1C);
-  color:#fff;
-  box-shadow:0 0 20px rgba(239,83,80,0.4);
-}
-.btn-dark {
-  background:linear-gradient(135deg,#2A2A2A,#151515);
-  color:var(--gold);
-  border:1.5px solid var(--border-strong);
-}
-.btn-outline {
-  background:transparent;
-  color:var(--gold);
-  border:1.5px solid var(--gold);
-  box-shadow:0 0 15px var(--shadow);
-}
-.btn-outline:hover { background:rgba(255,193,7,0.1); }
-.btn-small {
-  width:auto;
-  padding:7px 12px;
-  font-size:12px;
-  margin:3px 2px;
-  border-radius:10px;
-  margin-top:0;
-}
-.btn-gps {
-  background:linear-gradient(135deg,#00C853,#009624);
-  color:#fff;
-  box-shadow:0 0 20px rgba(0,200,83,0.5);
-  font-size:14px;
-  padding:12px;
-}
-.btn-gps.gps-done {
-  background:linear-gradient(135deg,#424242,#212121);
-  box-shadow:0 0 10px rgba(0,0,0,0.5);
-  color:#00E676;
-  border:1.5px solid #00E676;
-}
-.btn-success { background:linear-gradient(135deg,#00E676,#00C853); color:#0A0A0A; box-shadow:0 0 20px rgba(0,230,118,0.4); }
-.btn-blue { background:linear-gradient(135deg,#2196F3,#1976D2); color:#fff; box-shadow:0 0 20px rgba(33,150,243,0.4); }
+.btn-gold { background:linear-gradient(135deg,var(--gold-light),var(--gold)); color:#0A0A0A; box-shadow:0 0 25px var(--shadow); }
+.btn-gold:hover { transform:translateY(-2px); }
+.btn-danger { background:linear-gradient(135deg,#EF5350,#B71C1C); color:#fff; box-shadow:0 0 20px rgba(239,83,80,0.4); }
+.btn-outline { background:transparent; color:var(--gold); border:1.5px solid var(--gold); }
+.btn-small { width:auto; padding:7px 12px; font-size:12px; margin:3px 2px; border-radius:10px; margin-top:0; }
+.btn-gps { background:linear-gradient(135deg,#00C853,#009624); color:#fff; font-size:14px; padding:12px; }
+.btn-gps.gps-done { background:linear-gradient(135deg,#424242,#212121); color:#00E676; border:1.5px solid #00E676; }
+.btn-success { background:linear-gradient(135deg,#00E676,#00C853); color:#0A0A0A; }
+.btn-blue { background:linear-gradient(135deg,#2196F3,#1976D2); color:#fff; }
 
-.error-msg {
-  color:#EF5350;
-  font-size:13px;
-  margin-top:8px;
-  min-height:18px;
-}
-
-.secure-note {
-  margin-top:22px;
-  font-size:12px;
-  color:var(--text-mute);
-  letter-spacing:1px;
-  padding-top:16px;
-  border-top:1px solid var(--border);
-}
+.error-msg { color:#EF5350; font-size:13px; margin-top:8px; min-height:18px; }
+.secure-note { margin-top:22px; font-size:12px; color:var(--text-mute); padding-top:16px; border-top:1px solid var(--border); }
 .secure-note span { color:var(--gold); }
 
-/* ============ لوحة التحكم ============ */
 #dashboard {
-  display:none;
-  width:100%;
-  max-width:960px;
-  background:var(--bg-card);
-  border-radius:22px;
-  padding:18px;
-  border:1px solid var(--border-strong);
-  box-shadow:0 0 60px var(--shadow);
-  margin-top:15px;
-  animation:fadeUp 0.4s ease;
-  backdrop-filter:blur(8px);
+  display:none; width:100%; max-width:960px; background:var(--bg-card);
+  border-radius:22px; padding:18px; border:1px solid var(--border-strong);
+  margin-top:15px; backdrop-filter:blur(8px);
 }
-#dashboard h1 {
-  font-size:20px;
-  background:linear-gradient(90deg,var(--gold),var(--gold-light));
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  font-weight:900;
-}
-.topbar {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid var(--border);
-  padding-bottom:12px;
-  margin-bottom:14px;
-  gap:8px;
-  flex-wrap:wrap;
-}
+#dashboard h1 { font-size:20px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); -webkit-background-clip:text; color:transparent; font-weight:900; }
+.topbar { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
 .topbar .user-info { font-size:13px; color:var(--text-mute); }
 .topbar .user-info span { color:var(--gold); font-weight:bold; }
 
-/* ============ التبويبات ============ */
-.tabs {
-  display:flex;
-  gap:6px;
-  margin-bottom:15px;
-  flex-wrap:wrap;
-}
+.tabs { display:flex; gap:6px; margin-bottom:15px; flex-wrap:wrap; }
 .tab-btn {
-  flex:1;
-  min-width:80px;
-  padding:10px 6px;
-  background:var(--bg-input);
-  color:var(--text-mute);
-  border:1px solid var(--border);
-  border-radius:12px;
-  cursor:pointer;
-  font-size:12px;
-  font-weight:bold;
-  transition:0.3s;
+  flex:1; min-width:80px; padding:10px 6px; background:var(--bg-input); color:var(--text-mute);
+  border:1px solid var(--border); border-radius:12px; cursor:pointer; font-size:12px; font-weight:bold; transition:0.3s;
 }
-.tab-btn.active {
-  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
-  color:#0A0A0A;
-  box-shadow:0 0 20px var(--shadow);
-  border-color:transparent;
-}
-.tab-btn:hover:not(.active) {
-  border-color:var(--gold);
-  color:var(--gold-light);
-}
-
+.tab-btn.active { background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; border-color:transparent; }
 .tab-content { display:none; animation:fadeUp 0.3s ease; }
 .tab-content.active { display:block; }
 
-/* ============ كروت الإحصائيات ============ */
-.stats-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));
-  gap:10px;
-  margin-bottom:15px;
-}
-.stat-card {
-  background:linear-gradient(145deg, rgba(42,42,42,0.8), rgba(15,15,15,0.95));
-  padding:14px 10px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  text-align:center;
-  box-shadow:0 0 20px var(--shadow);
-  transition:0.3s;
-}
-body.light-mode .stat-card {
-  background:linear-gradient(145deg, rgba(255,255,255,0.95), rgba(245,245,245,0.9));
-}
-.stat-card:hover { transform:translateY(-3px); box-shadow:0 0 30px var(--shadow); }
-.stat-card .label {
-  font-size:11px;
-  color:var(--text-mute);
-  margin-bottom:6px;
-  letter-spacing:0.5px;
-}
-.stat-card .value {
-  font-size:20px;
-  font-weight:900;
-  color:var(--gold);
-}
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:15px; }
+.stat-card { background:linear-gradient(145deg, rgba(42,42,42,0.8), rgba(15,15,15,0.95)); padding:14px 10px; border-radius:14px; border:1px solid var(--border); text-align:center; }
+.stat-card .label { font-size:11px; color:var(--text-mute); margin-bottom:6px; }
+.stat-card .value { font-size:20px; font-weight:900; color:var(--gold); }
 .stat-card.green .value { color:var(--green); }
 .stat-card.red .value { color:var(--red); }
 .stat-card.gold .value { color:var(--gold-light); }
 
-/* ============ النماذج ============ */
 .form-group { margin-bottom:12px; }
-.form-group label {
-  display:block;
-  font-size:13px;
-  color:var(--text-strong);
-  margin-bottom:6px;
-  font-weight:bold;
-}
+.form-group label { display:block; font-size:13px; color:var(--text-strong); margin-bottom:6px; font-weight:bold; }
 .form-group input, .form-group select, .form-group textarea {
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:var(--bg-input);
-  color:var(--text);
-  font-size:14px;
-  transition:0.3s;
-  font-family:inherit;
+  width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
+  background:var(--bg-input); color:var(--text); font-size:14px; transition:0.3s;
 }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-  outline:none;
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(255,193,7,0.15), 0 0 15px var(--shadow);
-}
-.form-group input[type="file"] { padding:8px; font-size:12px; color:var(--gold-light); cursor:pointer; }
+.form-group input:focus, .form-group select:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,193,7,0.15); }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
-@media (max-width:520px) {
-  .form-row { grid-template-columns:1fr; }
-  .form-row-3 { grid-template-columns:1fr; }
-}
+@media (max-width:520px) { .form-row, .form-row-3 { grid-template-columns:1fr; } }
 
-/* ============ اختيار الوردية والنظام ============ */
 .shift-picker, .system-picker { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; margin-bottom:12px; }
 .shift-option, .system-option {
-  padding:14px;
-  border-radius:14px;
-  border:1.5px solid var(--border);
-  background:var(--bg-input);
-  color:var(--text-strong);
-  text-align:center;
-  cursor:pointer;
-  font-weight:bold;
-  font-size:14px;
-  transition:0.3s;
-  user-select:none;
+  padding:14px; border-radius:14px; border:1.5px solid var(--border); background:var(--bg-input);
+  color:var(--text-strong); text-align:center; cursor:pointer; font-weight:bold; font-size:14px;
 }
 .shift-option .emoji, .system-option .emoji { display:block; font-size:22px; margin-bottom:4px; }
-.shift-option.selected, .system-option.selected {
-  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
-  color:#0A0A0A;
-  border-color:var(--gold);
-  box-shadow:0 0 25px var(--shadow);
-  transform:translateY(-2px);
-}
+.shift-option.selected, .system-option.selected { background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; border-color:var(--gold); transform:translateY(-2px); }
 
-/* ============ الجداول ============ */
-.table-wrap {
-  overflow-x:auto;
-  border-radius:14px;
-  margin-top:10px;
-  border:1px solid var(--border);
-}
-table {
-  width:100%;
-  border-collapse:collapse;
-  background:rgba(20,20,20,0.7);
-  font-size:12.5px;
-  min-width:500px;
-}
-body.light-mode table { background:rgba(255,255,255,0.7); }
-table th {
-  background:linear-gradient(135deg, rgba(255,193,7,0.25), rgba(255,160,0,0.15));
-  color:var(--gold-light);
-  padding:10px 8px;
-  text-align:center;
-  font-size:11.5px;
-  font-weight:bold;
-  border-bottom:1px solid var(--border-strong);
-}
-table td {
-  padding:10px 8px;
-  text-align:center;
-  border-bottom:1px solid var(--border);
-  color:var(--text);
-}
+.table-wrap { overflow-x:auto; border-radius:14px; margin-top:10px; border:1px solid var(--border); }
+table { width:100%; border-collapse:collapse; background:rgba(20,20,20,0.7); font-size:12.5px; min-width:500px; }
+table th { background:linear-gradient(135deg, rgba(255,193,7,0.25), rgba(255,160,0,0.15)); color:var(--gold-light); padding:10px 8px; text-align:center; font-size:11.5px; border-bottom:1px solid var(--border-strong); }
+table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--border); color:var(--text); }
 table tr:hover td { background:rgba(255,193,7,0.06); }
 
-/* ============ الشارات ============ */
-.badge {
-  display:inline-block;
-  padding:3px 9px;
-  border-radius:20px;
-  font-size:11px;
-  font-weight:bold;
-}
-.badge-work { background:rgba(0,230,118,0.15); color:#00E676; border:1px solid rgba(0,230,118,0.4); }
-.badge-exp  { background:rgba(239,83,80,0.15); color:#EF5350; border:1px solid rgba(239,83,80,0.4); }
-.badge-morning { background:rgba(255,193,7,0.15); color:#FFC107; border:1px solid rgba(255,193,7,0.4); }
-.badge-evening { background:rgba(255,152,0,0.2); color:#FFB74D; border:1px solid rgba(255,152,0,0.5); }
+.badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:bold; }
 .badge-fixed { background:rgba(255,193,7,0.15); color:#FFC107; border:1px solid rgba(255,193,7,0.4); }
 .badge-third { background:rgba(255,152,0,0.15); color:#FFB74D; border:1px solid rgba(255,152,0,0.5); }
 .badge-open { background:rgba(0,230,118,0.15); color:#00E676; border:1px solid rgba(0,230,118,0.4); }
@@ -605,236 +291,91 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 .badge-pending { background:rgba(255,193,7,0.2); color:#FFC107; border:1px solid rgba(255,193,7,0.5); animation:pulse 2s infinite; }
 .badge-rejected { background:rgba(239,83,80,0.2); color:#EF5350; border:1px solid rgba(239,83,80,0.5); }
 
-/* ============ التنبيهات ============ */
 #toast {
-  position:fixed;
-  top:calc(20px + env(safe-area-inset-top, 0px));
-  left:50%;
-  transform:translateX(-50%) translateY(-120px);
-  background:linear-gradient(135deg,#00E676,#00C853);
-  color:#0A0A0A;
-  padding:12px 25px;
-  border-radius:14px;
-  font-weight:bold;
-  font-size:14px;
-  transition:0.4s;
-  z-index:99999;
-  box-shadow:0 8px 30px rgba(0,230,118,0.5);
-  max-width:90%;
-  text-align:center;
+  position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-120px);
+  background:linear-gradient(135deg,#00E676,#00C853); color:#0A0A0A;
+  padding:12px 25px; border-radius:14px; font-weight:bold; font-size:14px;
+  transition:0.4s; z-index:99999; box-shadow:0 8px 30px rgba(0,230,118,0.5); max-width:90%; text-align:center;
 }
 #toast.show { transform:translateX(-50%) translateY(0); }
 #toast.error { background:linear-gradient(135deg,#EF5350,#B71C1C); color:#fff; }
 #toast.warn { background:linear-gradient(135deg,#FFC107,#FFA000); color:#0A0A0A; }
 
-.section-title {
-  color:var(--gold);
-  font-size:15px;
-  margin:16px 0 10px;
-  border-right:3px solid var(--gold);
-  padding-right:10px;
-  font-weight:bold;
-}
-.empty-msg {
-  text-align:center;
-  color:var(--text-mute);
-  padding:20px;
-  font-size:13px;
-}
-
-/* ============ شريط الحالة ============ */
-.status-bar {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:rgba(255,193,7,0.08);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:10px 14px;
-  margin-bottom:12px;
-  font-size:12px;
-  flex-wrap:wrap;
-  gap:6px;
-}
+.section-title { color:var(--gold); font-size:15px; margin:16px 0 10px; border-right:3px solid var(--gold); padding-right:10px; font-weight:bold; }
+.empty-msg { text-align:center; color:var(--text-mute); padding:20px; font-size:13px; }
+.status-bar { display:flex; justify-content:space-between; align-items:center; background:rgba(255,193,7,0.08); border:1px solid var(--border); border-radius:12px; padding:10px 14px; margin-bottom:12px; font-size:12px; flex-wrap:wrap; gap:6px; }
 .status-bar .status-item { color:var(--text-strong); }
 .status-bar .status-item strong { color:var(--gold); }
 
-/* ============ مؤشرات التحميل و OCR ============ */
-.loading-overlay {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.85);
-  z-index:99999;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  gap:20px;
-}
+.loading-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; display:none; justify-content:center; align-items:center; flex-direction:column; gap:20px; }
 .loading-overlay.active { display:flex; }
-.loading-spinner {
-  width:60px;
-  height:60px;
-  border:5px solid rgba(255,193,7,0.2);
-  border-top-color:#FFC107;
-  border-radius:50%;
-  animation:spin 0.8s linear infinite;
-}
+.loading-spinner { width:60px; height:60px; border:5px solid rgba(255,193,7,0.2); border-top-color:#FFC107; border-radius:50%; animation:spin 0.8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
-.loading-text {
-  color:#FFC107;
-  font-size:16px;
-  font-weight:bold;
-}
+.loading-text { color:#FFC107; font-size:16px; font-weight:bold; }
 
-.ocr-loading {
-  display:none;
-  background:rgba(33,150,243,0.1);
-  border:1px solid rgba(33,150,243,0.4);
-  color:#2196F3;
-  padding:10px;
-  border-radius:10px;
-  margin-top:6px;
-  text-align:center;
-  font-weight:bold;
-  font-size:13px;
-}
+.ocr-loading { display:none; background:rgba(33,150,243,0.1); border:1px solid rgba(33,150,243,0.4); color:#2196F3; padding:10px; border-radius:10px; margin-top:6px; text-align:center; font-weight:bold; font-size:13px; }
 .ocr-loading.active { display:block; animation:pulse 1.5s infinite; }
-
-.ocr-result {
-  display:none;
-  background:rgba(0,230,118,0.1);
-  border:1px solid rgba(0,230,118,0.4);
-  color:#00E676;
-  padding:10px;
-  border-radius:10px;
-  margin-top:6px;
-  font-weight:bold;
-  font-size:14px;
-  text-align:center;
-}
+.ocr-result { display:none; background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.4); color:#00E676; padding:10px; border-radius:10px; margin-top:6px; font-weight:bold; font-size:14px; text-align:center; }
 .ocr-result.active { display:block; }
 
-.realtime-badge {
-  position:fixed;
-  bottom:calc(14px + env(safe-area-inset-bottom, 0px));
-  right:14px;
-  background:linear-gradient(135deg,#00C853,#009624);
-  color:#fff;
-  padding:6px 12px;
-  border-radius:20px;
-  font-size:11px;
-  font-weight:bold;
-  z-index:9990;
-  box-shadow:0 0 15px rgba(0,200,83,0.5);
-  display:none;
-  align-items:center;
-  gap:5px;
-}
+.realtime-badge { position:fixed; bottom:14px; right:14px; background:linear-gradient(135deg,#00C853,#009624); color:#fff; padding:6px 12px; border-radius:20px; font-size:11px; font-weight:bold; z-index:9990; display:none; align-items:center; gap:5px; }
 .realtime-badge.active { display:flex; }
-.realtime-badge .dot {
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#fff;
-  animation:pulse 1.5s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity:1; transform:scale(1); }
-  50% { opacity:0.5; transform:scale(1.3); }
-}
+.realtime-badge .dot { width:8px; height:8px; border-radius:50%; background:#fff; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.3); } }
 
 @media (max-width:520px) {
-  body { padding:8px; padding-top: env(safe-area-inset-top, 8px); padding-bottom: env(safe-area-inset-bottom, 8px); }
-  #settingsBtn { width:42px; height:42px; font-size:20px; top:10px; left:10px; }
-  #loginScreen { padding:22px 16px; border-radius:20px; }
+  body { padding:8px; }
+  #settingsBtn { width:42px; height:42px; top:10px; left:10px; }
+  #loginScreen { padding:22px 16px; }
   .logo-img { width:140px; height:140px; }
   .logo-text { font-size:26px; }
-  #dashboard { padding:14px; border-radius:18px; }
+  #dashboard { padding:14px; }
   .stat-card .value { font-size:17px; }
-  .tab-btn { font-size:11px; padding:9px 4px; min-width:70px; }
+  .tab-btn { font-size:11px; }
   table { font-size:11.5px; }
-  table th, table td { padding:8px 5px; }
-  .btn { font-size:15px; padding:13px; }
+  .btn { font-size:15px; }
   .system-picker { grid-template-columns:1fr; }
-  .realtime-badge { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); right:10px; font-size:10px; padding:5px 10px; }
 }
 </style>
 </head>
 <body>
+<div id="realtimeBadge" class="realtime-badge"><span class="dot"></span><span>مباشر</span></div>
 
-<!-- مؤشر التحديث اللحظي -->
-<div id="realtimeBadge" class="realtime-badge">
-  <span class="dot"></span>
-  <span>مباشر</span>
-</div>
-
-<!-- شاشة التحميل الرئيسية -->
 <div id="loadingOverlay" class="loading-overlay">
   <div class="loading-spinner"></div>
   <div class="loading-text" id="loadingText">جاري التحميل...</div>
 </div>
 
-<!-- زر الإعدادات (ترس) -->
-<button id="settingsBtn" onclick="toggleSettings()" title="الإعدادات">⚙️</button>
+<button id="settingsBtn" onclick="toggleSettings()">⚙️</button>
 
-<!-- لوحة الإعدادات -->
 <div id="settingsPanel" onclick="if(event.target===this) toggleSettings()">
   <div id="settingsBox">
     <h2>⚙️ الإعدادات</h2>
-    <div class="settings-item">
-      <span>🌓 الوضع الليلي / النهاري</span>
-      <button onclick="toggleTheme()" id="themeBtn">🌙 ليلي</button>
-    </div>
-    <div class="settings-item">
-      <span>📊 تصدير البيانات إلى Excel</span>
-      <button onclick="exportExcel()">📥 تصدير</button>
-    </div>
-    <div class="settings-item" id="adminOnly1" style="display:none;">
-      <span>🔐 تغيير كلمة مرور الأدمن</span>
-      <button onclick="changeAdminPassword()">✏️ تغيير</button>
-    </div>
-    <div class="settings-item" id="adminOnly2" style="display:none;">
-      <span>👑 إضافة أدمن جديد</span>
-      <button onclick="addNewAdmin()">➕ إضافة</button>
-    </div>
+    <div class="settings-item"><span>🌓 الوضع الليلي / النهاري</span><button onclick="toggleTheme()" id="themeBtn">🌙 ليلي</button></div>
+    <div class="settings-item"><span>📊 تصدير البيانات إلى Excel</span><button onclick="exportExcel()">📥 تصدير</button></div>
+    <div class="settings-item" id="adminOnly1" style="display:none;"><span>🔐 تغيير كلمة مرور الأدمن</span><button onclick="changeAdminPassword()">✏️ تغيير</button></div>
+    <div class="settings-item" id="adminOnly2" style="display:none;"><span>👑 إضافة أدمن جديد</span><button onclick="addNewAdmin()">➕ إضافة</button></div>
     <button class="btn btn-danger" style="margin-top:14px;" onclick="toggleSettings()">إغلاق</button>
   </div>
 </div>
 
-<!-- شاشة الدخول -->
 <div id="loginScreen">
   <img src="logo.png" alt="مشوارك" class="logo-img" onerror="this.style.display='none'">
   <div class="logo-text">مشوارك</div>
   <p class="subtitle">نظام إدارة الأسطول الذكي</p>
-
-  <div class="input-wrap">
-    <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
-    <span class="icon">👤</span>
-  </div>
-  <div class="input-wrap">
-    <input type="password" id="loginPass" placeholder="كلمة المرور">
-    <span class="icon">🔒</span>
-  </div>
+  <div class="input-wrap"><input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off"><span class="icon">👤</span></div>
+  <div class="input-wrap"><input type="password" id="loginPass" placeholder="كلمة المرور"><span class="icon">🔒</span></div>
   <button class="btn btn-gold" id="loginBtn" onclick="handleLogin()">🚀 دخول النظام</button>
   <div class="error-msg" id="loginError"></div>
-
-  <div class="secure-note">
-    🔐 نظام محمي • الدخول <span>للأدمن والكباتن</span> فقط
-  </div>
+  <div class="secure-note">🔐 نظام محمي • الدخول <span>للأدمن والكباتن</span> فقط</div>
 </div>
 
-<!-- لوحة التحكم -->
 <div id="dashboard">
   <div class="topbar">
-    <div>
-      <h1 id="dashTitle">لوحة التحكم</h1>
-      <div class="user-info">مرحباً، <span id="currentUserName"></span></div>
-    </div>
+    <div><h1 id="dashTitle">لوحة التحكم</h1><div class="user-info">مرحباً، <span id="currentUserName"></span></div></div>
     <button class="btn btn-danger btn-small" onclick="logout()">خروج</button>
   </div>
 
-  <!-- تبويبات الأدمن -->
   <div id="adminTabs" class="tabs">
     <button class="tab-btn active" onclick="switchTab('tab-overview', this)">📊 الرئيسية</button>
     <button class="tab-btn" onclick="switchTab('tab-captains', this)">👤 الكباتن</button>
@@ -844,7 +385,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <button class="tab-btn" onclick="switchTab('tab-reports', this)">📈 التقارير</button>
   </div>
 
-  <!-- تبويبات الكابتن -->
   <div id="captainTabs" class="tabs" style="display:none;">
     <button class="tab-btn active" onclick="switchTab('tab-myhome', this)">🏠 رئيسيتي</button>
     <button class="tab-btn" onclick="switchTab('tab-openshift', this)">🔓 بدء شيفت</button>
@@ -853,11 +393,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <button class="tab-btn" onclick="switchTab('tab-mytrans', this)">📋 سجلي</button>
   </div>
 
-  <!-- ============================================ -->
-  <!-- ============ محتوى الأدمن =================== -->
-  <!-- ============================================ -->
-
-  <!-- الرئيسية (الأدمن) -->
+  <!-- ====== محتوى الأدمن ====== -->
   <div id="tab-overview" class="tab-content active">
     <div class="stats-grid">
       <div class="stat-card green"><div class="label">إجمالي الإيرادات</div><div class="value" id="ovRevenue">0</div></div>
@@ -865,24 +401,16 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
       <div class="stat-card gold"><div class="label">صافي الربح</div><div class="value" id="ovNet">0</div></div>
       <div class="stat-card"><div class="label">عدد الكباتن</div><div class="value" id="ovCaptains">0</div></div>
     </div>
-
     <div class="stats-grid">
       <div class="stat-card gold"><div class="label">🔒 شيفت ثابت</div><div class="value" id="ovFixed">0</div></div>
       <div class="stat-card gold"><div class="label">⚖️ التلت والتلتين</div><div class="value" id="ovThird">0</div></div>
       <div class="stat-card"><div class="label">🟢 شيفتات مفتوحة</div><div class="value" id="ovOpen">0</div></div>
       <div class="stat-card red"><div class="label">💰 إجمالي المديونيات</div><div class="value" id="ovDebts">0</div></div>
     </div>
-
     <div class="section-title">آخر الشيفتات</div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>الكابتن</th><th>النظام</th><th>السيارة</th><th>الإيراد</th><th>الصافي</th><th>الحالة</th></tr></thead>
-        <tbody id="ovRecentTable"></tbody>
-      </table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>الكابتن</th><th>النظام</th><th>السيارة</th><th>الإيراد</th><th>الصافي</th><th>الحالة</th></tr></thead><tbody id="ovRecentTable"></tbody></table></div>
   </div>
 
-  <!-- الكباتن -->
   <div id="tab-captains" class="tab-content">
     <div class="section-title">➕ إضافة كابتن جديد</div>
     <div class="form-row">
@@ -894,31 +422,22 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
       <div class="form-group"><label>كلمة المرور</label><input type="text" id="capPass" placeholder="123456"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>نظام الشغل الأساسي</label>
-        <select id="capSystem"><option value="fixed">🔒 شيفت ثابت</option><option value="third">⚖️ التلت والتلتين</option></select>
-      </div>
+      <div class="form-group"><label>نظام الشغل الأساسي</label><select id="capSystem"><option value="fixed">🔒 شيفت ثابت</option><option value="third">⚖️ التلت والتلتين</option></select></div>
       <div class="form-group"><label>السيارة المخصصة</label><select id="capCar"><option value="">-- بدون --</option></select></div>
     </div>
     <div id="fixedPricesBox" style="background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.25);border-radius:12px;padding:12px;margin-bottom:12px;">
-      <div style="color:#FFC107;font-weight:bold;font-size:13px;margin-bottom:10px;">💰 أسعار الشرائح (للشيفت الثابت) — بالجنيه</div>
+      <div style="color:#FFC107;font-weight:bold;font-size:13px;margin-bottom:10px;">💰 أسعار الشرائح (للشيفت الثابت)</div>
       <div class="form-row-3">
-        <div class="form-group"><label>الشريحة 1 (1-350 كم)</label><input type="number" id="capTier1" value="0"></div>
-        <div class="form-group"><label>الشريحة 2 (350-420 كم)</label><input type="number" id="capTier2" value="0"></div>
-        <div class="form-group"><label>الشريحة 3 (420-500 كم)</label><input type="number" id="capTier3" value="0"></div>
+        <div class="form-group"><label>الشريحة 1</label><input type="number" id="capTier1" value="0"></div>
+        <div class="form-group"><label>الشريحة 2</label><input type="number" id="capTier2" value="0"></div>
+        <div class="form-group"><label>الشريحة 3</label><input type="number" id="capTier3" value="0"></div>
       </div>
     </div>
-    <button class="btn btn-primary" onclick="addCaptain()">➕ إضافة الكابتن</button>
+    <button class="btn btn-gold" onclick="addCaptain()">➕ إضافة الكابتن</button>
     <div class="section-title">قائمة الكباتن</div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>الاسم</th><th>اليوزر</th><th>النظام</th><th>السيارة</th><th>إيرادات</th><th>مصروفات</th><th>الصافي</th><th>مديونية</th><th>إجراءات</th></tr></thead>
-        <tbody id="captainsTable"></tbody>
-      </table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>اليوزر</th><th>النظام</th><th>السيارة</th><th>إيرادات</th><th>مصروفات</th><th>الصافي</th><th>مديونية</th><th>إجراءات</th></tr></thead><tbody id="captainsTable"></tbody></table></div>
   </div>
 
-  <!-- السيارات -->
   <div id="tab-cars" class="tab-content">
     <div class="section-title">➕ إضافة سيارة جديدة</div>
     <div class="form-row">
@@ -929,38 +448,21 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
       <div class="form-group"><label>النوع</label><select id="carType"><option value="سيدان">🚗 سيدان</option><option value="SUV">🚙 SUV</option><option value="ميكروباص">🚐 ميكروباص</option></select></div>
       <div class="form-group"><label>اللون</label><input type="text" id="carColor" placeholder="أبيض"></div>
     </div>
-    <button class="btn btn-primary" onclick="addCar()">➕ إضافة السيارة</button>
+    <button class="btn btn-gold" onclick="addCar()">➕ إضافة السيارة</button>
     <div class="section-title">قائمة السيارات</div>
-    <div class="table-wrap">
-      <table><thead><tr><th>اللوحة</th><th>الموديل</th><th>النوع</th><th>اللون</th><th>إجراءات</th></tr></thead><tbody id="carsTable"></tbody></table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>اللوحة</th><th>الموديل</th><th>النوع</th><th>اللون</th><th>إجراءات</th></tr></thead><tbody id="carsTable"></tbody></table></div>
   </div>
 
-  <!-- الشيفتات (الأدمن) -->
   <div id="tab-trans" class="tab-content">
     <div class="section-title">كل الشيفتات والمراجعة</div>
     <div class="form-row-3">
       <div class="form-group"><label>فلترة الكابتن</label><select id="filterCaptain" onchange="renderAllTransactions()"><option value="all">الكل</option></select></div>
       <div class="form-group"><label>فلترة النظام</label><select id="filterSystem" onchange="renderAllTransactions()"><option value="all">الكل</option><option value="fixed">🔒 ثابت</option><option value="third">⚖️ تلت</option></select></div>
-      <div class="form-group">
-        <label>فلترة الحالة</label>
-        <select id="filterStatus" onchange="renderAllTransactions()">
-          <option value="all">الكل</option>
-          <option value="open">🟢 مفتوح</option>
-          <option value="pending">🟡 معلق للمراجعة</option>
-          <option value="closed">🔴 مغلق (مقبول)</option>
-        </select>
-      </div>
+      <div class="form-group"><label>فلترة الحالة</label><select id="filterStatus" onchange="renderAllTransactions()"><option value="all">الكل</option><option value="open">🟢 مفتوح</option><option value="pending">🟡 معلق للمراجعة</option><option value="closed">🔴 مغلق (مقبول)</option></select></div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>الكابتن</th><th>النظام</th><th>التاريخ</th><th>الإيراد</th><th>الصافي</th><th>الحالة</th><th>إجراءات</th></tr></thead>
-        <tbody id="allTransTable"></tbody>
-      </table>
-    </div>
+    <div class="table-wrap"><table><thead><tr><th>الكابتن</th><th>النظام</th><th>التاريخ</th><th>الإيراد</th><th>الصافي</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="allTransTable"></tbody></table></div>
   </div>
 
-  <!-- المديونيات (الأدمن) -->
   <div id="tab-debts-admin" class="tab-content">
     <div class="section-title">💰 مديونيات الكباتن</div>
     <div class="table-wrap"><table><thead><tr><th>الكابتن</th><th>إجمالي المديونية</th><th>إجمالي المسدد</th><th>الرصيد الحالي</th><th>إجراءات</th></tr></thead><tbody id="debtsAdminTable"></tbody></table></div>
@@ -968,17 +470,12 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <div class="table-wrap"><table><thead><tr><th>الكابتن</th><th>التاريخ</th><th>المبلغ</th><th>الطريقة</th><th>ملاحظات</th></tr></thead><tbody id="allPaymentsTable"></tbody></table></div>
   </div>
 
-  <!-- التقارير -->
   <div id="tab-reports" class="tab-content">
     <div class="section-title">تقرير مالي لكل كابتن</div>
     <div class="table-wrap"><table><thead><tr><th>الكابتن</th><th>النظام</th><th>عدد الشيفتات</th><th>إجمالي إيراد</th><th>إجمالي مصروف</th><th>الصافي</th><th>المديونية</th></tr></thead><tbody id="reportTable"></tbody></table></div>
   </div>
 
-  <!-- ============================================ -->
-  <!-- ============ محتوى الكابتن ================== -->
-  <!-- ============================================ -->
-
-  <!-- رئيسية الكابتن -->
+  <!-- ====== محتوى الكابتن ====== -->
   <div id="tab-myhome" class="tab-content">
     <div class="stats-grid">
       <div class="stat-card green"><div class="label">إيراد اليوم</div><div class="value" id="myTodayWork">0</div></div>
@@ -988,9 +485,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     </div>
     <div class="section-title">💰 مديونيتي الحالية</div>
     <div class="stat-card red" style="margin-bottom:12px;">
-      <div class="label">إجمالي المديونية</div>
-      <div class="value" id="myDebtTotal" style="font-size:26px;">0</div>
-      <div style="font-size:11px;color:#9E9E9E;margin-top:4px;">جنيه مصري</div>
+      <div class="label">إجمالي المديونية</div><div class="value" id="myDebtTotal" style="font-size:26px;">0</div>
     </div>
     <div class="status-bar">
       <div class="status-item">السيارة: <strong id="myCar">-</strong></div>
@@ -1001,39 +496,33 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النظام</th><th>الإيراد</th><th>الصافي</th><th>الحالة</th></tr></thead><tbody id="myRecentTable"></tbody></table></div>
   </div>
 
-  <!-- بدء الشيفت -->
   <div id="tab-openshift" class="tab-content">
     <div class="section-title">🔓 بدء شيفت جديد</div>
-    
     <div class="form-row">
       <div class="form-group"><label>السيارة</label><select id="openCar"><option value="">-- اختر --</option></select></div>
-      <div class="form-group">
-        <label>الوردية</label>
+      <div class="form-group"><label>الوردية</label>
         <div class="shift-picker" style="margin-top:0;">
           <div class="shift-option" id="shiftMorning" onclick="selectShift('morning')"><span class="emoji">🌅</span>صباحي</div>
           <div class="shift-option" id="shiftEvening" onclick="selectShift('evening')"><span class="emoji">🌙</span>مسائي</div>
         </div>
       </div>
     </div>
-
     <div class="section-title">⚙️ نظام اليوم</div>
     <div class="system-picker">
       <div class="system-option" id="sysFixed" onclick="selectSystemForShift('fixed')"><span class="emoji">🔒</span>شيفت ثابت</div>
       <div class="system-option" id="sysThird" onclick="selectSystemForShift('third')"><span class="emoji">⚖️</span>التلت والتلتين</div>
     </div>
-
     <div class="section-title">📸 عداد البداية</div>
     <div class="form-group">
       <label>تصوير عداد البداية *</label>
-      <button type="button" class="btn btn-gold" onclick="openCamera('start')" style="font-size:15px;">📷 فتح الكاميرا وتصوير العداد</button>
+      <button type="button" class="btn btn-gold" onclick="openCamera('start')">📷 فتح الكاميرا وتصوير العداد</button>
       <div class="ocr-loading" id="startOcrLoading">🤖 جاري قراءة الأرقام...</div>
       <div class="ocr-result" id="startOcrResult"></div>
     </div>
     <div class="form-group">
       <label>كيلوهات البداية * (يتم قراءتها تلقائياً)</label>
-      <input type="number" id="startOdoValue" placeholder="45200" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;font-weight:bold;font-size:16px;">
+      <input type="number" id="startOdoValue" placeholder="ادخل رقم العداد" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;font-weight:bold;font-size:16px;">
     </div>
-
     <div class="form-group"><label>ملاحظات (اختياري)</label><input type="text" id="openNote" placeholder="أي ملاحظات"></div>
     <div class="form-group">
       <label>📍 موقع بداية الشيفت</label>
@@ -1043,10 +532,8 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <button class="btn btn-gold" id="openShiftBtn" onclick="openShift()">🚀 بدء الشيفت</button>
   </div>
 
-  <!-- إغلاق الشيفت -->
   <div id="tab-closeshift" class="tab-content">
     <div id="noOpenShiftMsg" class="empty-msg" style="display:none;">⚠️ لا يوجد شيفت مفتوح حالياً.</div>
-
     <div id="closeShiftBox" style="display:none;">
       <div class="section-title">🔒 إغلاق الشيفت الحالي</div>
       <div class="status-bar">
@@ -1055,8 +542,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
         <div class="status-item">الوردية: <strong id="csShift">-</strong></div>
         <div class="status-item">بدأ: <strong id="csStartTime">-</strong></div>
       </div>
-
-      <!-- اختيار النظام وقت الإغلاق -->
       <div id="changeSystemBox" style="background:rgba(33,150,243,0.08);border:1px solid rgba(33,150,243,0.3);border-radius:12px;padding:12px;margin-bottom:12px;">
         <div style="color:#2196F3;font-weight:bold;font-size:13px;margin-bottom:8px;">🔄 هل ترغب في تغيير نظام الشيفت؟</div>
         <div class="system-picker" style="margin-bottom:0;">
@@ -1065,16 +550,14 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
         </div>
       </div>
 
-      <!-- فورم الشيفت الثابت -->
       <div id="fixedForm" style="display:none;">
         <div class="section-title">📸 عداد النهاية</div>
         <div class="form-group">
           <label>تصوير عداد النهاية *</label>
-          <button type="button" class="btn btn-gold" onclick="openCamera('end')" style="font-size:15px;">📷 فتح الكاميرا وتصوير العداد</button>
+          <button type="button" class="btn btn-gold" onclick="openCamera('end')">📷 فتح الكاميرا وتصوير العداد</button>
           <div class="ocr-loading" id="endOcrLoading">🤖 جاري قراءة الأرقام...</div>
           <div class="ocr-result" id="endOcrResult"></div>
         </div>
-
         <div class="form-row">
           <div class="form-group"><label>كيلوهات البداية (تلقائي)</label><input type="number" id="fsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
           <div class="form-group"><label>كيلوهات النهاية * (تلقائي)</label><input type="number" id="fsKmEnd" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;"></div>
@@ -1083,7 +566,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <div class="form-group"><label>المستهلك</label><input type="number" id="fsKmUsed" readonly style="background:rgba(255,193,7,0.1);color:#FFC107;font-weight:bold;"></div>
           <div class="form-group"><label>الشريحة المطبقة</label><input type="text" id="fsTier" readonly style="background:rgba(255,193,7,0.1);color:#FFC107;font-weight:bold;"></div>
         </div>
-
         <div class="section-title">🚗 مشاوير إضافية</div>
         <div class="form-row-3">
           <div class="form-group"><label>سفر</label><input type="number" id="fsTravel" value="0" oninput="calcFixed()"></div>
@@ -1091,17 +573,14 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <div class="form-group"><label>مدارس</label><input type="number" id="fsSchools" value="0" oninput="calcFixed()"></div>
         </div>
         <div class="form-group"><label>موظفيين</label><input type="number" id="fsEmployees" value="0" oninput="calcFixed()"></div>
-
         <div class="form-row">
           <div class="form-group"><label>قيمة الشريحة</label><input type="number" id="fsTierValue" readonly style="background:rgba(255,193,7,0.1);"></div>
           <div class="form-group"><label>إجمالي الإيراد</label><input type="number" id="fsRevenue" readonly style="background:rgba(0,230,118,0.1);color:#00E676;"></div>
         </div>
-
         <div class="form-row">
           <div class="form-group"><label>المبلغ المحول *</label><input type="number" id="fsTransferred" placeholder="1000" oninput="calcFixed()"></div>
           <div class="form-group"><label>المتبقي (تلقائي)</label><input type="number" id="fsRemaining" readonly style="background:rgba(0,230,118,0.1);"></div>
         </div>
-
         <div class="section-title">💸 مصروفات إضافية</div>
         <div class="form-row">
           <div class="form-group"><label>بنزين</label><input type="number" id="fsExtraFuel" value="0" oninput="calcFixed()"></div>
@@ -1113,36 +592,25 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <button type="button" class="btn btn-outline btn-small" onclick="addExtraExpense('fs')" style="margin-top:8px;">➕ إضافة</button>
         </div>
         <div class="form-group"><label>إجمالي المصروفات الإضافية</label><input type="number" id="fsTotalExtraExpense" readonly style="background:rgba(239,83,80,0.1);color:#EF5350;"></div>
-
         <div class="form-row">
-          <div class="form-group">
-            <label>طريقة التحويل</label>
-            <select id="fsTransferMethod" onchange="toggleTransferImg('fs')">
-              <option value="">-- اختر --</option><option value="محفظة">محفظة</option><option value="انستاباي">انستاباي</option><option value="تحويل بنكي">تحويل بنكي</option><option value="كاش">كاش</option>
-            </select>
-          </div>
+          <div class="form-group"><label>طريقة التحويل</label><select id="fsTransferMethod" onchange="toggleTransferImg('fs')"><option value="">-- اختر --</option><option value="محفظة">محفظة</option><option value="انستاباي">انستاباي</option><option value="تحويل بنكي">تحويل بنكي</option><option value="كاش">كاش</option></select></div>
           <div class="form-group" id="fsTransferImgBox"><label>صورة التحويل</label><input type="file" id="fsTransferImg" accept="image/*"></div>
         </div>
       </div>
 
-      <!-- فورم التلت -->
       <div id="thirdForm" style="display:none;">
         <div class="section-title">📸 عداد النهاية</div>
         <div class="form-group">
           <label>تصوير عداد النهاية *</label>
-          <button type="button" class="btn btn-gold" onclick="openCamera('tsEnd')" style="font-size:15px;">📷 فتح الكاميرا وتصوير العداد</button>
+          <button type="button" class="btn btn-gold" onclick="openCamera('tsEnd')">📷 فتح الكاميرا وتصوير العداد</button>
           <div class="ocr-loading" id="tsEndOcrLoading">🤖 جاري قراءة الأرقام...</div>
           <div class="ocr-result" id="tsEndOcrResult"></div>
         </div>
-
         <div class="form-row">
           <div class="form-group"><label>كيلوهات البداية (تلقائي)</label><input type="number" id="tsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
           <div class="form-group"><label>كيلوهات النهاية * (تلقائي)</label><input type="number" id="tsKmEnd" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;"></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>المستهلك</label><input type="number" id="tsKmUsed" readonly style="background:rgba(255,193,7,0.1);"></div>
-        </div>
-
+        <div class="form-row"><div class="form-group"><label>المستهلك</label><input type="number" id="tsKmUsed" readonly style="background:rgba(255,193,7,0.1);"></div></div>
         <div class="section-title">💵 الإيرادات</div>
         <div class="form-row">
           <div class="form-group"><label>أوبر</label><input type="number" id="tsUber" value="0" oninput="calcThird()"></div>
@@ -1153,7 +621,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <div class="form-group"><label>مشوار خارجي</label><input type="number" id="tsExternal" value="0" oninput="calcThird()"></div>
         </div>
         <div class="form-group"><label>إجمالي الإيراد (تلقائي)</label><input type="number" id="tsTotalRevenue" readonly style="background:rgba(0,230,118,0.1);"></div>
-
         <div class="section-title">🚗 مشاوير إضافية</div>
         <div class="form-row-3">
           <div class="form-group"><label>سفر</label><input type="number" id="tsTravel" value="0" oninput="calcThird()"></div>
@@ -1161,7 +628,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <div class="form-group"><label>مدارس</label><input type="number" id="tsSchools" value="0" oninput="calcThird()"></div>
         </div>
         <div class="form-group"><label>موظفيين</label><input type="number" id="tsEmployees" value="0" oninput="calcThird()"></div>
-
         <div class="section-title">⛽ مصروفات أساسية</div>
         <div class="form-row">
           <div class="form-group"><label>الغاز</label><input type="number" id="tsGas" value="0" oninput="calcThird()"></div>
@@ -1171,12 +637,10 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <div class="form-group"><label>صور الغاز (متعدد)</label><input type="file" id="tsGasImgs" accept="image/*" multiple onchange="previewMulti('tsGasImgs','tsGasPreview')"><div id="tsGasPreview" class="img-preview"></div></div>
           <div class="form-group"><label>صور البنزين (متعدد)</label><input type="file" id="tsFuelImgs" accept="image/*" multiple onchange="previewMulti('tsFuelImgs','tsFuelPreview')"><div id="tsFuelPreview" class="img-preview"></div></div>
         </div>
-
         <div class="form-row">
           <div class="form-group"><label>نصيب الكابتن (⅓)</label><input type="number" id="tsCaptainShare" readonly style="background:rgba(255,193,7,0.1);"></div>
           <div class="form-group"><label>نصيب السيارة (⅔)</label><input type="number" id="tsCarShare" readonly style="background:rgba(255,193,7,0.1);"></div>
         </div>
-
         <div class="section-title">💸 مصروفات إضافية</div>
         <div class="form-row">
           <div class="form-group"><label>بنزين إضافي</label><input type="number" id="tsExtraFuel" value="0" oninput="calcThird()"></div>
@@ -1188,19 +652,13 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
           <button type="button" class="btn btn-outline btn-small" onclick="addExtraExpense('ts')" style="margin-top:8px;">➕ إضافة</button>
         </div>
         <div class="form-group"><label>إجمالي المصروفات الإضافية</label><input type="number" id="tsTotalExtraExpense" readonly style="background:rgba(239,83,80,0.1);"></div>
-
         <div class="section-title">💳 التحويل</div>
         <div class="form-row">
           <div class="form-group"><label>المبلغ المحول *</label><input type="number" id="tsTransferred" placeholder="1000" oninput="calcThird()"></div>
           <div class="form-group"><label>المتبقي (تلقائي)</label><input type="number" id="tsRemaining" readonly style="background:rgba(0,230,118,0.1);"></div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>طريقة التحويل</label>
-            <select id="tsTransferMethod" onchange="toggleTransferImg('ts')">
-              <option value="">-- اختر --</option><option value="محفظة">محفظة</option><option value="انستاباي">انستاباي</option><option value="تحويل بنكي">تحويل بنكي</option><option value="كاش">كاش</option>
-            </select>
-          </div>
+          <div class="form-group"><label>طريقة التحويل</label><select id="tsTransferMethod" onchange="toggleTransferImg('ts')"><option value="">-- اختر --</option><option value="محفظة">محفظة</option><option value="انستاباي">انستاباي</option><option value="تحويل بنكي">تحويل بنكي</option><option value="كاش">كاش</option></select></div>
           <div class="form-group" id="tsTransferImgBox"><label>صورة التحويل</label><input type="file" id="tsTransferImg" accept="image/*"></div>
         </div>
       </div>
@@ -1210,17 +668,12 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
         <button class="btn btn-gps" id="btnEndGps" onclick="captureEndLocation()">📍 إرسال موقعي</button>
         <div id="endGpsInfo" style="margin-top:8px;font-size:12px;color:#9E9E9E;text-align:center;"></div>
       </div>
-
       <button class="btn btn-danger" id="closeShiftBtn" onclick="closeShift()">🔒 تأكيد وإرسال للمراجعة</button>
     </div>
   </div>
 
-  <!-- المديونيات (كابتن) -->
   <div id="tab-debts" class="tab-content">
-    <div class="stat-card red" style="margin-bottom:14px;">
-      <div class="label">الرصيد الحالي للمديونية</div>
-      <div class="value" id="debtCurrentBalance" style="font-size:28px;">0</div>
-    </div>
+    <div class="stat-card red" style="margin-bottom:14px;"><div class="label">الرصيد الحالي للمديونية</div><div class="value" id="debtCurrentBalance" style="font-size:28px;">0</div></div>
     <div class="stats-grid">
       <div class="stat-card"><div class="label">إجمالي التراكم</div><div class="value" id="debtTotalAccum">0</div></div>
       <div class="stat-card green"><div class="label">إجمالي المسدد</div><div class="value" id="debtTotalPaid">0</div></div>
@@ -1242,7 +695,6 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النظام</th><th>المضاف</th><th>الرصيد بعد</th></tr></thead><tbody id="debtsTable"></tbody></table></div>
   </div>
 
-  <!-- سجل الكابتن -->
   <div id="tab-mytrans" class="tab-content">
     <div class="section-title">📋 كل شيفتاتي</div>
     <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النظام</th><th>السيارة</th><th>الإيراد</th><th>الصافي</th><th>الحالة</th><th>تفاصيل</th></tr></thead><tbody id="myAllTable"></tbody></table></div>
@@ -1251,56 +703,45 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 
 <div id="toast"></div>
 
-<!-- 🆕 نافذة الكاميرا لقراءة العداد -->
+<!-- نافذة الكاميرا -->
 <div id="cameraModal" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column;">
   <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,193,7,0.3);">
     <h3 style="color:#FFC107;font-size:16px;margin:0;">📷 كاميرا قراءة العداد</h3>
     <button onclick="closeCamera()" style="background:#EF5350;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:bold;">✖ إغلاق</button>
   </div>
-
   <div id="cameraReader" style="flex:1;position:relative;overflow:hidden;"></div>
-
-  <!-- المربع الأخضر (Scanner Overlay) -->
-  <div id="cameraOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:30%;border:3px solid #00E676;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,230,118,0.3);pointer-events:none;"></div>
-
-  <!-- معلومات OCR -->
+  <div id="cameraOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:12%;border:3px solid #00E676;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,230,118,0.3);pointer-events:none;">
+    <div style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);color:#00E676;font-size:12px;font-weight:bold;white-space:nowrap;text-shadow:0 0 10px #000;">📍 ضع العداد هنا</div>
+  </div>
   <div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.9);padding:10px 20px;border-radius:12px;border:1px solid rgba(255,193,7,0.4);text-align:center;min-width:250px;">
     <div id="cameraStatus" style="color:#FFC107;font-size:13px;font-weight:bold;">⏳ جاري البحث عن رقم...</div>
     <div id="cameraResult" style="color:#00E676;font-size:24px;font-weight:900;margin-top:6px;">-</div>
   </div>
-
-  <!-- أزرار التحكم -->
   <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;gap:8px;justify-content:center;border-top:1px solid rgba(255,193,7,0.3);">
-    <button id="cameraConfirmBtn" onclick="confirmCameraReading()" style="display:none;background:linear-gradient(135deg,#00E676,#00C853);color:#0A0A0A;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;box-shadow:0 0 20px rgba(0,230,118,0.5);">✅ تأكيد الرقم</button>
+    <button id="cameraConfirmBtn" onclick="confirmCameraReading()" style="display:none;background:linear-gradient(135deg,#00E676,#00C853);color:#0A0A0A;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">✅ تأكيد</button>
     <button onclick="restartCamera()" style="background:linear-gradient(135deg,#FFC107,#FFA000);color:#0A0A0A;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">🔄 إعادة</button>
     <button onclick="switchToManual()" style="background:linear-gradient(135deg,#2196F3,#1976D2);color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">✏️ كتابة يدوية</button>
   </div>
 </div>
 
-<!-- نافذة التفاصيل الكاملة للمراجعة -->
+<!-- نافذة التفاصيل -->
 <div id="detailsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;padding:20px;overflow-y:auto;">
-  <div style="max-width:700px;margin:30px auto;background:linear-gradient(145deg,#1A1A1A,#0A0A0A);border:1.5px solid rgba(255,193,7,0.4);border-radius:20px;padding:20px;box-shadow:0 0 60px rgba(255,193,7,0.3);">
+  <div style="max-width:700px;margin:30px auto;background:linear-gradient(145deg,#1A1A1A,#0A0A0A);border:1.5px solid rgba(255,193,7,0.4);border-radius:20px;padding:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <h2 style="color:#FFC107;font-size:20px;">🔍 مراجعة الشيفت</h2>
       <button class="btn btn-danger btn-small" onclick="closeDetails()">✖ إغلاق</button>
     </div>
     <div id="detailsContent"></div>
-    
-    <!-- لوحة تحكم الأدمن للمراجعة -->
     <div id="adminReviewControls" style="display:none;margin-top:20px;padding-top:20px;border-top:2px dashed rgba(255,193,7,0.3);">
       <div style="color:#FFC107;font-weight:bold;margin-bottom:12px;font-size:16px;">⚖️ إجراءات المراجعة:</div>
       <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;margin-bottom:15px;">
-        <div class="form-group"><label style="color:#00E676;">تعديل الكيلوهات (بداية / نهاية)</label>
-          <div class="form-row">
-            <input type="number" id="editKmStart" placeholder="كيلو البداية">
-            <input type="number" id="editKmEnd" placeholder="كيلو النهاية">
-          </div>
+        <div class="form-group"><label style="color:#00E676;">تعديل الكيلوهات</label>
+          <div class="form-row"><input type="number" id="editKmStart" placeholder="بداية"><input type="number" id="editKmEnd" placeholder="نهاية"></div>
         </div>
-        <div class="form-group"><label style="color:#00E676;">تعديل المبلغ المحول</label><input type="number" id="editTransferred" placeholder="المبلغ المحول"></div>
-        <div class="form-group"><label style="color:#00E676;">تعديل المتبقي (تلقائي)</label><input type="number" id="editRemaining" placeholder="المتبقي" readonly style="background:rgba(0,0,0,0.5);"></div>
-        <button class="btn btn-blue btn-small" onclick="saveAdminEdit()" style="width:100%;">💾 حفظ التعديلات وإعادة الحساب</button>
+        <div class="form-group"><label style="color:#00E676;">تعديل المبلغ المحول</label><input type="number" id="editTransferred" placeholder="المبلغ"></div>
+        <div class="form-group"><label style="color:#00E676;">المتبقي بعد التعديل</label><input type="number" id="editRemaining" readonly style="background:rgba(0,0,0,0.5);"></div>
+        <button class="btn btn-blue btn-small" onclick="saveAdminEdit()" style="width:100%;">💾 حفظ التعديلات</button>
       </div>
-      
       <div style="display:flex;gap:10px;">
         <button class="btn btn-success" onclick="approveShift()" style="flex:1;">✅ موافقة نهائية</button>
         <button class="btn btn-danger" onclick="rejectShift()" style="flex:1;">❌ رفض وإرجاع</button>
@@ -1309,105 +750,55 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
   </div>
 </div>
 <script>
-/* ============================================================
-   Firebase Data Layer & Helpers
-   ============================================================ */
-
-const COL_CAPTAINS = 'captains';
-const COL_TRANS = 'transactions';
-const COL_CARS = 'cars';
-const COL_ADMINS = 'admins';
-const COL_DEBTS = 'debts';
-const COL_PAYMENTS = 'payments';
+const COL_CAPTAINS = 'captains', COL_TRANS = 'transactions', COL_CARS = 'cars';
+const COL_ADMINS = 'admins', COL_DEBTS = 'debts', COL_PAYMENTS = 'payments';
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
+function todayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function nowFull() {
-  const d = new Date();
-  const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const d = new Date(); const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   return days[d.getDay()] + ' ' + todayStr() + ' - ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
 }
 function shiftName(s) { return s === 'morning' ? 'صباحي' : (s === 'evening' ? 'مسائي' : '-'); }
-function shiftBadge(s) {
-  if (s === 'morning') return '<span class="badge badge-morning">🌅 صباحي</span>';
-  if (s === 'evening') return '<span class="badge badge-evening">🌙 مسائي</span>';
-  return '-';
-}
+function shiftBadge(s) { return s === 'morning' ? '<span class="badge badge-morning">🌅 صباحي</span>' : '<span class="badge badge-evening">🌙 مسائي</span>'; }
 function systemName(sys) { return sys === 'fixed' ? '🔒 شيفت ثابت' : (sys === 'third' ? '⚖️ التلت والتلتين' : '-'); }
-function systemBadge(sys) {
-  if (sys === 'fixed') return '<span class="badge badge-fixed">🔒 ثابت</span>';
-  if (sys === 'third') return '<span class="badge badge-third">⚖️ تلت</span>';
-  return '<span class="badge badge-closed">-</span>';
-}
+function systemBadge(sys) { return sys === 'fixed' ? '<span class="badge badge-fixed">🔒 ثابت</span>' : '<span class="badge badge-third">⚖️ تلت</span>'; }
 function statusBadge(st) {
   if (st === 'open') return '<span class="badge badge-open">🟢 مفتوح</span>';
-  if (st === 'pending') return '<span class="badge badge-pending">🟡 معلق للمراجعة</span>';
-  if (st === 'rejected') return '<span class="badge badge-rejected">🔴 مرفوض</span>';
+  if (st === 'pending') return '<span class="badge badge-pending">🟡 معلق</span>';
   return '<span class="badge badge-closed">🔴 مغلق</span>';
 }
 function toast(msg, type) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show' + (type === 'error' ? ' error' : (type === 'warn' ? ' warn' : ''));
+  t.textContent = msg; t.className = 'show' + (type === 'error' ? ' error' : (type === 'warn' ? ' warn' : ''));
   setTimeout(() => { t.className = ''; }, 3000);
 }
-function showLoading(text) {
-  document.getElementById('loadingText').textContent = text || 'جاري التحميل...';
-  document.getElementById('loadingOverlay').classList.add('active');
-}
+function showLoading(text) { document.getElementById('loadingText').textContent = text || 'جاري التحميل...'; document.getElementById('loadingOverlay').classList.add('active'); }
 function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
-function disableBtn(id, text) {
-  const b = document.getElementById(id);
-  if (!b) return;
-  b.disabled = true; b.dataset.oldText = b.textContent; b.textContent = text || 'جاري...'; b.style.opacity = '0.6';
-}
-function enableBtn(id) {
-  const b = document.getElementById(id);
-  if (!b) return;
-  b.disabled = false; b.textContent = b.dataset.oldText || b.textContent; b.style.opacity = '1';
-}
+function disableBtn(id, text) { const b = document.getElementById(id); if (!b) return; b.disabled = true; b.dataset.oldText = b.textContent; b.textContent = text || 'جاري...'; }
+function enableBtn(id) { const b = document.getElementById(id); if (!b) return; b.disabled = false; b.textContent = b.dataset.oldText || b.textContent; }
 
-/* ============ Cloudinary Upload ============ */
 async function uploadFile(file, folder) {
   if (!file) return null;
-  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`;
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
   if (folder) formData.append('folder', folder);
-
-  const res = await fetch(url, { method: 'POST', body: formData });
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`, { method: 'POST', body: formData });
   if (!res.ok) throw new Error('فشل رفع الصورة');
-  const data = await res.json();
-  return data.secure_url;
+  const data = await res.json(); return data.secure_url;
 }
 async function uploadFiles(files, folder) {
   if (!files || files.length === 0) return [];
-  const urls = [];
-  for (const f of Array.from(files)) {
-    try { const u = await uploadFile(f, folder); if (u) urls.push(u); } catch (e) { console.error(e); }
-  }
+  const urls = []; for (const f of Array.from(files)) { try { const u = await uploadFile(f, folder); if (u) urls.push(u); } catch (e) {} }
   return urls;
 }
 function previewMulti(inputId, previewId) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  preview.innerHTML = '';
+  const input = document.getElementById(inputId); const preview = document.getElementById(previewId); preview.innerHTML = '';
   if (!input.files || input.files.length === 0) return;
   Array.from(input.files).slice(0, 10).forEach(f => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = document.createElement('img');
-      img.src = e.target.result; img.className = 'thumb'; preview.appendChild(img);
-    };
-    reader.readAsDataURL(f);
+    const reader = new FileReader(); reader.onload = (e) => { const img = document.createElement('img'); img.src = e.target.result; img.className = 'thumb'; preview.appendChild(img); }; reader.readAsDataURL(f);
   });
 }
 
-/* ============ Firestore Data Helpers ============ */
 async function getCaptains() { const snap = await db.collection(COL_CAPTAINS).get(); return snap.docs.map(d => ({ id: d.id, ...d.data() })); }
 async function addCaptainDB(data) { const ref = await db.collection(COL_CAPTAINS).add(data); return ref.id; }
 async function updateCaptainDB(id, data) { await db.collection(COL_CAPTAINS).doc(id).update(data); }
@@ -1433,1277 +824,341 @@ async function getPayments() { const snap = await db.collection(COL_PAYMENTS).or
 async function addPaymentDB(data) { const ref = await db.collection(COL_PAYMENTS).add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); return ref.id; }
 
 async function deleteCaptainFull(id) {
-  const trans = await getTransactions();
-  for (const t of trans.filter(x => x.captainId === id)) await deleteTransactionDB(t.id);
-  const debts = await getDebts();
-  for (const d of debts.filter(x => x.captainId === id)) await db.collection(COL_DEBTS).doc(d.id).delete();
-  const pays = await getPayments();
-  for (const p of pays.filter(x => x.captainId === id)) await db.collection(COL_PAYMENTS).doc(p.id).delete();
+  const trans = await getTransactions(); for (const t of trans.filter(x => x.captainId === id)) await deleteTransactionDB(t.id);
+  const debts = await getDebts(); for (const d of debts.filter(x => x.captainId === id)) await db.collection(COL_DEBTS).doc(d.id).delete();
+  const pays = await getPayments(); for (const p of pays.filter(x => x.captainId === id)) await db.collection(COL_PAYMENTS).doc(p.id).delete();
   await deleteCaptainDB(id);
 }
-
 async function captainDebtBalance(capId) {
-  const debts = await getDebts();
-  const payments = await getPayments();
+  const debts = await getDebts(); const payments = await getPayments();
   const totalAdd = debts.filter(d => d.captainId === capId).reduce((s, d) => s + (d.amount || 0), 0);
   const totalPaid = payments.filter(p => p.captainId === capId).reduce((s, p) => s + (p.amount || 0), 0);
   return { totalAdd, totalPaid, balance: Math.max(0, totalAdd - totalPaid) };
 }
 
-/* ============================================================
-   Real-time Listeners
-   ============================================================ */
-function stopRealtimeListeners() {
-  unsubscribers.forEach(unsub => { try { unsub(); } catch(e) {} });
-  unsubscribers = [];
-  const badge = document.getElementById('realtimeBadge');
-  if (badge) badge.classList.remove('active');
-}
+function stopRealtimeListeners() { unsubscribers.forEach(unsub => { try { unsub(); } catch(e) {} }); unsubscribers = []; }
 function startRealtimeListeners() {
   stopRealtimeListeners();
-  
   unsubscribers.push(db.collection(COL_TRANS).orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-    if (snapshot.docChanges().length > 0) {
-      if (currentUser) {
-        const activeTab = document.querySelector('.tab-content.active')?.id;
-        if (currentUser.role === 'admin') {
-          if (activeTab === 'tab-overview') renderOverview();
-          if (activeTab === 'tab-trans') renderAllTransactions();
-          if (activeTab === 'tab-reports') renderReports();
-          if (activeTab === 'tab-captains') renderCaptainsTable();
-        } else {
-          if (activeTab === 'tab-myhome') renderMyHome();
-          if (activeTab === 'tab-mytrans') renderMyTransactions();
-          if (activeTab === 'tab-closeshift') renderCloseShift();
-        }
-      }
-    }
+    if (snapshot.docChanges().length > 0) { if (currentUser) { const a = document.querySelector('.tab-content.active')?.id;
+      if (currentUser.role === 'admin') { if (a === 'tab-overview') renderOverview(); if (a === 'tab-trans') renderAllTransactions(); if (a === 'tab-reports') renderReports(); if (a === 'tab-captains') renderCaptainsTable(); }
+      else { if (a === 'tab-myhome') renderMyHome(); if (a === 'tab-mytrans') renderMyTransactions(); if (a === 'tab-closeshift') renderCloseShift(); }
+    } }
   }));
-  
-  unsubscribers.push(db.collection(COL_DEBTS).onSnapshot(() => {
-    if (currentUser) {
-      const activeTab = document.querySelector('.tab-content.active')?.id;
-      if (currentUser.role === 'admin' && activeTab === 'tab-debts-admin') renderDebtsAdmin();
-      if (currentUser.role === 'captain' && activeTab === 'tab-debts') renderMyDebts();
-    }
-  }));
-  unsubscribers.push(db.collection(COL_PAYMENTS).onSnapshot(() => {
-    if (currentUser) {
-      const activeTab = document.querySelector('.tab-content.active')?.id;
-      if (currentUser.role === 'admin' && activeTab === 'tab-debts-admin') renderDebtsAdmin();
-      if (currentUser.role === 'captain' && activeTab === 'tab-debts') renderMyDebts();
-    }
-  }));
-  unsubscribers.push(db.collection(COL_CARS).onSnapshot(() => {
-    if (currentUser) {
-      fillCarDropdowns();
-      if (currentUser.role === 'admin' && document.querySelector('.tab-content.active')?.id === 'tab-cars') renderCarsTable();
-    }
-  }));
-  unsubscribers.push(db.collection(COL_CAPTAINS).onSnapshot(() => {
-    if (currentUser && currentUser.role === 'admin') {
-      const activeTab = document.querySelector('.tab-content.active')?.id;
-      if (activeTab === 'tab-captains') renderCaptainsTable();
-      if (activeTab === 'tab-overview') renderOverview();
-    }
-  }));
-
-  const badge = document.getElementById('realtimeBadge');
-  if (badge) badge.classList.add('active');
 }
 
-/* ============================================================
-   Theme & Settings
-   ============================================================ */
-function applyTheme() {
-  const theme = localStorage.getItem('mashwarak_theme') || 'dark';
-  document.body.classList.toggle('light-mode', theme === 'light');
-  const btn = document.getElementById('themeBtn');
-  if (btn) btn.textContent = theme === 'light' ? '☀️ نهاري' : '🌙 ليلي';
-}
-function toggleTheme() {
-  const current = localStorage.getItem('mashwarak_theme') || 'dark';
-  localStorage.setItem('mashwarak_theme', current === 'dark' ? 'light' : 'dark');
-  applyTheme();
-}
-function toggleSettings() {
-  document.getElementById('settingsPanel').classList.toggle('open');
-  const isAdmin = currentUser && currentUser.role === 'admin';
-  document.getElementById('adminOnly1').style.display = isAdmin ? 'flex' : 'none';
-  document.getElementById('adminOnly2').style.display = isAdmin ? 'flex' : 'none';
-}
+function applyTheme() { const t = localStorage.getItem('mashwarak_theme') || 'dark'; document.body.classList.toggle('light-mode', t === 'light'); const b = document.getElementById('themeBtn'); if (b) b.textContent = t === 'light' ? '☀️ نهاري' : '🌙 ليلي'; }
+function toggleTheme() { const c = localStorage.getItem('mashwarak_theme') || 'dark'; localStorage.setItem('mashwarak_theme', c === 'dark' ? 'light' : 'dark'); applyTheme(); }
+function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('open'); const i = currentUser && currentUser.role === 'admin'; document.getElementById('adminOnly1').style.display = i ? 'flex' : 'none'; document.getElementById('adminOnly2').style.display = i ? 'flex' : 'none'; }
 
-/* ============================================================
-   Auth Flow
-   ============================================================ */
 async function handleLogin() {
-  const user = document.getElementById('loginUser').value.trim();
-  const pass = document.getElementById('loginPass').value.trim();
-  const err = document.getElementById('loginError');
-  err.textContent = '';
-
-  if (!user || !pass) { err.textContent = 'أدخل اليوزر والباسورد'; return; }
+  const user = document.getElementById('loginUser').value.trim(), pass = document.getElementById('loginPass').value.trim(), err = document.getElementById('loginError');
+  err.textContent = ''; if (!user || !pass) { err.textContent = 'أدخل اليوزر والباسورد'; return; }
   disableBtn('loginBtn', '⏳ جاري الدخول...');
-
   try {
     await auth.signInWithEmailAndPassword(user + FAKE_DOMAIN, pass);
-    
-    const admins = await getAdmins();
-    const admin = admins.find(a => a.username === user);
-    if (admin) {
-      currentUser = { role:'admin', adminId: admin.id, name: admin.name, username: admin.username };
-      localStorage.setItem('mashwarak_session', JSON.stringify(currentUser));
-      enterDashboard(); return;
-    }
-
-    const captains = await getCaptains();
-    const cap = captains.find(c => c.username === user);
-    if (cap) {
-      currentUser = { role:'captain', id: cap.id, name: cap.name, username: cap.username };
-      localStorage.setItem('mashwarak_session', JSON.stringify(currentUser));
-      enterDashboard(); return;
-    }
-
-    await auth.signOut();
-    err.textContent = '❌ الحساب غير مرتبط بأي أدمن أو كابتن';
-  } catch (e) {
-    err.textContent = '❌ بيانات الدخول غير صحيحة';
-  } finally {
-    enableBtn('loginBtn');
-  }
+    const admins = await getAdmins(), admin = admins.find(a => a.username === user);
+    if (admin) { currentUser = { role:'admin', adminId: admin.id, name: admin.name, username: admin.username }; localStorage.setItem('mashwarak_session', JSON.stringify(currentUser)); enterDashboard(); return; }
+    const cap = (await getCaptains()).find(c => c.username === user);
+    if (cap) { currentUser = { role:'captain', id: cap.id, name: cap.name, username: cap.username }; localStorage.setItem('mashwarak_session', JSON.stringify(currentUser)); enterDashboard(); return; }
+    await auth.signOut(); err.textContent = '❌ الحساب غير مرتبط';
+  } catch (e) { err.textContent = '❌ بيانات الدخول غير صحيحة'; } finally { enableBtn('loginBtn'); }
 }
-
-async function logout() {
-  stopRealtimeListeners();
-  try { await auth.signOut(); } catch(e) {}
-  localStorage.removeItem('mashwarak_session');
-  currentUser = null;
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'block';
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
-  document.getElementById('loginError').textContent = '';
-}
-
+async function logout() { stopRealtimeListeners(); try { await auth.signOut(); } catch(e) {} localStorage.removeItem('mashwarak_session'); currentUser = null; document.getElementById('dashboard').style.display = 'none'; document.getElementById('loginScreen').style.display = 'block'; document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = ''; }
 function enterDashboard() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  document.getElementById('currentUserName').textContent = currentUser.name;
-  startRealtimeListeners();
-
-  if (currentUser.role === 'admin') {
-    document.getElementById('dashTitle').textContent = 'لوحة تحكم الأدمن';
-    document.getElementById('adminTabs').style.display = 'flex';
-    document.getElementById('captainTabs').style.display = 'none';
-    switchTab('tab-overview', document.querySelector('#adminTabs .tab-btn'));
-  } else {
-    document.getElementById('dashTitle').textContent = 'لوحة الكابتن';
-    document.getElementById('adminTabs').style.display = 'none';
-    document.getElementById('captainTabs').style.display = 'flex';
-    switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
-  }
+  document.getElementById('loginScreen').style.display = 'none'; document.getElementById('dashboard').style.display = 'block'; document.getElementById('currentUserName').textContent = currentUser.name; startRealtimeListeners();
+  if (currentUser.role === 'admin') { document.getElementById('dashTitle').textContent = 'لوحة تحكم الأدمن'; document.getElementById('adminTabs').style.display = 'flex'; document.getElementById('captainTabs').style.display = 'none'; switchTab('tab-overview', document.querySelector('#adminTabs .tab-btn')); }
+  else { document.getElementById('dashTitle').textContent = 'لوحة الكابتن'; document.getElementById('adminTabs').style.display = 'none'; document.getElementById('captainTabs').style.display = 'flex'; switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn')); }
 }
-
 async function switchTab(tabId, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  const parent = btn.parentElement;
-  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  if (currentUser && currentUser.role === 'admin') await renderAdmin();
-  if (currentUser && currentUser.role === 'captain') await renderCaptain();
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active');
+  const parent = btn.parentElement; parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+  if (currentUser && currentUser.role === 'admin') await renderAdmin(); if (currentUser && currentUser.role === 'captain') await renderCaptain();
 }
 
-/* ============================================================
-   Admin Core Functions
-   ============================================================ */
-async function renderAdmin() {
-  try {
-    await renderOverview();
-    await renderCaptainsTable();
-    await renderCarsTable();
-    await renderAllTransactions();
-    await renderReports();
-    await renderDebtsAdmin();
-    await fillCaptainFilter();
-    await fillCarDropdowns();
-  } catch (e) { console.error(e); }
-}
-
+async function renderAdmin() { try { await renderOverview(); await renderCaptainsTable(); await renderCarsTable(); await renderAllTransactions(); await renderReports(); await renderDebtsAdmin(); await fillCaptainFilter(); await fillCarDropdowns(); } catch (e) {} }
 async function renderOverview() {
-  const shifts = await getTransactions();
-  const captains = await getCaptains();
+  const shifts = await getTransactions(), captains = await getCaptains();
   let rev = 0, exp = 0, fixedCount = 0, thirdCount = 0, openCount = 0;
-
-  shifts.forEach(s => {
-    rev += s.revenue || 0;
-    exp += s.expense || 0;
-    if (s.system === 'fixed') fixedCount++;
-    else if (s.system === 'third') thirdCount++;
-    if (s.status === 'open') openCount++;
-  });
-
-  const debts = await getDebts();
-  const payments = await getPayments();
-  const totalDebts = debts.reduce((s, d) => s + (d.amount || 0), 0) - payments.reduce((s, p) => s + (p.amount || 0), 0);
-
-  document.getElementById('ovRevenue').textContent = rev;
-  document.getElementById('ovExpense').textContent = exp;
-  document.getElementById('ovNet').textContent = rev - exp;
-  document.getElementById('ovCaptains').textContent = captains.length;
-  document.getElementById('ovFixed').textContent = fixedCount;
-  document.getElementById('ovThird').textContent = thirdCount;
-  document.getElementById('ovOpen').textContent = openCount;
-  document.getElementById('ovDebts').textContent = Math.max(0, totalDebts);
-
-  const tbody = document.getElementById('ovRecentTable');
-  tbody.innerHTML = '';
-  const recent = shifts.slice(0, 6);
+  shifts.forEach(s => { rev += s.revenue || 0; exp += s.expense || 0; if (s.system === 'fixed') fixedCount++; else if (s.system === 'third') thirdCount++; if (s.status === 'open') openCount++; });
+  const debts = await getDebts(), payments = await getPayments(), totalDebts = debts.reduce((s, d) => s + (d.amount || 0), 0) - payments.reduce((s, p) => s + (p.amount || 0), 0);
+  document.getElementById('ovRevenue').textContent = rev; document.getElementById('ovExpense').textContent = exp; document.getElementById('ovNet').textContent = rev - exp; document.getElementById('ovCaptains').textContent = captains.length;
+  document.getElementById('ovFixed').textContent = fixedCount; document.getElementById('ovThird').textContent = thirdCount; document.getElementById('ovOpen').textContent = openCount; document.getElementById('ovDebts').textContent = Math.max(0, totalDebts);
+  const tbody = document.getElementById('ovRecentTable'); tbody.innerHTML = ''; const recent = shifts.slice(0, 6);
   if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">لا توجد عمليات</td></tr>'; return; }
-  recent.forEach(s => {
-    const cap = captains.find(c => c.id === s.captainId);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${cap ? cap.name : 'محذوف'}</td><td>${systemBadge(s.system)}</td><td>${s.carPlate || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue || 0) - (s.expense || 0)}</td><td>${statusBadge(s.status)}</td>`;
-    tbody.appendChild(tr);
-  });
+  recent.forEach(s => { const cap = captains.find(c => c.id === s.captainId); tbody.innerHTML += `<tr><td>${cap ? cap.name : 'محذوف'}</td><td>${systemBadge(s.system)}</td><td>${s.carPlate || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue || 0) - (s.expense || 0)}</td><td>${statusBadge(s.status)}</td></tr>`; });
 }
-
 async function addCaptain() {
-  const name = document.getElementById('capName').value.trim();
-  const phone = document.getElementById('capPhone').value.trim();
-  const user = document.getElementById('capUser').value.trim();
-  const pass = document.getElementById('capPass').value.trim();
-  const system = document.getElementById('capSystem').value;
-  const carId = document.getElementById('capCar').value;
-  const tier1 = parseFloat(document.getElementById('capTier1').value) || 0;
-  const tier2 = parseFloat(document.getElementById('capTier2').value) || 0;
-  const tier3 = parseFloat(document.getElementById('capTier3').value) || 0;
-
+  const name = document.getElementById('capName').value.trim(), phone = document.getElementById('capPhone').value.trim(), user = document.getElementById('capUser').value.trim(), pass = document.getElementById('capPass').value.trim(), system = document.getElementById('capSystem').value, carId = document.getElementById('capCar').value;
+  const tier1 = parseFloat(document.getElementById('capTier1').value) || 0, tier2 = parseFloat(document.getElementById('capTier2').value) || 0, tier3 = parseFloat(document.getElementById('capTier3').value) || 0;
   if (!name || !user || !pass || pass.length < 6) { toast('أكمل البيانات (كلمة المرور 6 أحرف)', 'error'); return; }
   if (!/^[a-zA-Z0-9_]+$/.test(user)) { toast('اليوزر إنجليزي وأرقام فقط', 'error'); return; }
-
   showLoading('جاري إنشاء حساب الكابتن...');
   try {
-    const captains = await getCaptains();
-    if (captains.some(c => c.username === user)) { toast('اسم المستخدم موجود', 'error'); return; }
-
-    const oldUser = auth.currentUser;
-    const userCred = await auth.createUserWithEmailAndPassword(user + FAKE_DOMAIN, pass);
-    const car = (await getCars()).find(c => c.id === carId);
-
-    await addCaptainDB({
-      name, phone, username:user, password: pass, system, carId: carId || null, carPlate: car ? car.plate : '',
-      tiers: { t1: tier1, t2: tier2, t3: tier3 }, authUid: userCred.user.uid, createdAt: todayStr()
-    });
-
-    await auth.updateCurrentUser(oldUser);
-    
-    document.getElementById('capName').value = ''; document.getElementById('capPhone').value = '';
-    document.getElementById('capUser').value = ''; document.getElementById('capPass').value = '';
-    document.getElementById('capCar').value = '';
-    
-    toast('✅ تم إضافة الكابتن');
-    await renderAdmin();
-  } catch (e) {
-    toast('خطأ: ' + e.message, 'error');
-  } finally { hideLoading(); }
+    if ((await getCaptains()).some(c => c.username === user)) { toast('اسم المستخدم موجود', 'error'); return; }
+    const oldUser = auth.currentUser; const userCred = await auth.createUserWithEmailAndPassword(user + FAKE_DOMAIN, pass); const car = (await getCars()).find(c => c.id === carId);
+    await addCaptainDB({ name, phone, username:user, password: pass, system, carId: carId || null, carPlate: car ? car.plate : '', tiers: { t1: tier1, t2: tier2, t3: tier3 }, authUid: userCred.user.uid, createdAt: todayStr() });
+    await auth.updateCurrentUser(oldUser); ['capName','capPhone','capUser','capPass','capCar'].forEach(id => document.getElementById(id).value = ''); ['capTier1','capTier2','capTier3'].forEach(id => document.getElementById(id).value = '0');
+    toast('✅ تم إضافة الكابتن'); await renderAdmin();
+  } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { hideLoading(); }
 }
-
 async function renderCaptainsTable() {
-  const captains = await getCaptains();
-  const tbody = document.getElementById('captainsTable');
-  tbody.innerHTML = '';
+  const captains = await getCaptains(), tbody = document.getElementById('captainsTable'); tbody.innerHTML = '';
   if (captains.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">لا يوجد كباتن</td></tr>'; return; }
-
   for (const c of captains) {
     const shifts = (await getTransactions()).filter(t => t.captainId === c.id && t.status === 'closed');
-    const rev = shifts.reduce((s, x) => s + (x.revenue || 0), 0);
-    const exp = shifts.reduce((s, x) => s + (x.expense || 0), 0);
-    const d = await captainDebtBalance(c.id);
-    
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${c.name}</td><td>${c.username}</td><td>${systemBadge(c.system)}</td><td>${c.carPlate || '-'}</td>
-      <td style="color:#00E676;">${rev}</td><td style="color:#EF5350;">${exp}</td>
-      <td style="color:#FFC107;font-weight:bold;">${rev - exp}</td>
-      <td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td>
-      <td>
-        <button class="btn btn-outline btn-small" onclick="editCaptain('${c.id}')">تعديل</button>
-        <button class="btn btn-danger btn-small" onclick="deleteCaptain('${c.id}')">حذف</button>
-      </td>`;
-    tbody.appendChild(tr);
+    const rev = shifts.reduce((s, x) => s + (x.revenue || 0), 0), exp = shifts.reduce((s, x) => s + (x.expense || 0), 0), d = await captainDebtBalance(c.id);
+    tbody.innerHTML += `<tr><td>${c.name}</td><td>${c.username}</td><td>${systemBadge(c.system)}</td><td>${c.carPlate || '-'}</td><td style="color:#00E676;">${rev}</td><td style="color:#EF5350;">${exp}</td><td style="color:#FFC107;font-weight:bold;">${rev - exp}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td><td><button class="btn btn-outline btn-small" onclick="editCaptain('${c.id}')">تعديل</button> <button class="btn btn-danger btn-small" onclick="deleteCaptain('${c.id}')">حذف</button></td></tr>`;
   }
 }
-
-async function deleteCaptain(id) {
-  if (!confirm('حذف الكابتن وكل بياناته؟')) return;
-  showLoading('جاري الحذف...');
-  try { await deleteCaptainFull(id); toast('🗑️ تم الحذف'); await renderAdmin(); } 
-  catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
-}
-
+async function deleteCaptain(id) { if (!confirm('حذف الكابتن وكل بياناته؟')) return; showLoading('جاري الحذف...'); try { await deleteCaptainFull(id); toast('🗑️ تم الحذف'); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); } }
 async function editCaptain(id) {
-  const captains = await getCaptains();
-  const c = captains.find(x => x.id === id);
-  if (!c) return;
-  const newName = prompt('الاسم:', c.name);
-  if (newName === null) return;
-  const t1 = prompt('سعر الشريحة 1:', c.tiers?.t1 || 0);
-  if (t1 === null) return;
-  const t2 = prompt('سعر الشريحة 2:', c.tiers?.t2 || 0);
-  if (t2 === null) return;
-  const t3 = prompt('سعر الشريحة 3:', c.tiers?.t3 || 0);
-  if (t3 === null) return;
-
-  showLoading('جاري التعديل...');
-  try {
-    await updateCaptainDB(id, { name: newName.trim() || c.name, tiers: { t1: parseFloat(t1)||0, t2: parseFloat(t2)||0, t3: parseFloat(t3)||0 } });
-    toast('✏️ تم التعديل'); await renderAdmin();
-  } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
+  const c = (await getCaptains()).find(x => x.id === id); if (!c) return;
+  const n = prompt('الاسم:', c.name); if (n === null) return; const t1 = prompt('سعر الشريحة 1:', c.tiers?.t1 || 0); if (t1 === null) return; const t2 = prompt('سعر الشريحة 2:', c.tiers?.t2 || 0); if (t2 === null) return; const t3 = prompt('سعر الشريحة 3:', c.tiers?.t3 || 0); if (t3 === null) return;
+  showLoading('جاري التعديل...'); try { await updateCaptainDB(id, { name: n.trim() || c.name, tiers: { t1: parseFloat(t1)||0, t2: parseFloat(t2)||0, t3: parseFloat(t3)||0 } }); toast('✏️ تم التعديل'); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
-
 async function addCar() {
-  const plate = document.getElementById('carPlate').value.trim();
-  const model = document.getElementById('carModel').value.trim();
-  if (!plate || !model) { toast('أكمل البيانات', 'error'); return; }
-  showLoading('جاري الإضافة...');
-  try {
-    const cars = await getCars();
-    if (cars.some(c => c.plate === plate)) { toast('اللوحة موجودة', 'error'); return; }
-    await addCarDB({ plate, model, type: document.getElementById('carType').value, color: document.getElementById('carColor').value.trim(), createdAt: todayStr() });
-    document.getElementById('carPlate').value = ''; document.getElementById('carModel').value = '';
-    toast('✅ تم إضافة السيارة'); await renderAdmin();
-  } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
+  const plate = document.getElementById('carPlate').value.trim(), model = document.getElementById('carModel').value.trim();
+  if (!plate || !model) { toast('أكمل البيانات', 'error'); return; } showLoading('جاري الإضافة...');
+  try { if ((await getCars()).some(c => c.plate === plate)) { toast('اللوحة موجودة', 'error'); return; } await addCarDB({ plate, model, type: document.getElementById('carType').value, color: document.getElementById('carColor').value.trim(), createdAt: todayStr() }); document.getElementById('carPlate').value = ''; document.getElementById('carModel').value = ''; toast('✅ تم إضافة السيارة'); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
-
 async function renderCarsTable() {
-  const cars = await getCars();
-  const tbody = document.getElementById('carsTable');
-  tbody.innerHTML = '';
+  const cars = await getCars(), tbody = document.getElementById('carsTable'); tbody.innerHTML = '';
   if (cars.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد سيارات</td></tr>'; return; }
-  cars.forEach(c => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${c.plate}</td><td>${c.model}</td><td>${c.type}</td><td>${c.color || '-'}</td><td><button class="btn btn-danger btn-small" onclick="deleteCar('${c.id}')">حذف</button></td>`;
-    tbody.appendChild(tr);
-  });
+  cars.forEach(c => { tbody.innerHTML += `<tr><td>${c.plate}</td><td>${c.model}</td><td>${c.type}</td><td>${c.color || '-'}</td><td><button class="btn btn-danger btn-small" onclick="deleteCar('${c.id}')">حذف</button></td></tr>`; });
 }
-
-async function deleteCar(id) {
-  if (!confirm('حذف السيارة؟')) return;
-  showLoading('جاري الحذف...');
-  try { await deleteCarDB(id); toast('🗑️ تم الحذف'); await renderAdmin(); } finally { hideLoading(); }
-}
-
+async function deleteCar(id) { if (!confirm('حذف السيارة؟')) return; showLoading('جاري الحذف...'); try { await deleteCarDB(id); toast('🗑️ تم الحذف'); await renderAdmin(); } finally { hideLoading(); } }
 async function fillCarDropdowns() {
   const cars = await getCars();
-  const capSel = document.getElementById('capCar');
-  if (capSel) {
-    const val = capSel.value;
-    capSel.innerHTML = '<option value="">-- بدون --</option>';
-    cars.forEach(c => { capSel.innerHTML += `<option value="${c.id}">${c.plate} - ${c.model}</option>`; });
-    capSel.value = val;
-  }
-  const openSel = document.getElementById('openCar');
-  if (openSel) {
-    const val = openSel.value;
-    openSel.innerHTML = '<option value="">-- اختر السيارة --</option>';
-    cars.forEach(c => { openSel.innerHTML += `<option value="${c.id}">${c.plate} - ${c.model}</option>`; });
-    openSel.value = val;
-  }
+  const capSel = document.getElementById('capCar'); if (capSel) { const val = capSel.value; capSel.innerHTML = '<option value="">-- بدون --</option>'; cars.forEach(c => { capSel.innerHTML += `<option value="${c.id}">${c.plate} - ${c.model}</option>`; }); capSel.value = val; }
+  const openSel = document.getElementById('openCar'); if (openSel) { const val = openSel.value; openSel.innerHTML = '<option value="">-- اختر السيارة --</option>'; cars.forEach(c => { openSel.innerHTML += `<option value="${c.id}">${c.plate} - ${c.model}</option>`; }); openSel.value = val; }
 }
-
-async function fillCaptainFilter() {
-  const sel = document.getElementById('filterCaptain');
-  if (!sel) return;
-  const val = sel.value || 'all';
-  sel.innerHTML = '<option value="all">الكل</option>';
-  const captains = await getCaptains();
-  captains.forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
-  sel.value = val;
-}
-
-/* ============================================================
-   Admin Transactions & Review
-   ============================================================ */
+async function fillCaptainFilter() { const sel = document.getElementById('filterCaptain'); if (!sel) return; const val = sel.value || 'all'; sel.innerHTML = '<option value="all">الكل</option>'; (await getCaptains()).forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name}</option>`; }); sel.value = val; }
 async function renderAllTransactions() {
-  const filterCap = document.getElementById('filterCaptain').value;
-  const filterSystem = document.getElementById('filterSystem').value;
-  const filterStatus = document.getElementById('filterStatus').value;
-
-  let shifts = await getTransactions();
-  if (filterCap !== 'all') shifts = shifts.filter(s => s.captainId === filterCap);
-  if (filterSystem !== 'all') shifts = shifts.filter(s => s.system === filterSystem);
-  if (filterStatus !== 'all') shifts = shifts.filter(s => s.status === filterStatus);
-
-  const captains = await getCaptains();
-  const tbody = document.getElementById('allTransTable');
-  tbody.innerHTML = '';
+  const filterCap = document.getElementById('filterCaptain').value, filterSystem = document.getElementById('filterSystem').value, filterStatus = document.getElementById('filterStatus').value;
+  let shifts = await getTransactions(); if (filterCap !== 'all') shifts = shifts.filter(s => s.captainId === filterCap); if (filterSystem !== 'all') shifts = shifts.filter(s => s.system === filterSystem); if (filterStatus !== 'all') shifts = shifts.filter(s => s.status === filterStatus);
+  const captains = await getCaptains(), tbody = document.getElementById('allTransTable'); tbody.innerHTML = '';
   if (shifts.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا توجد عمليات</td></tr>'; return; }
-
-  shifts.forEach(s => {
-    const cap = captains.find(c => c.id === s.captainId);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${cap ? cap.name : 'محذوف'}</td>
-      <td>${systemBadge(s.system)}</td>
-      <td>${s.date || '-'}</td>
-      <td style="color:#00E676;">${s.revenue || 0}</td>
-      <td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td>
-      <td>${statusBadge(s.status)}</td>
-      <td>
-        <button class="btn btn-outline btn-small" onclick="showDetails('${s.id}')">${s.status === 'pending' ? '🔍 مراجعة' : 'عرض'}</button>
-        <button class="btn btn-danger btn-small" onclick="deleteTrans('${s.id}')">حذف</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  shifts.forEach(s => { const cap = captains.find(c => c.id === s.captainId); tbody.innerHTML += `<tr><td>${cap ? cap.name : 'محذوف'}</td><td>${systemBadge(s.system)}</td><td>${s.date || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td><td><button class="btn btn-outline btn-small" onclick="showDetails('${s.id}')">${s.status === 'pending' ? '🔍 مراجعة' : 'عرض'}</button> <button class="btn btn-danger btn-small" onclick="deleteTrans('${s.id}')">حذف</button></td></tr>`; });
 }
-
-async function deleteTrans(id) {
-  if (!confirm('حذف هذا الشيفت نهائياً؟')) return;
-  showLoading('جاري الحذف...');
-  try { await deleteTransactionDB(id); toast('🗑️ تم الحذف'); await renderAdmin(); } finally { hideLoading(); }
-}
-
+async function deleteTrans(id) { if (!confirm('حذف الشيفت نهائياً؟')) return; showLoading('جاري الحذف...'); try { await deleteTransactionDB(id); toast('🗑️ تم الحذف'); await renderAdmin(); } finally { hideLoading(); } }
 async function renderDebtsAdmin() {
-  const captains = await getCaptains();
-  const tbody = document.getElementById('debtsAdminTable');
-  tbody.innerHTML = '';
-  for (const c of captains) {
-    const d = await captainDebtBalance(c.id);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${c.name}</td><td style="color:#FFC107;">${d.totalAdd}</td><td style="color:#00E676;">${d.totalPaid}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td><td><button class="btn btn-outline btn-small" onclick="showCaptainDebts('${c.id}')">تفاصيل</button></td>`;
-    tbody.appendChild(tr);
-  }
-
-  const payTbody = document.getElementById('allPaymentsTable');
-  payTbody.innerHTML = '';
-  const payments = await getPayments();
-  payments.forEach(p => {
-    const cap = captains.find(c => c.id === p.captainId);
-    payTbody.innerHTML += `<tr><td>${cap?.name || 'محذوف'}</td><td>${p.date}</td><td style="color:#00E676;font-weight:bold;">${p.amount}</td><td>${p.method}</td><td>${p.note || '-'}</td></tr>`;
-  });
+  const captains = await getCaptains(), tbody = document.getElementById('debtsAdminTable'); tbody.innerHTML = '';
+  for (const c of captains) { const d = await captainDebtBalance(c.id); tbody.innerHTML += `<tr><td>${c.name}</td><td style="color:#FFC107;">${d.totalAdd}</td><td style="color:#00E676;">${d.totalPaid}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td><td><button class="btn btn-outline btn-small" onclick="showCaptainDebts('${c.id}')">تفاصيل</button></td></tr>`; }
+  const payTbody = document.getElementById('allPaymentsTable'); payTbody.innerHTML = '';
+  const payments = await getPayments(); payments.forEach(p => { const cap = captains.find(c => c.id === p.captainId); payTbody.innerHTML += `<tr><td>${cap?.name || 'محذوف'}</td><td>${p.date}</td><td style="color:#00E676;font-weight:bold;">${p.amount}</td><td>${p.method}</td><td>${p.note || '-'}</td></tr>`; });
 }
-
-async function showCaptainDebts(capId) {
-  const cap = (await getCaptains()).find(c => c.id === capId);
-  const bal = await captainDebtBalance(capId);
-  alert(`💰 مديونيات ${cap.name}\n\nالتراكم: ${bal.totalAdd} ج\nالمسدد: ${bal.totalPaid} ج\nالرصيد: ${bal.balance} ج`);
-}
-
+async function showCaptainDebts(capId) { const cap = (await getCaptains()).find(c => c.id === capId), bal = await captainDebtBalance(capId); alert(`💰 مديونيات ${cap.name}\n\nالتراكم: ${bal.totalAdd} ج\nالمسدد: ${bal.totalPaid} ج\nالرصيد: ${bal.balance} ج`); }
 async function renderReports() {
-  const tbody = document.getElementById('reportTable');
-  tbody.innerHTML = '';
-  const captains = await getCaptains();
-  for (const c of captains) {
-    const shifts = (await getTransactions()).filter(t => t.captainId === c.id && t.status === 'closed');
-    const rev = shifts.reduce((s, x) => s + (x.revenue || 0), 0);
-    const exp = shifts.reduce((s, x) => s + (x.expense || 0), 0);
-    const d = await captainDebtBalance(c.id);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${c.name}</td><td>${systemBadge(c.system)}</td><td>${shifts.length}</td><td style="color:#00E676;">${rev}</td><td style="color:#EF5350;">${exp}</td><td style="color:#FFC107;font-weight:bold;">${rev - exp}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td>`;
-    tbody.appendChild(tr);
-  }
+  const tbody = document.getElementById('reportTable'); tbody.innerHTML = ''; const captains = await getCaptains();
+  for (const c of captains) { const shifts = (await getTransactions()).filter(t => t.captainId === c.id && t.status === 'closed'); const rev = shifts.reduce((s, x) => s + (x.revenue || 0), 0), exp = shifts.reduce((s, x) => s + (x.expense || 0), 0), d = await captainDebtBalance(c.id); tbody.innerHTML += `<tr><td>${c.name}</td><td>${systemBadge(c.system)}</td><td>${shifts.length}</td><td style="color:#00E676;">${rev}</td><td style="color:#EF5350;">${exp}</td><td style="color:#FFC107;font-weight:bold;">${rev - exp}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td></tr>`; }
 }
 </script>
 <script>
-/* ============================================================
-   وظائف الكابتن (Captain Functions)
-   ============================================================ */
-
-async function renderCaptain() {
-  try {
-    await fillCarDropdowns();
-    await renderMyHome();
-    await renderMyTransactions();
-    await renderCloseShift();
-    await renderMyDebts();
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-function selectShift(shift) {
-  selectedShift = shift;
-  document.getElementById('shiftMorning').classList.toggle('selected', shift === 'morning');
-  document.getElementById('shiftEvening').classList.toggle('selected', shift === 'evening');
-}
-
-function selectSystemForShift(sys) {
-  selectedSystemForShift = sys;
-  document.getElementById('sysFixed').classList.toggle('selected', sys === 'fixed');
-  document.getElementById('sysThird').classList.toggle('selected', sys === 'third');
-}
-
+async function renderCaptain() { try { await fillCarDropdowns(); await renderMyHome(); await renderMyTransactions(); await renderCloseShift(); await renderMyDebts(); } catch (e) {} }
+function selectShift(shift) { selectedShift = shift; document.getElementById('shiftMorning').classList.toggle('selected', shift === 'morning'); document.getElementById('shiftEvening').classList.toggle('selected', shift === 'evening'); }
+function selectSystemForShift(sys) { selectedSystemForShift = sys; document.getElementById('sysFixed').classList.toggle('selected', sys === 'fixed'); document.getElementById('sysThird').classList.toggle('selected', sys === 'third'); }
 function changeSystemForClose(sys) {
-  if (!currentOpenShift) return;
-  currentOpenShift.closeSystem = sys;
-  document.getElementById('closeSysFixed').classList.toggle('selected', sys === 'fixed');
-  document.getElementById('closeSysThird').classList.toggle('selected', sys === 'third');
-  
-  if (sys === 'fixed') {
-    document.getElementById('fixedForm').style.display = 'block';
-    document.getElementById('thirdForm').style.display = 'none';
-    calcFixed();
-  } else {
-    document.getElementById('fixedForm').style.display = 'none';
-    document.getElementById('thirdForm').style.display = 'block';
-    calcThird();
-  }
+  if (!currentOpenShift) return; currentOpenShift.closeSystem = sys;
+  document.getElementById('closeSysFixed').classList.toggle('selected', sys === 'fixed'); document.getElementById('closeSysThird').classList.toggle('selected', sys === 'third');
+  if (sys === 'fixed') { document.getElementById('fixedForm').style.display = 'block'; document.getElementById('thirdForm').style.display = 'none'; calcFixed(); }
+  else { document.getElementById('fixedForm').style.display = 'none'; document.getElementById('thirdForm').style.display = 'block'; calcThird(); }
 }
 
-/* ============================================================
-   🆕 كاميرا قراءة العداد (Live OCR)
-   ============================================================ */
-
+/* ======== الكاميرا ======== */
 async function openCamera(targetType) {
   cameraTargetField = targetType;
-  
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    toast('⚠️ الكاميرا تحتاج HTTPS. ارفع الموقع على GitHub Pages.', 'warn');
-    return;
-  }
-
-  const modal = document.getElementById('cameraModal');
-  modal.style.display = 'flex';
-  document.getElementById('cameraStatus').textContent = '⏳ جاري تشغيل الكاميرا...';
-  document.getElementById('cameraResult').textContent = '-';
-  document.getElementById('cameraConfirmBtn').style.display = 'none';
-
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') { toast('⚠️ الكاميرا تحتاج HTTPS', 'warn'); return; }
+  const modal = document.getElementById('cameraModal'); modal.style.display = 'flex'; document.getElementById('cameraStatus').textContent = '⏳ جاري تشغيل الكاميرا...'; document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraConfirmBtn').style.display = 'none';
   try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-    });
-
-    const reader = document.getElementById('cameraReader');
-    reader.innerHTML = '';
-    
-    const video = document.createElement('video');
-    video.id = 'cameraVideo';
-    video.autoplay = true;
-    video.playsInline = true;
-    video.muted = true;
-    video.style.width = '100%';
-    video.style.height = '100%';
-    video.style.objectFit = 'cover';
-    video.srcObject = cameraStream;
-    reader.appendChild(video);
-
-    await video.play();
-
-    const overlay = document.getElementById('cameraOverlay');
-    overlay.style.position = 'absolute';
-
-    document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم داخل المربع';
-    
-    startCameraOCR();
-
-  } catch (err) {
-    console.error(err);
-    toast('❌ تعذر تشغيل الكاميرا: ' + err.message, 'error');
-    closeCamera();
-  }
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } });
+    const reader = document.getElementById('cameraReader'); reader.innerHTML = '';
+    const video = document.createElement('video'); video.id = 'cameraVideo'; video.autoplay = true; video.playsInline = true; video.muted = true; video.style.width = '100%'; video.style.height = '100%'; video.style.objectFit = 'cover'; video.srcObject = cameraStream; reader.appendChild(video);
+    await video.play(); document.getElementById('cameraOverlay').style.position = 'absolute'; document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم داخل المربع'; startCameraOCR();
+  } catch (err) { toast('❌ تعذر تشغيل الكاميرا: ' + err.message, 'error'); closeCamera(); }
 }
-
 function startCameraOCR() {
-  if (!currentWorker) {
-    currentWorker = Tesseract.createWorker('eng');
-    currentWorker.then(w => {
-      w.setParameters({ tessedit_char_whitelist: '0123456789' });
-    });
-  }
-
+  if (!currentWorker) { currentWorker = Tesseract.createWorker('eng'); currentWorker.then(w => { w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7', tessedit_ocr_engine_mode: '1' }); }); }
   if (cameraInterval) clearInterval(cameraInterval);
-  
   cameraInterval = setInterval(async () => {
-    if (isReading) return;
-    const video = document.getElementById('cameraVideo');
-    if (!video || video.readyState !== 4) return;
-
-    isReading = true;
-
+    if (isReading) return; const video = document.getElementById('cameraVideo'); if (!video || video.readyState !== 4) return; isReading = true;
     try {
-      const canvas = document.createElement('canvas');
-      const videoRect = video.getBoundingClientRect();
-      const overlayRect = document.getElementById('cameraOverlay').getBoundingClientRect();
+      const canvas = document.createElement('canvas'); const videoRect = video.getBoundingClientRect(); const overlayRect = document.getElementById('cameraOverlay').getBoundingClientRect();
+      const cropX = ((overlayRect.left - videoRect.left) / videoRect.width) * video.videoWidth, cropY = ((overlayRect.top - videoRect.top) / videoRect.height) * video.videoHeight, cropW = (overlayRect.width / videoRect.width) * video.videoWidth, cropH = (overlayRect.height / videoRect.height) * video.videoHeight;
       
-      const cropX = ((overlayRect.left - videoRect.left) / videoRect.width) * video.videoWidth;
-      const cropY = ((overlayRect.top - videoRect.top) / videoRect.height) * video.videoHeight;
-      const cropW = (overlayRect.width / videoRect.width) * video.videoWidth;
-      const cropH = (overlayRect.height / videoRect.height) * video.videoHeight;
+      // تكبير 3 مرات لتحسين الدقة
+      const scale = 3; canvas.width = cropW * scale; canvas.height = cropH * scale;
+      const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW * scale, cropH * scale);
       
-      canvas.width = cropW;
-      canvas.height = cropH;
-      
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      // تحسين التباين
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) { const gray = (data[i] + data[i+1] + data[i+2]) / 3; const val = gray > 128 ? 255 : 0; data[i] = val; data[i+1] = val; data[i+2] = val; }
+      ctx.putImageData(imageData, 0, 0);
 
-      const worker = await currentWorker;
-      const ret = await worker.recognize(canvas);
+      const worker = await currentWorker; const ret = await worker.recognize(canvas);
+      let text = ret.data.text.replace(/\s+/g, ''); 
       
-      let text = ret.data.text.replace(/\s+/g, '');
-      let numbers = text.match(/\d{4,}/g);
+      // فلترة الأرقام: من 3 إلى 15 رقم
+      let numbers = text.match(/\d{3,15}/g);
       
       if (numbers && numbers.length > 0) {
-        const result = numbers.reduce((a, b) => a.length > b.length ? a : b);
-        
-        document.getElementById('cameraResult').textContent = result;
-        document.getElementById('cameraStatus').textContent = '✅ تم قراءة الرقم! اضغط "تأكيد"';
-        document.getElementById('cameraStatus').style.color = '#00E676';
-        document.getElementById('cameraConfirmBtn').style.display = 'inline-block';
-        document.getElementById('cameraOverlay').style.borderColor = '#00E676';
+        const result = numbers.reduce((a, b) => a.length >= b.length ? a : b);
+        document.getElementById('cameraResult').textContent = result; document.getElementById('cameraStatus').textContent = '✅ تم قراءة الرقم! اضغط "تأكيد"'; document.getElementById('cameraStatus').style.color = '#00E676'; document.getElementById('cameraConfirmBtn').style.display = 'inline-block'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
       } else {
-        document.getElementById('cameraResult').textContent = '?';
-        document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم بوضوح';
-        document.getElementById('cameraStatus').style.color = '#FFC107';
-        document.getElementById('cameraConfirmBtn').style.display = 'none';
+        document.getElementById('cameraResult').textContent = '?'; document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم بوضوح'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
       }
-    } catch (e) {
-      // تجاهل
-    } finally {
-      isReading = false;
-    }
-  }, 1500);
+    } catch (e) {} finally { isReading = false; }
+  }, 1000);
 }
-
 function confirmCameraReading() {
-  const resultText = document.getElementById('cameraResult').textContent;
-  if (!resultText || resultText === '-' || resultText === '?') {
-    toast('لا يوجد رقم لتأكيده', 'error');
-    return;
-  }
-
-  const value = parseInt(resultText);
-
-  if (cameraTargetField === 'start') {
-    document.getElementById('startOdoValue').value = value;
-    document.getElementById('startOcrResult').innerHTML = `✅ الرقم المقروء: <strong>${value}</strong>`;
-    document.getElementById('startOcrResult').classList.add('active');
-  } else if (cameraTargetField === 'end') {
-    document.getElementById('fsKmEnd').value = value;
-    document.getElementById('endOcrResult').innerHTML = `✅ الرقم المقروء: <strong>${value}</strong>`;
-    document.getElementById('endOcrResult').classList.add('active');
-    calcFixed();
-  } else if (cameraTargetField === 'tsEnd') {
-    document.getElementById('tsKmEnd').value = value;
-    document.getElementById('tsEndOcrResult').innerHTML = `✅ الرقم المقروء: <strong>${value}</strong>`;
-    document.getElementById('tsEndOcrResult').classList.add('active');
-    calcThird();
-  }
-
-  closeCamera();
-  toast('✅ تم حفظ الرقم: ' + value);
+  const val = document.getElementById('cameraResult').textContent; if (!val || val === '-' || val === '?') { toast('لا يوجد رقم', 'error'); return; }
+  const value = parseInt(val);
+  if (cameraTargetField === 'start') { document.getElementById('startOdoValue').value = value; document.getElementById('startOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('startOcrResult').classList.add('active'); }
+  else if (cameraTargetField === 'end') { document.getElementById('fsKmEnd').value = value; document.getElementById('endOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('endOcrResult').classList.add('active'); calcFixed(); }
+  else if (cameraTargetField === 'tsEnd') { document.getElementById('tsKmEnd').value = value; document.getElementById('tsEndOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('tsEndOcrResult').classList.add('active'); calcThird(); }
+  closeCamera(); toast('✅ تم حفظ الرقم: ' + value);
 }
-
-function restartCamera() {
-  document.getElementById('cameraResult').textContent = '-';
-  document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم داخل المربع';
-  document.getElementById('cameraStatus').style.color = '#FFC107';
-  document.getElementById('cameraConfirmBtn').style.display = 'none';
-  document.getElementById('cameraOverlay').style.borderColor = '#00E676';
-}
-
+function restartCamera() { document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none'; }
 function switchToManual() {
   closeCamera();
-  
-  if (cameraTargetField === 'start') {
-    document.getElementById('startOdoValue').removeAttribute('readonly');
-    document.getElementById('startOdoValue').style.background = 'rgba(33,150,243,0.15)';
-    document.getElementById('startOdoValue').style.borderColor = '#2196F3';
-    document.getElementById('startOdoValue').focus();
-    toast('✏️ اكتب الرقم يدوياً (سيراجعه الأدمن)', 'warn');
-  } else if (cameraTargetField === 'end') {
-    document.getElementById('fsKmEnd').removeAttribute('readonly');
-    document.getElementById('fsKmEnd').style.background = 'rgba(33,150,243,0.15)';
-    document.getElementById('fsKmEnd').style.borderColor = '#2196F3';
-    document.getElementById('fsKmEnd').focus();
-    toast('✏️ اكتب الرقم يدوياً (سيراجعه الأدمن)', 'warn');
-  } else if (cameraTargetField === 'tsEnd') {
-    document.getElementById('tsKmEnd').removeAttribute('readonly');
-    document.getElementById('tsKmEnd').style.background = 'rgba(33,150,243,0.15)';
-    document.getElementById('tsKmEnd').style.borderColor = '#2196F3';
-    document.getElementById('tsKmEnd').focus();
-    toast('✏️ اكتب الرقم يدوياً (سيراجعه الأدمن)', 'warn');
-  }
+  const field = cameraTargetField === 'start' ? 'startOdoValue' : cameraTargetField === 'end' ? 'fsKmEnd' : 'tsKmEnd';
+  const el = document.getElementById(field); if (el) { el.removeAttribute('readonly'); el.style.background = 'rgba(33,150,243,0.15)'; el.style.borderColor = '#2196F3'; el.focus(); toast('✏️ اكتب الرقم يدوياً', 'warn'); }
 }
-
 function closeCamera() {
   if (cameraInterval) { clearInterval(cameraInterval); cameraInterval = null; }
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(t => t.stop());
-    cameraStream = null;
-  }
-  if (currentWorker) {
-    currentWorker.then(w => w.terminate()).catch(() => {});
-    currentWorker = null;
-  }
-  document.getElementById('cameraModal').style.display = 'none';
-  isReading = false;
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  if (currentWorker) { currentWorker.then(w => w.terminate()).catch(() => {}); currentWorker = null; }
+  document.getElementById('cameraModal').style.display = 'none'; isReading = false;
 }
 
-/* ============================================================
-   GPS
-   ============================================================ */
+/* ======== GPS ======== */
 function captureStartLocation() {
-  const btn = document.getElementById('btnStartGps');
-  const info = document.getElementById('startGpsInfo');
-  btn.disabled = true; btn.textContent = '⏳ جاري تحديد الموقع...';
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      selectedStartLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: nowFull() };
-      btn.disabled = false; btn.classList.add('gps-done'); btn.textContent = '✅ تم تسجيل موقع البداية';
-      info.innerHTML = `✅ ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-    },
-    (err) => { btn.disabled = false; btn.textContent = '📍 إرسال موقعي'; toast('فشل تحديد الموقع', 'error'); },
-    { enableHighAccuracy: true, timeout: 15000 }
-  );
+  const btn = document.getElementById('btnStartGps'), info = document.getElementById('startGpsInfo'); btn.disabled = true; btn.textContent = '⏳ جاري تحديد الموقع...';
+  navigator.geolocation.getCurrentPosition((pos) => { selectedStartLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: nowFull() }; btn.disabled = false; btn.classList.add('gps-done'); btn.textContent = '✅ تم تسجيل الموقع'; info.innerHTML = `✅ ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`; },
+    (err) => { btn.disabled = false; btn.textContent = '📍 إرسال موقعي'; toast('فشل تحديد الموقع', 'error'); }, { enableHighAccuracy: true, timeout: 15000 });
 }
-
 function captureEndLocation() {
-  const btn = document.getElementById('btnEndGps');
-  const info = document.getElementById('endGpsInfo');
-  btn.disabled = true; btn.textContent = '⏳ جاري تحديد الموقع...';
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      selectedEndLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: nowFull() };
-      btn.disabled = false; btn.classList.add('gps-done'); btn.textContent = '✅ تم تسجيل موقع النهاية';
-      info.innerHTML = `✅ ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-    },
-    (err) => { btn.disabled = false; btn.textContent = '📍 إرسال موقعي'; toast('فشل تحديد الموقع', 'error'); },
-    { enableHighAccuracy: true, timeout: 15000 }
-  );
+  const btn = document.getElementById('btnEndGps'), info = document.getElementById('endGpsInfo'); btn.disabled = true; btn.textContent = '⏳ جاري تحديد الموقع...';
+  navigator.geolocation.getCurrentPosition((pos) => { selectedEndLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: nowFull() }; btn.disabled = false; btn.classList.add('gps-done'); btn.textContent = '✅ تم تسجيل الموقع'; info.innerHTML = `✅ ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`; },
+    (err) => { btn.disabled = false; btn.textContent = '📍 إرسال موقعي'; toast('فشل تحديد الموقع', 'error'); }, { enableHighAccuracy: true, timeout: 15000 });
 }
 
-/* ============================================================
-   بدء الشيفت
-   ============================================================ */
+/* ======== Logic ======== */
 async function openShift() {
-  const carId = document.getElementById('openCar').value;
-  const startOdo = parseFloat(document.getElementById('startOdoValue').value);
-
-  if (!carId) { toast('اختر السيارة', 'error'); return; }
-  if (!selectedShift) { toast('اختر الوردية', 'error'); return; }
-  if (!selectedSystemForShift) { toast('اختر نظام اليوم', 'error'); return; }
-  if (!startOdo) { toast('لم يتم قراءة العداد — استخدم الكاميرا', 'error'); return; }
-  if (!selectedStartLocation) { toast('أرسل موقع البداية', 'error'); return; }
-
-  disableBtn('openShiftBtn', '⏳ جاري بدء الشيفت...');
-  showLoading('جاري بدء الشيفت...');
-
+  const carId = document.getElementById('openCar').value, startOdo = parseFloat(document.getElementById('startOdoValue').value);
+  if (!carId) { toast('اختر السيارة', 'error'); return; } if (!selectedShift) { toast('اختر الوردية', 'error'); return; } if (!selectedSystemForShift) { toast('اختر نظام اليوم', 'error'); return; } if (!startOdo) { toast('لم يتم قراءة العداد', 'error'); return; } if (!selectedStartLocation) { toast('أرسل موقع البداية', 'error'); return; }
+  disableBtn('openShiftBtn', '⏳ جاري بدء الشيفت...'); showLoading('جاري بدء الشيفت...');
   try {
-    const allTrans = await getTransactions();
-    if (allTrans.find(t => t.captainId === currentUser.id && (t.status === 'open' || t.status === 'pending'))) {
-      toast('لديك شيفت مفتوح أو معلق! لا يمكنك البدء حتى يتم مراجعة السابق.', 'error'); return;
-    }
-
-    const cars = await getCars();
-    const car = cars.find(c => c.id === carId);
-
-    const shift = {
-      captainId: currentUser.id,
-      system: selectedSystemForShift,
-      shift: selectedShift,
-      carId: carId,
-      carPlate: car ? car.plate : '-',
-      carModel: car ? car.model : '-',
-      startTime: nowFull(),
-      startLocation: selectedStartLocation,
-      startOdometer: startOdo,
-      note: document.getElementById('openNote').value.trim(),
-      status: 'open',
-      date: todayStr(),
-      revenue: 0,
-      expense: 0
-    };
-
+    if ((await getTransactions()).find(t => t.captainId === currentUser.id && (t.status === 'open' || t.status === 'pending'))) { toast('لديك شيفت مفتوح أو معلق!', 'error'); return; }
+    const car = (await getCars()).find(c => c.id === carId);
+    const shift = { captainId: currentUser.id, system: selectedSystemForShift, shift: selectedShift, carId: carId, carPlate: car ? car.plate : '-', carModel: car ? car.model : '-', startTime: nowFull(), startLocation: selectedStartLocation, startOdometer: startOdo, note: document.getElementById('openNote').value.trim(), status: 'open', date: todayStr(), revenue: 0, expense: 0 };
     await addTransactionDB(shift);
-
-    document.getElementById('startOdoValue').value = '';
-    document.getElementById('startOcrResult').classList.remove('active');
-    document.getElementById('openCar').value = '';
-    document.getElementById('openNote').value = '';
-    document.getElementById('shiftMorning').classList.remove('selected');
-    document.getElementById('shiftEvening').classList.remove('selected');
-    document.getElementById('sysFixed').classList.remove('selected');
-    document.getElementById('sysThird').classList.remove('selected');
-    document.getElementById('btnStartGps').classList.remove('gps-done');
-    document.getElementById('btnStartGps').textContent = '📍 إرسال موقعي';
-    document.getElementById('startGpsInfo').textContent = '';
+    ['startOdoValue','openCar','openNote','startGpsInfo'].forEach(id => { const el = document.getElementById(id); if (el.tagName === 'INPUT') el.value = ''; else el.textContent = ''; });
+    document.getElementById('startOcrResult').classList.remove('active'); document.getElementById('shiftMorning').classList.remove('selected'); document.getElementById('shiftEvening').classList.remove('selected'); document.getElementById('sysFixed').classList.remove('selected'); document.getElementById('sysThird').classList.remove('selected'); document.getElementById('btnStartGps').classList.remove('gps-done'); document.getElementById('btnStartGps').textContent = '📍 إرسال موقعي';
     selectedShift = null; selectedSystemForShift = null; selectedStartLocation = null;
-
-    toast('✅ تم بدء الشيفت بنجاح!');
-    await renderCaptain();
-    switchTab('tab-closeshift', document.querySelector('#captainTabs .tab-btn:nth-child(3)'));
-  } catch (e) {
-    toast('خطأ: ' + e.message, 'error');
-  } finally {
-    enableBtn('openShiftBtn'); hideLoading();
-  }
+    toast('✅ تم بدء الشيفت'); await renderCaptain(); switchTab('tab-closeshift', document.querySelector('#captainTabs .tab-btn:nth-child(3)'));
+  } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { enableBtn('openShiftBtn'); hideLoading(); }
 }
-
-/* ============================================================
-   حساب الشيفت الثابت
-   ============================================================ */
 async function calcFixed() {
-  const kmStart = currentOpenShift?.startOdometer || 0;
-  const kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0;
-  const travel = parseFloat(document.getElementById('fsTravel').value) || 0;
-  const privateT = parseFloat(document.getElementById('fsPrivate').value) || 0;
-  const schools = parseFloat(document.getElementById('fsSchools').value) || 0;
-  const employees = parseFloat(document.getElementById('fsEmployees').value) || 0;
-  const trans = parseFloat(document.getElementById('fsTransferred').value) || 0;
-
-  document.getElementById('fsKmStart').value = kmStart;
-  const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0;
-  document.getElementById('fsKmUsed').value = kmUsed;
-
-  const captains = await getCaptains();
-  const cap = captains.find(c => c.id === currentUser.id);
-  const tiers = cap && cap.tiers ? cap.tiers : { t1:0, t2:0, t3:0 };
-
-  let tierLabel = '-';
-  let tierPrice = 0;
-  if (kmUsed > 0 && kmUsed <= 350) { tierLabel = 'الأولى (1-350 كم)'; tierPrice = tiers.t1 || 0; }
-  else if (kmUsed > 350 && kmUsed <= 420) { tierLabel = 'الثانية (350-420 كم)'; tierPrice = tiers.t2 || 0; }
-  else if (kmUsed > 420 && kmUsed <= 500) { tierLabel = 'الثالثة (420-500 كم)'; tierPrice = tiers.t3 || 0; }
-  else if (kmUsed > 500) { tierLabel = 'خارج الشرائح (>500 كم)'; tierPrice = 0; }
-
-  document.getElementById('fsTier').value = tierLabel;
-  document.getElementById('fsTierValue').value = tierPrice;
-
-  const totalRevenue = tierPrice + travel + privateT + schools + employees;
-  document.getElementById('fsRevenue').value = totalRevenue;
-
-  const extra = getExtraExpensesTotal('fs');
-  const totalExtraEl = document.getElementById('fsTotalExtraExpense');
-  if (totalExtraEl) totalExtraEl.value = extra.total;
-
-  const remaining = Math.max(0, totalRevenue - trans - extra.total);
-  document.getElementById('fsRemaining').value = remaining;
+  const kmStart = currentOpenShift?.startOdometer || 0, kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0, travel = parseFloat(document.getElementById('fsTravel').value) || 0, privateT = parseFloat(document.getElementById('fsPrivate').value) || 0, schools = parseFloat(document.getElementById('fsSchools').value) || 0, employees = parseFloat(document.getElementById('fsEmployees').value) || 0, trans = parseFloat(document.getElementById('fsTransferred').value) || 0;
+  document.getElementById('fsKmStart').value = kmStart; const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0; document.getElementById('fsKmUsed').value = kmUsed;
+  const cap = (await getCaptains()).find(c => c.id === currentUser.id), tiers = cap && cap.tiers ? cap.tiers : { t1:0, t2:0, t3:0 };
+  let tierLabel = '-', tierPrice = 0;
+  if (kmUsed > 0 && kmUsed <= 350) { tierLabel = 'الأولى'; tierPrice = tiers.t1 || 0; } else if (kmUsed > 350 && kmUsed <= 420) { tierLabel = 'الثانية'; tierPrice = tiers.t2 || 0; } else if (kmUsed > 420 && kmUsed <= 500) { tierLabel = 'الثالثة'; tierPrice = tiers.t3 || 0; } else if (kmUsed > 500) { tierLabel = 'خارج الشرائح'; tierPrice = 0; }
+  document.getElementById('fsTier').value = tierLabel; document.getElementById('fsTierValue').value = tierPrice;
+  const totalRevenue = tierPrice + travel + privateT + schools + employees; document.getElementById('fsRevenue').value = totalRevenue;
+  const extra = getExtraExpensesTotal('fs'); document.getElementById('fsTotalExtraExpense').value = extra.total; document.getElementById('fsRemaining').value = Math.max(0, totalRevenue - trans - extra.total);
 }
-
 function calcThird() {
-  const kmStart = currentOpenShift?.startOdometer || 0;
-  const kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0;
-  const uber = parseFloat(document.getElementById('tsUber').value) || 0;
-  const didi = parseFloat(document.getElementById('tsDidi').value) || 0;
-  const indriver = parseFloat(document.getElementById('tsIndriver').value) || 0;
-  const external = parseFloat(document.getElementById('tsExternal').value) || 0;
-  const travel = parseFloat(document.getElementById('tsTravel').value) || 0;
-  const privateT = parseFloat(document.getElementById('tsPrivate').value) || 0;
-  const schools = parseFloat(document.getElementById('tsSchools').value) || 0;
-  const employees = parseFloat(document.getElementById('tsEmployees').value) || 0;
-  const gas = parseFloat(document.getElementById('tsGas').value) || 0;
-  const fuel = parseFloat(document.getElementById('tsFuel').value) || 0;
-  const trans = parseFloat(document.getElementById('tsTransferred').value) || 0;
-
-  document.getElementById('tsKmStart').value = kmStart;
-  const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0;
-  document.getElementById('tsKmUsed').value = kmUsed;
-
-  const totalRev = uber + didi + indriver + external + travel + privateT + schools + employees;
-  const totalExp = gas + fuel;
-  const net = totalRev - totalExp;
-  const captainShare = net / 3;
-  const carShare = (net * 2) / 3;
-  
-  const extra = getExtraExpensesTotal('ts');
-  const totalExtraEl = document.getElementById('tsTotalExtraExpense');
-  if (totalExtraEl) totalExtraEl.value = extra.total;
-
-  const remaining = totalRev - captainShare - trans - totalExp - extra.total;
-
-  document.getElementById('tsTotalRevenue').value = totalRev;
-  document.getElementById('tsCaptainShare').value = captainShare.toFixed(2);
-  document.getElementById('tsCarShare').value = carShare.toFixed(2);
-  document.getElementById('tsRemaining').value = remaining.toFixed(2);
+  const kmStart = currentOpenShift?.startOdometer || 0, kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0, uber = parseFloat(document.getElementById('tsUber').value) || 0, didi = parseFloat(document.getElementById('tsDidi').value) || 0, indriver = parseFloat(document.getElementById('tsIndriver').value) || 0, external = parseFloat(document.getElementById('tsExternal').value) || 0, travel = parseFloat(document.getElementById('tsTravel').value) || 0, privateT = parseFloat(document.getElementById('tsPrivate').value) || 0, schools = parseFloat(document.getElementById('tsSchools').value) || 0, employees = parseFloat(document.getElementById('tsEmployees').value) || 0, gas = parseFloat(document.getElementById('tsGas').value) || 0, fuel = parseFloat(document.getElementById('tsFuel').value) || 0, trans = parseFloat(document.getElementById('tsTransferred').value) || 0;
+  document.getElementById('tsKmStart').value = kmStart; const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0; document.getElementById('tsKmUsed').value = kmUsed;
+  const totalRev = uber + didi + indriver + external + travel + privateT + schools + employees, totalExp = gas + fuel, net = totalRev - totalExp, captainShare = net / 3, carShare = (net * 2) / 3;
+  const extra = getExtraExpensesTotal('ts'); document.getElementById('tsTotalExtraExpense').value = extra.total; const remaining = totalRev - captainShare - trans - totalExp - extra.total;
+  document.getElementById('tsTotalRevenue').value = totalRev; document.getElementById('tsCaptainShare').value = captainShare.toFixed(2); document.getElementById('tsCarShare').value = carShare.toFixed(2); document.getElementById('tsRemaining').value = remaining.toFixed(2);
 }
-
-/* ============================================================
-   إظهار شاشة الإغلاق
-   ============================================================ */
 async function renderCloseShift() {
-  const allTrans = await getTransactions();
-  const openShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'open');
-  currentOpenShift = openShift;
-
-  if (!openShift) {
-    document.getElementById('noOpenShiftMsg').style.display = 'block';
-    document.getElementById('closeShiftBox').style.display = 'none';
-    return;
-  }
-
-  document.getElementById('noOpenShiftMsg').style.display = 'none';
-  document.getElementById('closeShiftBox').style.display = 'block';
-
-  document.getElementById('csSystem').textContent = systemName(openShift.system);
-  document.getElementById('csCar').textContent = openShift.carPlate + ' - ' + (openShift.carModel || '');
-  document.getElementById('csShift').textContent = shiftName(openShift.shift);
-  document.getElementById('csStartTime').textContent = openShift.startTime;
-
-  currentOpenShift.closeSystem = openShift.system;
-  document.getElementById('closeSysFixed').classList.toggle('selected', openShift.system === 'fixed');
-  document.getElementById('closeSysThird').classList.toggle('selected', openShift.system === 'third');
-
-  if (openShift.system === 'fixed') {
-    document.getElementById('fixedForm').style.display = 'block';
-    document.getElementById('thirdForm').style.display = 'none';
-    calcFixed();
-  } else {
-    document.getElementById('fixedForm').style.display = 'none';
-    document.getElementById('thirdForm').style.display = 'block';
-    calcThird();
-  }
-
-  selectedEndLocation = null;
-  const btnE = document.getElementById('btnEndGps');
-  if (btnE) {
-    btnE.classList.remove('gps-done');
-    btnE.textContent = '📍 إرسال موقعي';
-    btnE.disabled = false;
-  }
-  document.getElementById('endGpsInfo').textContent = '';
+  const openShift = (await getTransactions()).find(t => t.captainId === currentUser.id && t.status === 'open'); currentOpenShift = openShift;
+  if (!openShift) { document.getElementById('noOpenShiftMsg').style.display = 'block'; document.getElementById('closeShiftBox').style.display = 'none'; return; }
+  document.getElementById('noOpenShiftMsg').style.display = 'none'; document.getElementById('closeShiftBox').style.display = 'block';
+  document.getElementById('csSystem').textContent = systemName(openShift.system); document.getElementById('csCar').textContent = openShift.carPlate + ' - ' + (openShift.carModel || ''); document.getElementById('csShift').textContent = shiftName(openShift.shift); document.getElementById('csStartTime').textContent = openShift.startTime;
+  currentOpenShift.closeSystem = openShift.system; document.getElementById('closeSysFixed').classList.toggle('selected', openShift.system === 'fixed'); document.getElementById('closeSysThird').classList.toggle('selected', openShift.system === 'third');
+  if (openShift.system === 'fixed') { document.getElementById('fixedForm').style.display = 'block'; document.getElementById('thirdForm').style.display = 'none'; calcFixed(); } else { document.getElementById('fixedForm').style.display = 'none'; document.getElementById('thirdForm').style.display = 'block'; calcThird(); }
+  selectedEndLocation = null; const btnE = document.getElementById('btnEndGps'); if (btnE) { btnE.classList.remove('gps-done'); btnE.textContent = '📍 إرسال موقعي'; btnE.disabled = false; } document.getElementById('endGpsInfo').textContent = '';
 }
-
-/* ============================================================
-   إدارة المصروفات الإضافية
-   ============================================================ */
-function addExtraExpense(prefix) {
-  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
-  list.push({ name: '', amount: 0 });
-  renderExtraExpenses(prefix);
-}
-
-function removeExtraExpense(prefix, index) {
-  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
-  list.splice(index, 1);
-  renderExtraExpenses(prefix);
-  if (prefix === 'fs') calcFixed(); else calcThird();
-}
-
-function updateExtraExpense(prefix, index, field, value) {
-  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
-  if (field === 'amount') list[index].amount = parseFloat(value) || 0;
-  else list[index].name = value;
-  if (prefix === 'fs') calcFixed(); else calcThird();
-}
-
+function addExtraExpense(prefix) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; list.push({ name: '', amount: 0 }); renderExtraExpenses(prefix); }
+function removeExtraExpense(prefix, index) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; list.splice(index, 1); renderExtraExpenses(prefix); if (prefix === 'fs') calcFixed(); else calcThird(); }
+function updateExtraExpense(prefix, index, field, value) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; if (field === 'amount') list[index].amount = parseFloat(value) || 0; else list[index].name = value; if (prefix === 'fs') calcFixed(); else calcThird(); }
 function renderExtraExpenses(prefix) {
-  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
-  const container = document.getElementById(prefix + 'ExtraExpensesList');
-  if (!container) return;
+  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses, container = document.getElementById(prefix + 'ExtraExpensesList'); if (!container) return;
   if (list.length === 0) { container.innerHTML = '<div style="color:#9E9E9E;font-size:12px;text-align:center;">لا توجد مصروفات إضافية</div>'; return; }
-
-  container.innerHTML = list.map((item, i) => `
-    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
-      <input type="text" value="${item.name}" placeholder="اسم المصروف" onchange="updateExtraExpense('${prefix}', ${i}, 'name', this.value)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,193,7,0.2);background:rgba(20,20,20,0.9);color:#fff;font-size:12px;">
-      <input type="number" value="${item.amount}" placeholder="0" onchange="updateExtraExpense('${prefix}', ${i}, 'amount', this.value)" style="width:80px;padding:8px;border-radius:8px;border:1px solid rgba(255,193,7,0.2);background:rgba(20,20,20,0.9);color:#fff;font-size:12px;">
-      <button type="button" onclick="removeExtraExpense('${prefix}', ${i})" style="background:#EF5350;color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;">🗑️</button>
-    </div>
-  `).join('');
+  container.innerHTML = list.map((item, i) => `<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;"><input type="text" value="${item.name}" placeholder="اسم المصروف" onchange="updateExtraExpense('${prefix}', ${i}, 'name', this.value)" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,193,7,0.2);background:rgba(20,20,20,0.9);color:#fff;font-size:12px;"><input type="number" value="${item.amount}" placeholder="0" onchange="updateExtraExpense('${prefix}', ${i}, 'amount', this.value)" style="width:80px;padding:8px;border-radius:8px;border:1px solid rgba(255,193,7,0.2);background:rgba(20,20,20,0.9);color:#fff;font-size:12px;"><button type="button" onclick="removeExtraExpense('${prefix}', ${i})" style="background:#EF5350;color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;">🗑️</button></div>`).join('');
 }
+function getExtraExpensesTotal(prefix) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; const manual = list.reduce((s, e) => s + (e.amount || 0), 0), fuel = parseFloat(document.getElementById(prefix + 'ExtraFuel')?.value) || 0, gas = parseFloat(document.getElementById(prefix + 'ExtraGas')?.value) || 0; return { manual, fuel, gas, total: manual + fuel + gas, list }; }
+function toggleTransferImg(prefix) { const m = document.getElementById(prefix + 'TransferMethod'), b = document.getElementById(prefix + 'TransferImgBox'), i = document.getElementById(prefix + 'TransferImg'); if (!m || !b) return; if (m.value === 'كاش') { b.style.display = 'none'; if (i) i.value = ''; } else b.style.display = 'block'; }
 
-function getExtraExpensesTotal(prefix) {
-  const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses;
-  const manual = list.reduce((s, e) => s + (e.amount || 0), 0);
-  const fuel = parseFloat(document.getElementById(prefix + 'ExtraFuel')?.value) || 0;
-  const gas = parseFloat(document.getElementById(prefix + 'ExtraGas')?.value) || 0;
-  return { manual, fuel, gas, total: manual + fuel + gas, list };
-}
-
-function toggleTransferImg(prefix) {
-  const methodSelect = document.getElementById(prefix + 'TransferMethod');
-  const imgBox = document.getElementById(prefix + 'TransferImgBox');
-  const imgInput = document.getElementById(prefix + 'TransferImg');
-  if (!methodSelect || !imgBox) return;
-  if (methodSelect.value === 'كاش') {
-    imgBox.style.display = 'none';
-    if (imgInput) imgInput.value = '';
-  } else {
-    imgBox.style.display = 'block';
-  }
-}
-
-/* ============================================================
-   إغلاق الشيفت (يرسل للمراجعة)
-   ============================================================ */
 async function closeShift() {
-  if (!currentOpenShift) { toast('لا يوجد شيفت مفتوح', 'error'); return; }
-  if (!selectedEndLocation) { toast('أرسل موقع النهاية أولاً', 'error'); return; }
-
-  const shift = { ...currentOpenShift };
-  disableBtn('closeShiftBtn', '⏳ جاري الحفظ ورفع الصور...');
-
+  if (!currentOpenShift) { toast('لا يوجد شيفت مفتوح', 'error'); return; } if (!selectedEndLocation) { toast('أرسل موقع النهاية أولاً', 'error'); return; }
+  const shift = { ...currentOpenShift }; disableBtn('closeShiftBtn', '⏳ جاري الحفظ ورفع الصور...');
   try {
-    let updateData = {
-      endLocation: selectedEndLocation,
-      endTime: nowFull(),
-      status: 'pending',
-      closedAt: nowFull(),
-      system: currentOpenShift.closeSystem
-    };
-
+    let updateData = { endLocation: selectedEndLocation, endTime: nowFull(), status: 'pending', closedAt: nowFull(), system: currentOpenShift.closeSystem };
     if (shift.system === 'fixed') {
-      const kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0;
-      const kmStart = shift.startOdometer;
-      const transMethod = document.getElementById('fsTransferMethod').value;
-      const transImg = document.getElementById('fsTransferImg').files[0];
-
-      if (kmEnd <= kmStart) { toast('كيلوهات النهاية يجب أن تكون أكبر من البداية', 'error'); return; }
-      if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; }
-      if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
-
-      showLoading('جاري رفع الصور...');
-      
-      const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null;
-      
-      const extraExp = getExtraExpensesTotal('fs');
-      
-      updateData = {
-        ...updateData,
-        revenue: parseFloat(document.getElementById('fsRevenue').value) || 0,
-        expense: extraExp.total,
-        kmEnd, kmUsed: kmEnd - kmStart,
-        tier: document.getElementById('fsTier').value,
-        tierValue: parseFloat(document.getElementById('fsTierValue').value) || 0,
-        transferred: parseFloat(document.getElementById('fsTransferred').value) || 0,
-        remaining: parseFloat(document.getElementById('fsRemaining').value) || 0,
-        transferMethod: transMethod,
-        transferImg: transImgUrl,
-        travel: parseFloat(document.getElementById('fsTravel').value) || 0,
-        privateTrips: parseFloat(document.getElementById('fsPrivate').value) || 0,
-        schoolTrips: parseFloat(document.getElementById('fsSchools').value) || 0,
-        employeeTrips: parseFloat(document.getElementById('fsEmployees').value) || 0,
-        extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0),
-        extraExpenseTotal: extraExp.total,
-        extraFuel: extraExp.fuel,
-        extraGas: extraExp.gas
-      };
-
+      const kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0, kmStart = shift.startOdometer, transMethod = document.getElementById('fsTransferMethod').value, transImg = document.getElementById('fsTransferImg').files[0];
+      if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
+      showLoading('جاري رفع الصور...'); const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; const extraExp = getExtraExpensesTotal('fs');
+      updateData = { ...updateData, revenue: parseFloat(document.getElementById('fsRevenue').value) || 0, expense: extraExp.total, kmEnd, kmUsed: kmEnd - kmStart, tier: document.getElementById('fsTier').value, tierValue: parseFloat(document.getElementById('fsTierValue').value) || 0, transferred: parseFloat(document.getElementById('fsTransferred').value) || 0, remaining: parseFloat(document.getElementById('fsRemaining').value) || 0, transferMethod: transMethod, transferImg: transImgUrl, travel: parseFloat(document.getElementById('fsTravel').value) || 0, privateTrips: parseFloat(document.getElementById('fsPrivate').value) || 0, schoolTrips: parseFloat(document.getElementById('fsSchools').value) || 0, employeeTrips: parseFloat(document.getElementById('fsEmployees').value) || 0, extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0), extraExpenseTotal: extraExp.total, extraFuel: extraExp.fuel, extraGas: extraExp.gas };
     } else if (shift.system === 'third') {
-      const kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0;
-      const kmStart = shift.startOdometer;
-      const transMethod = document.getElementById('tsTransferMethod').value;
-      const transImg = document.getElementById('tsTransferImg').files[0];
-
-      if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; }
-      if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; }
-      if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
-
-      showLoading('جاري رفع الصور...');
-
-      const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null;
-      const gasImgs = document.getElementById('tsGasImgs').files;
-      const fuelImgs = document.getElementById('tsFuelImgs').files;
-      const gasUrls = await uploadFiles(gasImgs, 'gas');
-      const fuelUrls = await uploadFiles(fuelImgs, 'fuel');
-
-      const extraExp = getExtraExpensesTotal('ts');
-
-      updateData = {
-        ...updateData,
-        revenue: parseFloat(document.getElementById('tsTotalRevenue').value) || 0,
-        expense: (parseFloat(document.getElementById('tsGas').value)||0) + (parseFloat(document.getElementById('tsFuel').value)||0) + extraExp.total,
-        kmEnd, kmUsed: kmEnd - kmStart,
-        uber: parseFloat(document.getElementById('tsUber').value) || 0,
-        didi: parseFloat(document.getElementById('tsDidi').value) || 0,
-        indriver: parseFloat(document.getElementById('tsIndriver').value) || 0,
-        external: parseFloat(document.getElementById('tsExternal').value) || 0,
-        travel: parseFloat(document.getElementById('tsTravel').value) || 0,
-        privateTrips: parseFloat(document.getElementById('tsPrivate').value) || 0,
-        schoolTrips: parseFloat(document.getElementById('tsSchools').value) || 0,
-        employeeTrips: parseFloat(document.getElementById('tsEmployees').value) || 0,
-        gas: parseFloat(document.getElementById('tsGas').value) || 0,
-        fuel: parseFloat(document.getElementById('tsFuel').value) || 0,
-        captainShare: parseFloat(document.getElementById('tsCaptainShare').value) || 0,
-        carShare: parseFloat(document.getElementById('tsCarShare').value) || 0,
-        transferred: parseFloat(document.getElementById('tsTransferred').value) || 0,
-        remaining: parseFloat(document.getElementById('tsRemaining').value) || 0,
-        transferMethod: transMethod,
-        transferImg: transImgUrl,
-        gasImgs: gasUrls,
-        fuelImgs: fuelUrls,
-        extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0),
-        extraExpenseTotal: extraExp.total,
-        extraFuel: extraExp.fuel,
-        extraGas: extraExp.gas
-      };
+      const kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0, kmStart = shift.startOdometer, transMethod = document.getElementById('tsTransferMethod').value, transImg = document.getElementById('tsTransferImg').files[0];
+      if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
+      showLoading('جاري رفع الصور...'); const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; const gasUrls = await uploadFiles(document.getElementById('tsGasImgs').files, 'gas'), fuelUrls = await uploadFiles(document.getElementById('tsFuelImgs').files, 'fuel'), extraExp = getExtraExpensesTotal('ts');
+      updateData = { ...updateData, revenue: parseFloat(document.getElementById('tsTotalRevenue').value) || 0, expense: (parseFloat(document.getElementById('tsGas').value)||0) + (parseFloat(document.getElementById('tsFuel').value)||0) + extraExp.total, kmEnd, kmUsed: kmEnd - kmStart, uber: parseFloat(document.getElementById('tsUber').value) || 0, didi: parseFloat(document.getElementById('tsDidi').value) || 0, indriver: parseFloat(document.getElementById('tsIndriver').value) || 0, external: parseFloat(document.getElementById('tsExternal').value) || 0, travel: parseFloat(document.getElementById('tsTravel').value) || 0, privateTrips: parseFloat(document.getElementById('tsPrivate').value) || 0, schoolTrips: parseFloat(document.getElementById('tsSchools').value) || 0, employeeTrips: parseFloat(document.getElementById('tsEmployees').value) || 0, gas: parseFloat(document.getElementById('tsGas').value) || 0, fuel: parseFloat(document.getElementById('tsFuel').value) || 0, captainShare: parseFloat(document.getElementById('tsCaptainShare').value) || 0, carShare: parseFloat(document.getElementById('tsCarShare').value) || 0, transferred: parseFloat(document.getElementById('tsTransferred').value) || 0, remaining: parseFloat(document.getElementById('tsRemaining').value) || 0, transferMethod: transMethod, transferImg: transImgUrl, gasImgs: gasUrls, fuelImgs: fuelUrls, extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0), extraExpenseTotal: extraExp.total, extraFuel: extraExp.fuel, extraGas: extraExp.gas };
     }
-
-    await updateTransactionDB(shift.id, updateData);
-    resetCloseForms();
-    toast('✅ تم إرسال الشيفت للمراجعة بنجاح!');
-    await renderCaptain();
-    switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
-
-  } catch (e) {
-    console.error(e);
-    toast('حدث خطأ: ' + e.message, 'error');
-  } finally {
-    enableBtn('closeShiftBtn'); hideLoading();
-  }
+    await updateTransactionDB(shift.id, updateData); resetCloseForms(); toast('✅ تم إرسال الشيفت للمراجعة بنجاح!'); await renderCaptain(); switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
+  } catch (e) { console.error(e); toast('حدث خطأ: ' + e.message, 'error'); } finally { enableBtn('closeShiftBtn'); hideLoading(); }
 }
-
 function resetCloseForms() {
-  ['fsKmEnd','fsKmUsed','fsTransferred','fsRemaining','fsTier','fsTierValue','fsRevenue','fsExtraFuel','fsExtraGas','fsTotalExtraExpense'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
+  ['fsKmEnd','fsKmUsed','fsTransferred','fsRemaining','fsTier','fsTierValue','fsRevenue','fsExtraFuel','fsExtraGas','fsTotalExtraExpense'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   ['fsTravel','fsPrivate','fsSchools','fsEmployees'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
-  document.getElementById('fsTransferMethod').value = '';
-  document.getElementById('fsTransferImgBox').style.display = 'block';
-  document.getElementById('fsTransferImg').value = '';
-
-  ['tsKmEnd','tsKmUsed','tsTransferred','tsRemaining','tsTotalRevenue','tsCaptainShare','tsCarShare','tsTotalExtraExpense'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
+  document.getElementById('fsTransferMethod').value = ''; document.getElementById('fsTransferImgBox').style.display = 'block'; document.getElementById('fsTransferImg').value = '';
+  ['tsKmEnd','tsKmUsed','tsTransferred','tsRemaining','tsTotalRevenue','tsCaptainShare','tsCarShare','tsTotalExtraExpense'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   ['tsUber','tsDidi','tsIndriver','tsExternal','tsGas','tsFuel','tsTravel','tsPrivate','tsSchools','tsEmployees','tsExtraFuel','tsExtraGas'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
-  document.getElementById('tsTransferMethod').value = '';
-  document.getElementById('tsTransferImgBox').style.display = 'block';
-  ['tsTransferImg','tsGasImgs','tsFuelImgs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('tsTransferMethod').value = ''; document.getElementById('tsTransferImgBox').style.display = 'block'; ['tsTransferImg','tsGasImgs','tsFuelImgs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('tsGasPreview').innerHTML = ''; document.getElementById('tsFuelPreview').innerHTML = '';
-
-  fsExtraExpenses = []; tsExtraExpenses = [];
-  renderExtraExpenses('fs'); renderExtraExpenses('ts');
-  selectedEndLocation = null;
+  fsExtraExpenses = []; tsExtraExpenses = []; renderExtraExpenses('fs'); renderExtraExpenses('ts'); selectedEndLocation = null;
 }
 
-/* ============================================================
-   رئيسية الكابتن والسجل والمديونيات
-   ============================================================ */
 async function renderMyHome() {
-  const allTrans = await getTransactions();
-  const shifts = allTrans.filter(t => t.captainId === currentUser.id && t.status === 'closed');
-  const today = todayStr();
-
-  let todayWork = 0, todayExp = 0;
+  const allTrans = await getTransactions(), shifts = allTrans.filter(t => t.captainId === currentUser.id && t.status === 'closed'), today = todayStr(); let todayWork = 0, todayExp = 0;
   shifts.forEach(s => { if (s.date === today) { todayWork += s.revenue || 0; todayExp += s.expense || 0; } });
-
-  document.getElementById('myTodayWork').textContent = todayWork;
-  document.getElementById('myTodayExp').textContent = todayExp;
-  document.getElementById('myTodayNet').textContent = todayWork - todayExp;
-
-  const captains = await getCaptains();
-  const cap = captains.find(c => c.id === currentUser.id);
-  document.getElementById('mySystem').textContent = cap ? systemName(cap.system) : '-';
-  document.getElementById('myCar').textContent = cap ? (cap.carPlate || '-') : '-';
-
-  const openShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'open');
-  const pendingShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'pending');
-  let statusTxt = '🔴 مغلق';
-  if (openShift) statusTxt = '🟢 مفتوح';
-  if (pendingShift) statusTxt = '🟡 معلق للمراجعة';
-  document.getElementById('myShiftStatus').textContent = statusTxt;
-
-  document.getElementById('myLastShift').textContent = shifts.length > 0 ? shifts[shifts.length - 1].date : '-';
-
-  const d = await captainDebtBalance(currentUser.id);
-  document.getElementById('myDebtTotal').textContent = d.balance;
-
-  const tbody = document.getElementById('myRecentTable');
-  tbody.innerHTML = '';
-  const recent = allTrans.filter(t => t.captainId === currentUser.id).slice(0, 5);
-  if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
-  recent.forEach(s => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${s.date}</td><td>${systemBadge(s.system)}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td>`;
-    tbody.appendChild(tr);
-  });
+  document.getElementById('myTodayWork').textContent = todayWork; document.getElementById('myTodayExp').textContent = todayExp; document.getElementById('myTodayNet').textContent = todayWork - todayExp;
+  const cap = (await getCaptains()).find(c => c.id === currentUser.id); document.getElementById('mySystem').textContent = cap ? systemName(cap.system) : '-'; document.getElementById('myCar').textContent = cap ? (cap.carPlate || '-') : '-';
+  const openShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'open'), pendingShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'pending'); let sT = '🔴 مغلق'; if (openShift) sT = '🟢 مفتوح'; if (pendingShift) sT = '🟡 معلق'; document.getElementById('myShiftStatus').textContent = sT; document.getElementById('myLastShift').textContent = shifts.length > 0 ? shifts[shifts.length - 1].date : '-';
+  document.getElementById('myDebtTotal').textContent = (await captainDebtBalance(currentUser.id)).balance;
+  const tbody = document.getElementById('myRecentTable'); tbody.innerHTML = ''; const recent = allTrans.filter(t => t.captainId === currentUser.id).slice(0, 5); if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
+  recent.forEach(s => { tbody.innerHTML += `<tr><td>${s.date}</td><td>${systemBadge(s.system)}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td></tr>`; });
 }
-
 async function renderMyTransactions() {
-  const allTrans = await getTransactions();
-  const shifts = allTrans.filter(t => t.captainId === currentUser.id);
-  const tbody = document.getElementById('myAllTable');
-  tbody.innerHTML = '';
-  if (shifts.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
-  shifts.forEach(s => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${s.date}</td><td>${systemBadge(s.system)}</td><td>${s.carPlate || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td><td><button class="btn btn-outline btn-small" onclick="showDetails('${s.id}')">عرض</button></td>`;
-    tbody.appendChild(tr);
-  });
+  const shifts = (await getTransactions()).filter(t => t.captainId === currentUser.id), tbody = document.getElementById('myAllTable'); tbody.innerHTML = ''; if (shifts.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
+  shifts.forEach(s => { tbody.innerHTML += `<tr><td>${s.date}</td><td>${systemBadge(s.system)}</td><td>${s.carPlate || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td><td><button class="btn btn-outline btn-small" onclick="showDetails('${s.id}')">عرض</button></td></tr>`; });
 }
-
 async function renderMyDebts() {
-  const bal = await captainDebtBalance(currentUser.id);
-  document.getElementById('debtCurrentBalance').textContent = bal.balance;
-  document.getElementById('debtTotalAccum').textContent = bal.totalAdd;
-  document.getElementById('debtTotalPaid').textContent = bal.totalPaid;
-
-  const payTbody = document.getElementById('paymentsTable');
-  payTbody.innerHTML = '';
-  const myPays = (await getPayments()).filter(p => p.captainId === currentUser.id);
-  myPays.forEach(p => {
-    payTbody.innerHTML += `<tr><td>${p.date}</td><td style="color:#00E676;font-weight:bold;">${p.amount}</td><td>${p.method}</td><td>${p.note || '-'}</td><td>${p.img ? `<img src="${p.img}" style="width:40px;height:40px;border-radius:6px;cursor:pointer;" onclick="window.open('${p.img}')">` : '-'}</td></tr>`;
-  });
-
-  const debtTbody = document.getElementById('debtsTable');
-  debtTbody.innerHTML = '';
-  const myDebts = (await getDebts()).filter(d => d.captainId === currentUser.id);
-  myDebts.forEach(d => {
-    debtTbody.innerHTML += `<tr><td>${d.date}</td><td>${systemBadge(d.system)}</td><td style="color:#EF5350;font-weight:bold;">+${d.amount}</td><td style="color:#FFC107;">${d.balanceAfter}</td></tr>`;
-  });
-
+  const bal = await captainDebtBalance(currentUser.id); document.getElementById('debtCurrentBalance').textContent = bal.balance; document.getElementById('debtTotalAccum').textContent = bal.totalAdd; document.getElementById('debtTotalPaid').textContent = bal.totalPaid;
+  const payTbody = document.getElementById('paymentsTable'); payTbody.innerHTML = ''; (await getPayments()).filter(p => p.captainId === currentUser.id).forEach(p => { payTbody.innerHTML += `<tr><td>${p.date}</td><td style="color:#00E676;font-weight:bold;">${p.amount}</td><td>${p.method}</td><td>${p.note || '-'}</td><td>${p.img ? `<img src="${p.img}" style="width:40px;height:40px;border-radius:6px;" onclick="window.open('${p.img}')">` : '-'}</td></tr>`; });
+  const debtTbody = document.getElementById('debtsTable'); debtTbody.innerHTML = ''; (await getDebts()).filter(d => d.captainId === currentUser.id).forEach(d => { debtTbody.innerHTML += `<tr><td>${d.date}</td><td>${systemBadge(d.system)}</td><td style="color:#EF5350;font-weight:bold;">+${d.amount}</td><td style="color:#FFC107;">${d.balanceAfter}</td></tr>`; });
   updatePayHint();
 }
-
-async function updatePayHint() {
-  const bal = (await captainDebtBalance(currentUser.id)).balance;
-  const hint = document.getElementById('payHint');
-  if (bal <= 0) hint.innerHTML = '<span style="color:#00E676;">✅ لا يوجد مديونية</span>';
-  else hint.innerHTML = `💰 المديونية: <strong style="color:#EF5350;">${bal} ج</strong>`;
-}
-
-async function validatePayAmount() {
-  const bal = (await captainDebtBalance(currentUser.id)).balance;
-  const amount = parseFloat(document.getElementById('payAmount').value) || 0;
-  const hint = document.getElementById('payHint');
-  if (amount > bal) hint.innerHTML = `<span style="color:#EF5350;">❌ المبلغ أكبر من المديونية (${bal})</span>`;
-  else if (amount > 0) hint.innerHTML = `<span style="color:#00E676;">✅ صحيح</span>`;
-  else updatePayHint();
-}
-
+async function updatePayHint() { const bal = (await captainDebtBalance(currentUser.id)).balance, hint = document.getElementById('payHint'); if (bal <= 0) hint.innerHTML = '<span style="color:#00E676;">✅ لا يوجد مديونية</span>'; else hint.innerHTML = `💰 المديونية: <strong style="color:#EF5350;">${bal} ج</strong>`; }
+async function validatePayAmount() { const bal = (await captainDebtBalance(currentUser.id)).balance, amount = parseFloat(document.getElementById('payAmount').value) || 0, hint = document.getElementById('payHint'); if (amount > bal) hint.innerHTML = `<span style="color:#EF5350;">❌ أكبر من المديونية (${bal})</span>`; else if (amount > 0) hint.innerHTML = `<span style="color:#00E676;">✅ صحيح</span>`; else updatePayHint(); }
 async function submitPayment() {
-  const amount = parseFloat(document.getElementById('payAmount').value) || 0;
-  const method = document.getElementById('payMethod').value;
-  const note = document.getElementById('payNote').value.trim();
-  const imgFile = document.getElementById('payImg').files[0];
-  const bal = (await captainDebtBalance(currentUser.id)).balance;
-
-  if (bal <= 0) { toast('لا يوجد مديونية', 'error'); return; }
-  if (!amount || amount > bal) { toast('مبلغ غير صحيح', 'error'); return; }
-  if (!method) { toast('اختر طريقة الدفع', 'error'); return; }
-  if (!imgFile) { toast('صورة الإثبات مطلوبة', 'error'); return; }
-
-  disableBtn('payBtn', '⏳ جاري الرفع...');
-  showLoading('جاري رفع صورة الإثبات...');
-
-  try {
-    const imgUrl = await uploadFile(imgFile, 'payments');
-    await addPaymentDB({ captainId: currentUser.id, date: todayStr(), amount, method, note, img: imgUrl });
-    document.getElementById('payAmount').value = ''; document.getElementById('payMethod').value = '';
-    document.getElementById('payNote').value = ''; document.getElementById('payImg').value = '';
-    toast('✅ تم تسجيل التسديد');
-    await renderMyDebts(); await renderMyHome();
-  } catch (e) { toast('خطأ: ' + e.message, 'error'); }
-  finally { enableBtn('payBtn'); hideLoading(); }
+  const amount = parseFloat(document.getElementById('payAmount').value) || 0, method = document.getElementById('payMethod').value, note = document.getElementById('payNote').value.trim(), imgFile = document.getElementById('payImg').files[0], bal = (await captainDebtBalance(currentUser.id)).balance;
+  if (bal <= 0) { toast('لا يوجد مديونية', 'error'); return; } if (!amount || amount > bal) { toast('مبلغ غير صحيح', 'error'); return; } if (!method) { toast('اختر طريقة الدفع', 'error'); return; } if (!imgFile) { toast('صورة الإثبات مطلوبة', 'error'); return; }
+  disableBtn('payBtn', '⏳ جاري الرفع...'); showLoading('جاري رفع صورة الإثبات...');
+  try { const imgUrl = await uploadFile(imgFile, 'payments'); await addPaymentDB({ captainId: currentUser.id, date: todayStr(), amount, method, note, img: imgUrl }); document.getElementById('payAmount').value = ''; document.getElementById('payMethod').value = ''; document.getElementById('payNote').value = ''; document.getElementById('payImg').value = ''; toast('✅ تم تسجيل التسديد'); await renderMyDebts(); await renderMyHome(); } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { enableBtn('payBtn'); hideLoading(); }
 }
 </script>
 <script>
-/* ============================================================
-   شاشة التفاصيل والمراجعة (للأدمن)
-   ============================================================ */
-
 async function showDetails(id) {
-  const shifts = await getTransactions();
-  const s = shifts.find(t => t.id === id);
-  if (!s) return;
-  const cap = (await getCaptains()).find(c => c.id === s.captainId);
-
-  let html = `
-    <div style="color:#BDBDBD;font-size:13px;line-height:2;">
+  const s = (await getTransactions()).find(t => t.id === id); if (!s) return; const cap = (await getCaptains()).find(c => c.id === s.captainId);
+  let html = `<div style="color:#BDBDBD;font-size:13px;line-height:2;">
       <div><strong style="color:#FFC107;">الكابتن:</strong> ${cap ? cap.name : 'محذوف'}</div>
       <div><strong style="color:#FFC107;">النظام:</strong> ${systemName(s.system)}</div>
       <div><strong style="color:#FFC107;">السيارة:</strong> ${s.carPlate || '-'}</div>
@@ -2718,326 +1173,58 @@ async function showDetails(id) {
       <div><strong style="color:#FFC107;">المتبقي:</strong> ${s.remaining || 0} ج</div>
       <div><strong style="color:#FFC107;">طريقة التحويل:</strong> ${s.transferMethod || '-'}</div>
       <div><strong style="color:#FFC107;">كيلوهات:</strong> ${s.startOdometer || 0} → ${s.kmEnd || 0} (مستهلك: ${s.kmUsed || 0})</div>
-    </div>
-  `;
-
-  if (s.system === 'fixed') {
-    html += `
-      <hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">
-      <div style="color:#BDBDBD;font-size:13px;line-height:2;">
-        <div><strong style="color:#FFC107;">الشريحة:</strong> ${s.tier || '-'}</div>
-        <div><strong style="color:#FFC107;">قيمة الشريحة:</strong> ${s.tierValue || 0} ج</div>
-        <div><strong style="color:#FFC107;">مشاوير سفر:</strong> ${s.travel || 0}</div>
-        <div><strong style="color:#FFC107;">مشاوير خاصة:</strong> ${s.privateTrips || 0}</div>
-        <div><strong style="color:#FFC107;">دورات مدارس:</strong> ${s.schoolTrips || 0}</div>
-        <div><strong style="color:#FFC107;">دورات موظفيين:</strong> ${s.employeeTrips || 0}</div>
-      </div>
-    `;
-  } else if (s.system === 'third') {
-    html += `
-      <hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">
-      <div style="color:#BDBDBD;font-size:13px;line-height:2;">
-        <div><strong style="color:#FFC107;">أوبر:</strong> ${s.uber || 0}</div>
-        <div><strong style="color:#FFC107;">ديدي:</strong> ${s.didi || 0}</div>
-        <div><strong style="color:#FFC107;">إندرايفر:</strong> ${s.indriver || 0}</div>
-        <div><strong style="color:#FFC107;">مشوار خارجي:</strong> ${s.external || 0}</div>
-        <div><strong style="color:#EF5350;">غاز:</strong> ${s.gas || 0}</div>
-        <div><strong style="color:#EF5350;">بنزين:</strong> ${s.fuel || 0}</div>
-        <div><strong style="color:#FFC107;">نصيب الكابتن:</strong> ${s.captainShare || 0}</div>
-        <div><strong style="color:#FFC107;">نصيب السيارة:</strong> ${s.carShare || 0}</div>
-      </div>
-    `;
-  }
-
-  if (s.extraExpenseTotal > 0) {
-    html += `
-      <hr style="border-color:rgba(239,83,80,0.2);margin:10px 0;">
-      <div style="color:#EF5350;font-size:13px;margin-top:8px;">
-        <div style="color:#EF5350;font-weight:bold;margin-bottom:4px;">💸 المصروفات الإضافية:</div>
-        <div>بنزين: ${s.extraFuel || 0} ج | غاز: ${s.extraGas || 0} ج</div>
-      </div>
-    `;
-    if (s.extraExpenses && s.extraExpenses.length > 0) {
-      html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;"><strong>مصروفات أخرى:</strong><br>`;
-      s.extraExpenses.forEach(e => { html += `• ${e.name}: ${e.amount} ج<br>`; });
-      html += `</div>`;
-    }
-    html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;font-weight:bold;">الإجمالي: ${s.extraExpenseTotal} ج</div>`;
-  }
-
-  // عرض الصور
-  const imgs = [
-    { key: 'startOdometerImg', label: '📸 صورة عداد البداية' },
-    { key: 'endOdometerImg', label: '📸 صورة عداد النهاية' },
-    { key: 'transferImg', label: '📸 صورة التحويل' }
-  ];
-  const imgHtml = imgs.filter(i => s[i.key]).map(i =>
-    `<div style="margin-top:8px;">
-       <div style="color:#FFC107;font-size:12px;margin-bottom:4px;">${i.label}:</div>
-       <img src="${s[i.key]}" style="width:100%;max-width:220px;border-radius:12px;border:1.5px solid rgba(255,193,7,0.4);cursor:pointer;" onclick="window.open('${s[i.key]}')">
-     </div>`
-  ).join('');
+    </div>`;
+  if (s.system === 'fixed') { html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">الشريحة:</strong> ${s.tier || '-'}</div><div><strong style="color:#FFC107;">قيمة الشريحة:</strong> ${s.tierValue || 0} ج</div><div><strong style="color:#FFC107;">مشاوير سفر:</strong> ${s.travel || 0}</div><div><strong style="color:#FFC107;">مشاوير خاصة:</strong> ${s.privateTrips || 0}</div><div><strong style="color:#FFC107;">دورات مدارس:</strong> ${s.schoolTrips || 0}</div><div><strong style="color:#FFC107;">دورات موظفيين:</strong> ${s.employeeTrips || 0}</div></div>`; }
+  else if (s.system === 'third') { html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">أوبر:</strong> ${s.uber || 0}</div><div><strong style="color:#FFC107;">ديدي:</strong> ${s.didi || 0}</div><div><strong style="color:#FFC107;">إندرايفر:</strong> ${s.indriver || 0}</div><div><strong style="color:#FFC107;">مشوار خارجي:</strong> ${s.external || 0}</div><div><strong style="color:#EF5350;">غاز:</strong> ${s.gas || 0}</div><div><strong style="color:#EF5350;">بنزين:</strong> ${s.fuel || 0}</div><div><strong style="color:#FFC107;">نصيب الكابتن:</strong> ${s.captainShare || 0}</div><div><strong style="color:#FFC107;">نصيب السيارة:</strong> ${s.carShare || 0}</div></div>`; }
+  if (s.extraExpenseTotal > 0) { html += `<hr style="border-color:rgba(239,83,80,0.2);margin:10px 0;"><div style="color:#EF5350;font-size:13px;margin-top:8px;"><div style="color:#EF5350;font-weight:bold;margin-bottom:4px;">💸 المصروفات الإضافية:</div><div>بنزين: ${s.extraFuel || 0} ج | غاز: ${s.extraGas || 0} ج</div></div>`; if (s.extraExpenses && s.extraExpenses.length > 0) { html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;"><strong>مصروفات أخرى:</strong><br>`; s.extraExpenses.forEach(e => { html += `• ${e.name}: ${e.amount} ج<br>`; }); html += `</div>`; } html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;font-weight:bold;">الإجمالي: ${s.extraExpenseTotal} ج</div>`; }
+  const imgs = [{ key: 'startOdometerImg', label: '📸 عداد البداية' }, { key: 'endOdometerImg', label: '📸 عداد النهاية' }, { key: 'transferImg', label: '📸 التحويل' }];
+  const imgHtml = imgs.filter(i => s[i.key]).map(i => `<div style="margin-top:8px;"><div style="color:#FFC107;font-size:12px;margin-bottom:4px;">${i.label}:</div><img src="${s[i.key]}" style="width:100%;max-width:220px;border-radius:12px;border:1.5px solid rgba(255,193,7,0.4);cursor:pointer;" onclick="window.open('${s[i.key]}')"></div>`).join('');
   if (imgHtml) html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">` + imgHtml;
-
   document.getElementById('detailsContent').innerHTML = html;
-
-  // لوحة تحكم المراجعة
   const adminControls = document.getElementById('adminReviewControls');
-  if (currentUser.role === 'admin' && s.status === 'pending') {
-    adminControls.style.display = 'block';
-    document.getElementById('editKmStart').value = s.startOdometer || 0;
-    document.getElementById('editKmEnd').value = s.kmEnd || 0;
-    document.getElementById('editTransferred').value = s.transferred || 0;
-    document.getElementById('editRemaining').value = s.remaining || 0;
-    
-    currentReviewShiftId = s.id;
-  } else {
-    adminControls.style.display = 'none';
-  }
-
+  if (currentUser.role === 'admin' && s.status === 'pending') { adminControls.style.display = 'block'; document.getElementById('editKmStart').value = s.startOdometer || 0; document.getElementById('editKmEnd').value = s.kmEnd || 0; document.getElementById('editTransferred').value = s.transferred || 0; document.getElementById('editRemaining').value = s.remaining || 0; currentReviewShiftId = s.id; } else { adminControls.style.display = 'none'; }
   document.getElementById('detailsModal').style.display = 'block';
 }
+function closeDetails() { document.getElementById('detailsModal').style.display = 'none'; currentReviewShiftId = null; }
 
-function closeDetails() {
-  document.getElementById('detailsModal').style.display = 'none';
-  currentReviewShiftId = null;
-}
-
-/* ============================================================
-   إجراءات الأدمن (موافقة / رفض / تعديل)
-   ============================================================ */
 async function approveShift() {
-  if (!currentReviewShiftId) return;
-  if (!confirm('هل أنت متأكد من الموافقة النهائية على هذا الشيفت؟ سيتم إضافة المتبقي لمديونية الكابتن.')) return;
-
+  if (!currentReviewShiftId) return; if (!confirm('تأكيد الموافقة النهائية؟ سيتم إضافة المتبقي للمديونية.')) return;
   showLoading('جاري الموافقة...');
-  try {
-    const shifts = await getTransactions();
-    const s = shifts.find(t => t.id === currentReviewShiftId);
-    if (!s) return;
-
-    await updateTransactionDB(s.id, { status: 'closed' });
-
-    if (s.remaining > 0) {
-      const bal = await captainDebtBalance(s.captainId);
-      await addDebtDB({
-        captainId: s.captainId,
-        shiftId: s.id,
-        date: todayStr(),
-        system: s.system,
-        amount: s.remaining,
-        balanceAfter: bal.balance + s.remaining
-      });
-    }
-
-    toast('✅ تمت الموافقة على الشيفت وتسجيله نهائياً.');
-    closeDetails();
-    await renderAdmin();
-  } catch (e) {
-    console.error(e);
-    toast('حدث خطأ', 'error');
-  } finally {
-    hideLoading();
-  }
+  try { const s = (await getTransactions()).find(t => t.id === currentReviewShiftId); if (!s) return; await updateTransactionDB(s.id, { status: 'closed' }); if (s.remaining > 0) { const bal = await captainDebtBalance(s.captainId); await addDebtDB({ captainId: s.captainId, shiftId: s.id, date: todayStr(), system: s.system, amount: s.remaining, balanceAfter: bal.balance + s.remaining }); } toast('✅ تمت الموافقة'); closeDetails(); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
-
 async function rejectShift() {
-  if (!currentReviewShiftId) return;
-  const reason = prompt('سبب الرفض (سيظهر للكابتن):');
-  if (reason === null) return;
-
-  showLoading('جاري الرفض...');
-  try {
-    await updateTransactionDB(currentReviewShiftId, { 
-      status: 'open', 
-      rejectReason: reason 
-    });
-    
-    toast('❌ تم رفض الشيفت وإرجاعه للكابتن.');
-    closeDetails();
-    await renderAdmin();
-  } catch (e) {
-    console.error(e);
-    toast('حدث خطأ', 'error');
-  } finally {
-    hideLoading();
-  }
+  if (!currentReviewShiftId) return; const reason = prompt('سبب الرفض:'); if (reason === null) return; showLoading('جاري الرفض...');
+  try { await updateTransactionDB(currentReviewShiftId, { status: 'open', rejectReason: reason }); toast('❌ تم الرفض'); closeDetails(); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
-
 async function saveAdminEdit() {
-  if (!currentReviewShiftId) return;
-  
-  const newKmStart = parseFloat(document.getElementById('editKmStart').value) || 0;
-  const newKmEnd = parseFloat(document.getElementById('editKmEnd').value) || 0;
-  const newTrans = parseFloat(document.getElementById('editTransferred').value) || 0;
-
-  showLoading('جاري التعديل...');
-  try {
-    const shifts = await getTransactions();
-    const s = shifts.find(t => t.id === currentReviewShiftId);
-    if (!s) return;
-
-    let updateData = {
-      startOdometer: newKmStart,
-      kmEnd: newKmEnd,
-      kmUsed: newKmEnd - newKmStart,
-      transferred: newTrans
-    };
-
-    if (s.system === 'fixed') {
-      const cap = (await getCaptains()).find(c => c.id === s.captainId);
-      const tiers = cap.tiers || { t1:0, t2:0, t3:0 };
-      let tierPrice = 0;
-      let tierLabel = '-';
-      
-      if (updateData.kmUsed > 0 && updateData.kmUsed <= 350) { tierPrice = tiers.t1; tierLabel = 'الأولى'; }
-      else if (updateData.kmUsed > 350 && updateData.kmUsed <= 420) { tierPrice = tiers.t2; tierLabel = 'الثانية'; }
-      else if (updateData.kmUsed > 420 && updateData.kmUsed <= 500) { tierPrice = tiers.t3; tierLabel = 'الثالثة'; }
-      
-      const newRev = tierPrice + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0);
-      updateData.tierValue = tierPrice;
-      updateData.tier = tierLabel;
-      updateData.revenue = newRev;
-      updateData.remaining = Math.max(0, newRev - newTrans - (s.extraExpenseTotal||0));
-    } else {
-      const newRev = (s.uber||0) + (s.didi||0) + (s.indriver||0) + (s.external||0) + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0);
-      const newExp = (s.gas||0) + (s.fuel||0) + (s.extraExpenseTotal||0);
-      const captainShare = (newRev - newExp) / 3;
-      const carShare = ((newRev - newExp) * 2) / 3;
-      
-      updateData.revenue = newRev;
-      updateData.captainShare = captainShare;
-      updateData.carShare = carShare;
-      updateData.remaining = newRev - captainShare - newTrans - newExp;
-    }
-
-    await updateTransactionDB(s.id, updateData);
-    document.getElementById('editRemaining').value = updateData.remaining;
-    
-    toast('✏️ تم حفظ التعديلات. اضغط "موافقة نهائية" لتأكيد الشيفت.');
-    await showDetails(s.id);
-  } catch (e) {
-    console.error(e);
-    toast('حدث خطأ', 'error');
-  } finally {
-    hideLoading();
-  }
+  if (!currentReviewShiftId) return; const newKmStart = parseFloat(document.getElementById('editKmStart').value) || 0, newKmEnd = parseFloat(document.getElementById('editKmEnd').value) || 0, newTrans = parseFloat(document.getElementById('editTransferred').value) || 0; showLoading('جاري التعديل...');
+  try { const s = (await getTransactions()).find(t => t.id === currentReviewShiftId); if (!s) return; let updateData = { startOdometer: newKmStart, kmEnd: newKmEnd, kmUsed: newKmEnd - newKmStart, transferred: newTrans };
+    if (s.system === 'fixed') { const cap = (await getCaptains()).find(c => c.id === s.captainId), tiers = cap.tiers || { t1:0, t2:0, t3:0 }; let tP = 0, tL = '-'; if (updateData.kmUsed > 0 && updateData.kmUsed <= 350) { tP = tiers.t1; tL = 'الأولى'; } else if (updateData.kmUsed > 350 && updateData.kmUsed <= 420) { tP = tiers.t2; tL = 'الثانية'; } else if (updateData.kmUsed > 420 && updateData.kmUsed <= 500) { tP = tiers.t3; tL = 'الثالثة'; }
+      const nR = tP + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0); updateData.tierValue = tP; updateData.tier = tL; updateData.revenue = nR; updateData.remaining = Math.max(0, nR - newTrans - (s.extraExpenseTotal||0));
+    } else { const nR = (s.uber||0) + (s.didi||0) + (s.indriver||0) + (s.external||0) + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0), nE = (s.gas||0) + (s.fuel||0) + (s.extraExpenseTotal||0), cS = (nR - nE) / 3, caS = ((nR - nE) * 2) / 3; updateData.revenue = nR; updateData.captainShare = cS; updateData.carShare = caS; updateData.remaining = nR - cS - newTrans - nE; }
+    await updateTransactionDB(s.id, updateData); document.getElementById('editRemaining').value = updateData.remaining; toast('✏️ تم التعديل'); await showDetails(s.id);
+  } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
 
-/* ============================================================
-   الأدوات المساعدة (Excel & Admin Pass)
-   ============================================================ */
-async function exportExcel() {
-  showLoading('جاري التصدير...');
-  try {
-    const trans = await getTransactions();
-    const caps = await getCaptains();
-    let csv = '\uFEFF=== الشيفتات ===\nالكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل\n';
-    
-    trans.forEach(s => {
-      const cap = caps.find(c => c.id === s.captainId);
-      csv += [
-        cap ? cap.name : 'محذوف', s.system === 'fixed' ? 'ثابت' : 'تلت', s.carPlate || '-', s.date || '-', shiftName(s.shift),
-        s.status, s.revenue || 0, s.expense || 0, (s.revenue||0) - (s.expense||0), s.transferred || 0, s.remaining || 0, s.transferMethod || '-'
-      ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
-    });
+async function exportExcel() { showLoading('جاري التصدير...'); try { const trans = await getTransactions(), caps = await getCaptains(); let csv = '\uFEFF=== الشيفتات ===\nالكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل\n'; trans.forEach(s => { const cap = caps.find(c => c.id === s.captainId); csv += [cap ? cap.name : 'محذوف', s.system === 'fixed' ? 'ثابت' : 'تلت', s.carPlate || '-', s.date || '-', shiftName(s.shift), s.status, s.revenue || 0, s.expense || 0, (s.revenue||0) - (s.expense||0), s.transferred || 0, s.remaining || 0, s.transferMethod || '-'].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n'; }); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mashwarak_' + todayStr() + '.csv'; a.click(); toast('✅ تم التصدير'); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); } }
+async function changeAdminPassword() { if (!currentUser || currentUser.role !== 'admin') return; const oldPass = prompt('كلمة المرور الحالية:'); if (!oldPass) return; try { await auth.currentUser.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(currentUser.username + FAKE_DOMAIN, oldPass)); const newPass = prompt('كلمة المرور الجديدة (6 أحرف على الأقل):'); if (!newPass || newPass.length < 6) { toast('قصيرة', 'error'); return; } await auth.currentUser.updatePassword(newPass); toast('✅ تم التغيير'); } catch (e) { toast('❌ غير صحيحة', 'error'); } }
+async function addNewAdmin() { if (!currentUser || currentUser.role !== 'admin') return; const name = prompt('اسم الأدمن:'), username = prompt('اسم المستخدم (إنجليزي):'); if (!name || !/^[a-zA-Z0-9_]+$/.test(username)) { toast('بيانات غلط', 'error'); return; } const password = prompt('كلمة المرور (6+):'); if (!password || password.length < 6) { toast('قصيرة', 'error'); return; } showLoading('جاري الإنشاء...'); try { const oldUser = auth.currentUser, userCred = await auth.createUserWithEmailAndPassword(username + FAKE_DOMAIN, password); await addAdminDB({ username, name, password, main: false, authUid: userCred.user.uid, createdAt: todayStr() }); await auth.updateCurrentUser(oldUser); toast('✅ تم إضافة الأدمن'); } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { hideLoading(); } }
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'mashwarak_' + todayStr() + '.csv';
-    a.click();
-    toast('✅ تم التصدير');
-  } catch (e) {
-    toast('خطأ في التصدير', 'error');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function changeAdminPassword() {
-  if (!currentUser || currentUser.role !== 'admin') return;
-  const oldPass = prompt('كلمة المرور الحالية:');
-  if (!oldPass) return;
-  try {
-    const cred = firebase.auth.EmailAuthProvider.credential(currentUser.username + FAKE_DOMAIN, oldPass);
-    await auth.currentUser.reauthenticateWithCredential(cred);
-    const newPass = prompt('كلمة المرور الجديدة (6 أحرف على الأقل):');
-    if (!newPass || newPass.length < 6) { toast('كلمة المرور قصيرة', 'error'); return; }
-    await auth.currentUser.updatePassword(newPass);
-    toast('✅ تم التغيير');
-  } catch (e) {
-    toast('❌ كلمة المرور الحالية غير صحيحة', 'error');
-  }
-}
-
-async function addNewAdmin() {
-  if (!currentUser || currentUser.role !== 'admin') return;
-  const name = prompt('اسم الأدمن الجديد:');
-  if (!name) return;
-  const username = prompt('اسم المستخدم (إنجليزي):');
-  if (!/^[a-zA-Z0-9_]+$/.test(username)) { toast('إنجليزي فقط', 'error'); return; }
-  const password = prompt('كلمة المرور (6 أحرف على الأقل):');
-  if (!password || password.length < 6) { toast('كلمة المرور قصيرة', 'error'); return; }
-  
-  showLoading('جاري الإنشاء...');
-  try {
-    const oldUser = auth.currentUser;
-    const userCred = await auth.createUserWithEmailAndPassword(username + FAKE_DOMAIN, password);
-    await addAdminDB({ username, name, password, main: false, authUid: userCred.user.uid, createdAt: todayStr() });
-    await auth.updateCurrentUser(oldUser);
-    toast('✅ تم إضافة الأدمن');
-  } catch (e) {
-    toast('خطأ: ' + e.message, 'error');
-  } finally { hideLoading(); }
-}
-
-/* ============================================================
-   التشغيل النهائي
-   ============================================================ */
 applyTheme();
-
 auth.onAuthStateChanged(async function(firebaseUser) {
-  if (firebaseUser) {
-    const savedSession = localStorage.getItem('mashwarak_session');
-    if (savedSession) {
-      currentUser = JSON.parse(savedSession);
-      enterDashboard();
-    }
-  } else {
-    currentUser = null;
-    localStorage.removeItem('mashwarak_session');
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'block';
-  }
+  if (firebaseUser) { const saved = localStorage.getItem('mashwarak_session'); if (saved) { currentUser = JSON.parse(saved); enterDashboard(); } }
+  else { currentUser = null; localStorage.removeItem('mashwarak_session'); document.getElementById('dashboard').style.display = 'none'; document.getElementById('loginScreen').style.display = 'block'; }
 });
-
 (async function initDefaultAdmin() {
-  try {
-    await new Promise(r => setTimeout(r, 800));
-    const admins = await getAdmins();
-    if (admins.length > 0) return;
-    try {
-      const cred = await auth.createUserWithEmailAndPassword('Abdallh' + FAKE_DOMAIN, 'Abdallh2027');
-      await addAdminDB({ username: 'Abdallh', name: 'عبدالله', password: 'Abdallh2027', main: true, authUid: cred.user.uid, createdAt: todayStr() });
-      await auth.signOut();
-    } catch (e) {}
+  try { await new Promise(r => setTimeout(r, 800)); if ((await getAdmins()).length > 0) return;
+    try { const cred = await auth.createUserWithEmailAndPassword('Abdallh' + FAKE_DOMAIN, 'Abdallh2027'); await addAdminDB({ username: 'Abdallh', name: 'عبدالله', password: 'Abdallh2027', main: true, authUid: cred.user.uid, createdAt: todayStr() }); await auth.signOut(); } catch (e) {}
   } catch (e) {}
 })();
-
 document.getElementById('loginPass').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
 document.getElementById('loginUser').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
-
-document.addEventListener('input', function(e) {
-  if (e.target.type === 'number' && parseFloat(e.target.value) < 0) e.target.value = 0;
-});
-
-window.addEventListener('load', function() {
-  console.log('🚗 مشوارك — النسخة 15.0 (كاميرا ذكية + مراجعة)');
-  setTimeout(hideLoading, 800);
-});
+document.addEventListener('input', function(e) { if (e.target.type === 'number' && parseFloat(e.target.value) < 0) e.target.value = 0; });
+window.addEventListener('load', function() { console.log('🚗 مشوارك — v16.0'); setTimeout(hideLoading, 800); });
 setTimeout(hideLoading, 1500);
 </script>
-
 </body>
 </html>
