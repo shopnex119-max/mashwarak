@@ -50,15 +50,11 @@ let fsExtraExpenses = [];
 let tsExtraExpenses = [];
 let currentReviewShiftId = null;
 
-// حالة الكاميرا
-let cameraStream = null;
-let cameraTargetField = null;
-let currentWorker = null;
-
-// لحفظ الصور
+// حالة الصور والقراءة
 let capturedStartImage = null;
 let capturedEndImage = null;
 let capturedTsEndImage = null;
+let currentWorker = null;
 </script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Tahoma','Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent; }
@@ -99,111 +95,48 @@ body.light-mode {
 }
 
 body {
-  background:var(--bg);
-  color:var(--text);
-  position:relative;
-  padding:12px;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  min-height:100vh;
-  transition:background 0.3s, color 0.3s;
-  padding-top: env(safe-area-inset-top, 12px);
-  padding-bottom: env(safe-area-inset-bottom, 12px);
+  background:var(--bg); color:var(--text); position:relative; padding:12px;
+  display:flex; justify-content:center; align-items:flex-start; min-height:100vh;
+  transition:background 0.3s; padding-top:env(safe-area-inset-top,12px); padding-bottom:env(safe-area-inset-bottom,12px);
 }
 body::before {
-  content:'';
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(2px 2px at 20% 30%, var(--gold), transparent),
-    radial-gradient(2px 2px at 60% 70%, var(--gold-light), transparent),
-    radial-gradient(1px 1px at 80% 20%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 35% 85%, var(--gold), transparent),
-    radial-gradient(1px 1px at 90% 60%, #fff, transparent),
-    radial-gradient(1px 1px at 10% 50%, var(--gold-light), transparent),
-    radial-gradient(2px 2px at 50% 10%, #fff, transparent);
-  background-size:200% 200%;
-  animation:starMove 30s linear infinite;
-  z-index:-2;
-  opacity:0.35;
+  content:''; position:fixed; inset:0;
+  background:radial-gradient(2px 2px at 20% 30%,var(--gold),transparent),radial-gradient(2px 2px at 60% 70%,var(--gold-light),transparent),radial-gradient(1px 1px at 80% 20%,#fff,transparent);
+  background-size:200% 200%; animation:starMove 30s linear infinite; z-index:-2; opacity:0.35;
 }
 body.light-mode::before { opacity:0.15; }
-body::after {
-  content:'';
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(circle at 15% 20%, var(--shadow), transparent 40%),
-    radial-gradient(circle at 85% 80%, var(--shadow), transparent 40%),
-    radial-gradient(circle at 50% 50%, var(--shadow), transparent 60%);
-  z-index:-1;
-  pointer-events:none;
-}
 @keyframes starMove { 0% { background-position:0% 0%; } 100% { background-position:100% 100%; } }
 
 #settingsBtn {
   position:fixed; top:14px; left:14px; width:48px; height:48px; border-radius:50%;
   background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; border:none;
   font-size:24px; cursor:pointer; z-index:9999; box-shadow:0 0 25px var(--shadow);
-  transition:transform 0.4s; display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:center; justify-content:center;
 }
-#settingsBtn:hover { transform:rotate(90deg); }
-
-#settingsPanel {
-  position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9998;
-  display:none; justify-content:center; align-items:center; padding:20px; overflow-y:auto;
-}
+#settingsPanel { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9998; display:none; justify-content:center; align-items:center; padding:20px; overflow-y:auto; }
 #settingsPanel.open { display:flex; }
-#settingsBox {
-  background:var(--bg-card); border:1.5px solid var(--border-strong);
-  border-radius:22px; padding:24px; max-width:480px; width:100%;
-  box-shadow:0 0 60px var(--shadow); animation:fadeUp 0.3s ease;
-}
+#settingsBox { background:var(--bg-card); border:1.5px solid var(--border-strong); border-radius:22px; padding:24px; max-width:480px; width:100%; }
 #settingsBox h2 { color:var(--gold); font-size:20px; margin-bottom:16px; text-align:center; }
-.settings-item {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:12px; border-radius:12px; background:var(--bg-input);
-  border:1px solid var(--border); margin-bottom:10px; gap:10px;
-}
+.settings-item { display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; background:var(--bg-input); border:1px solid var(--border); margin-bottom:10px; gap:10px; }
 .settings-item span { color:var(--text-strong); font-size:14px; font-weight:bold; }
-.settings-item button {
-  padding:8px 14px; border-radius:10px; border:none; font-size:13px; font-weight:bold;
-  cursor:pointer; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A;
-}
+.settings-item button { padding:8px 14px; border-radius:10px; border:none; font-size:13px; font-weight:bold; cursor:pointer; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; }
 
 #loginScreen {
-  background:var(--bg-card); padding:32px 24px; border-radius:24px;
-  width:100%; max-width:420px; box-shadow:0 0 60px var(--shadow);
-  border:1px solid var(--border-strong); text-align:center; margin-top:20px;
-  backdrop-filter:blur(10px); animation:fadeUp 0.6s ease;
+  background:var(--bg-card); padding:32px 24px; border-radius:24px; width:100%; max-width:420px;
+  box-shadow:0 0 60px var(--shadow); border:1px solid var(--border-strong); text-align:center; margin-top:20px;
+  animation:fadeUp 0.6s ease;
 }
 @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-
-.logo-img {
-  width:180px; height:180px; object-fit:contain; margin:0 auto 12px;
-  display:block; border-radius:20px; box-shadow:0 0 40px var(--shadow); background:var(--bg); padding:8px;
-}
-.logo-text {
-  font-size:34px; font-weight:900; background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold));
-  background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
-  letter-spacing:2px; margin-bottom:6px; animation:shine 3s linear infinite;
-}
+.logo-img { width:180px; height:180px; object-fit:contain; margin:0 auto 12px; display:block; border-radius:20px; background:var(--bg); padding:8px; }
+.logo-text { font-size:34px; font-weight:900; background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold)); background-size:200% auto; -webkit-background-clip:text; color:transparent; letter-spacing:2px; margin-bottom:6px; animation:shine 3s linear infinite; }
 @keyframes shine { to { background-position:200% center; } }
-.subtitle { color:var(--text-mute); font-size:13px; margin-bottom:24px; letter-spacing:1px; }
-
+.subtitle { color:var(--text-mute); font-size:13px; margin-bottom:24px; }
 .input-wrap { position:relative; margin:12px 0; }
-.input-wrap input {
-  width:100%; padding:14px 45px 14px 14px; border-radius:14px;
-  border:1px solid var(--border); background:var(--bg-input); color:var(--text); font-size:15px;
-}
-.input-wrap input:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,193,7,0.15); }
-.input-wrap .icon { position:absolute; top:50%; right:14px; transform:translateY(-50%); font-size:16px; color:var(--gold); pointer-events:none; }
+.input-wrap input { width:100%; padding:14px 45px 14px 14px; border-radius:14px; border:1px solid var(--border); background:var(--bg-input); color:var(--text); font-size:15px; }
+.input-wrap input:focus { outline:none; border-color:var(--gold); }
+.input-wrap .icon { position:absolute; top:50%; right:14px; transform:translateY(-50%); font-size:16px; color:var(--gold); }
 
-.btn {
-  width:100%; padding:14px; margin-top:12px; border:none; border-radius:14px;
-  font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s;
-}
+.btn { width:100%; padding:14px; margin-top:12px; border:none; border-radius:14px; font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s; }
 .btn-gold { background:linear-gradient(135deg,var(--gold-light),var(--gold)); color:#0A0A0A; box-shadow:0 0 25px var(--shadow); }
 .btn-gold:hover { transform:translateY(-2px); }
 .btn-danger { background:linear-gradient(135deg,#EF5350,#B71C1C); color:#fff; }
@@ -213,44 +146,31 @@ body::after {
 .btn-gps.gps-done { background:linear-gradient(135deg,#424242,#212121); color:#00E676; border:1.5px solid #00E676; }
 .btn-success { background:linear-gradient(135deg,#00E676,#00C853); color:#0A0A0A; }
 .btn-blue { background:linear-gradient(135deg,#2196F3,#1976D2); color:#fff; }
-
 .error-msg { color:#EF5350; font-size:13px; margin-top:8px; min-height:18px; }
 .secure-note { margin-top:22px; font-size:12px; color:var(--text-mute); padding-top:16px; border-top:1px solid var(--border); }
 .secure-note span { color:var(--gold); }
 
-#dashboard {
-  display:none; width:100%; max-width:960px; background:var(--bg-card);
-  border-radius:22px; padding:18px; border:1px solid var(--border-strong);
-  margin-top:15px;
-}
+#dashboard { display:none; width:100%; max-width:960px; background:var(--bg-card); border-radius:22px; padding:18px; border:1px solid var(--border-strong); margin-top:15px; }
 #dashboard h1 { font-size:20px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); -webkit-background-clip:text; color:transparent; font-weight:900; }
 .topbar { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
 .topbar .user-info { font-size:13px; color:var(--text-mute); }
 .topbar .user-info span { color:var(--gold); font-weight:bold; }
 
 .tabs { display:flex; gap:6px; margin-bottom:15px; flex-wrap:wrap; }
-.tab-btn {
-  flex:1; min-width:80px; padding:10px 6px; background:var(--bg-input); color:var(--text-mute);
-  border:1px solid var(--border); border-radius:12px; cursor:pointer; font-size:12px; font-weight:bold;
-}
+.tab-btn { flex:1; min-width:80px; padding:10px 6px; background:var(--bg-input); color:var(--text-mute); border:1px solid var(--border); border-radius:12px; cursor:pointer; font-size:12px; font-weight:bold; }
 .tab-btn.active { background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; border-color:transparent; }
 .tab-content { display:none; }
 .tab-content.active { display:block; }
 
-.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:15px; }
-.stat-card { background:linear-gradient(145deg, rgba(42,42,42,0.8), rgba(15,15,15,0.95)); padding:14px 10px; border-radius:14px; border:1px solid var(--border); text-align:center; }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:15px; }
+.stat-card { background:linear-gradient(145deg,rgba(42,42,42,0.8),rgba(15,15,15,0.95)); padding:14px 10px; border-radius:14px; border:1px solid var(--border); text-align:center; }
 .stat-card .label { font-size:11px; color:var(--text-mute); margin-bottom:6px; }
 .stat-card .value { font-size:20px; font-weight:900; color:var(--gold); }
-.stat-card.green .value { color:var(--green); }
-.stat-card.red .value { color:var(--red); }
-.stat-card.gold .value { color:var(--gold-light); }
+.stat-card.green .value { color:var(--green); } .stat-card.red .value { color:var(--red); } .stat-card.gold .value { color:var(--gold-light); }
 
 .form-group { margin-bottom:12px; }
 .form-group label { display:block; font-size:13px; color:var(--text-strong); margin-bottom:6px; font-weight:bold; }
-.form-group input, .form-group select, .form-group textarea {
-  width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
-  background:var(--bg-input); color:var(--text); font-size:14px;
-}
+.form-group input, .form-group select, .form-group textarea { width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--bg-input); color:var(--text); font-size:14px; }
 .form-group input:focus, .form-group select:focus { outline:none; border-color:var(--gold); }
 .form-group input[type="file"] { padding:8px; font-size:12px; color:var(--gold-light); cursor:pointer; }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -258,16 +178,13 @@ body::after {
 @media (max-width:520px) { .form-row, .form-row-3 { grid-template-columns:1fr; } }
 
 .shift-picker, .system-picker { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; margin-bottom:12px; }
-.shift-option, .system-option {
-  padding:14px; border-radius:14px; border:1.5px solid var(--border); background:var(--bg-input);
-  color:var(--text-strong); text-align:center; cursor:pointer; font-weight:bold; font-size:14px;
-}
+.shift-option, .system-option { padding:14px; border-radius:14px; border:1.5px solid var(--border); background:var(--bg-input); color:var(--text-strong); text-align:center; cursor:pointer; font-weight:bold; font-size:14px; }
 .shift-option .emoji, .system-option .emoji { display:block; font-size:22px; margin-bottom:4px; }
 .shift-option.selected, .system-option.selected { background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; border-color:var(--gold); transform:translateY(-2px); }
 
 .table-wrap { overflow-x:auto; border-radius:14px; margin-top:10px; border:1px solid var(--border); }
 table { width:100%; border-collapse:collapse; background:rgba(20,20,20,0.7); font-size:12.5px; min-width:500px; }
-table th { background:linear-gradient(135deg, rgba(255,193,7,0.25), rgba(255,160,0,0.15)); color:var(--gold-light); padding:10px 8px; text-align:center; font-size:11.5px; border-bottom:1px solid var(--border-strong); }
+table th { background:linear-gradient(135deg,rgba(255,193,7,0.25),rgba(255,160,0,0.15)); color:var(--gold-light); padding:10px 8px; text-align:center; font-size:11.5px; border-bottom:1px solid var(--border-strong); }
 table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--border); color:var(--text); }
 
 .badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:bold; }
@@ -277,12 +194,7 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
 .badge-closed { background:rgba(117,117,117,0.2); color:#9E9E9E; border:1px solid rgba(117,117,117,0.4); }
 .badge-pending { background:rgba(255,193,7,0.2); color:#FFC107; border:1px solid rgba(255,193,7,0.5); }
 
-#toast {
-  position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-120px);
-  background:linear-gradient(135deg,#00E676,#00C853); color:#0A0A0A;
-  padding:12px 25px; border-radius:14px; font-weight:bold; font-size:14px;
-  transition:0.4s; z-index:99999; max-width:90%; text-align:center;
-}
+#toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-120px); background:linear-gradient(135deg,#00E676,#00C853); color:#0A0A0A; padding:12px 25px; border-radius:14px; font-weight:bold; font-size:14px; transition:0.4s; z-index:99999; max-width:90%; text-align:center; }
 #toast.show { transform:translateX(-50%) translateY(0); }
 #toast.error { background:linear-gradient(135deg,#EF5350,#B71C1C); color:#fff; }
 #toast.warn { background:linear-gradient(135deg,#FFC107,#FFA000); color:#0A0A0A; }
@@ -300,14 +212,14 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
 .loading-text { color:#FFC107; font-size:16px; font-weight:bold; }
 
 .ocr-loading { display:none; background:rgba(33,150,243,0.1); border:1px solid rgba(33,150,243,0.4); color:#2196F3; padding:10px; border-radius:10px; margin-top:6px; text-align:center; font-weight:bold; font-size:13px; }
-.ocr-loading.active { display:block; }
+.ocr-loading.active { display:block; animation:pulse 1.5s infinite; }
 .ocr-result { display:none; background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.4); color:#00E676; padding:10px; border-radius:10px; margin-top:6px; font-weight:bold; font-size:14px; text-align:center; }
 .ocr-result.active { display:block; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
 
 .realtime-badge { position:fixed; bottom:14px; right:14px; background:linear-gradient(135deg,#00C853,#009624); color:#fff; padding:6px 12px; border-radius:20px; font-size:11px; font-weight:bold; z-index:9990; display:none; align-items:center; gap:5px; }
 .realtime-badge.active { display:flex; }
 .realtime-badge .dot { width:8px; height:8px; border-radius:50%; background:#fff; animation:pulse 1.5s infinite; }
-@keyframes pulse { 0%, 100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.3); } }
 
 @media (max-width:520px) {
   body { padding:8px; }
@@ -326,12 +238,7 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
 </head>
 <body>
 <div id="realtimeBadge" class="realtime-badge"><span class="dot"></span><span>مباشر</span></div>
-
-<div id="loadingOverlay" class="loading-overlay">
-  <div class="loading-spinner"></div>
-  <div class="loading-text" id="loadingText">جاري التحميل...</div>
-</div>
-
+<div id="loadingOverlay" class="loading-overlay"><div class="loading-spinner"></div><div class="loading-text" id="loadingText">جاري التحميل...</div></div>
 <button id="settingsBtn" onclick="toggleSettings()">⚙️</button>
 
 <div id="settingsPanel" onclick="if(event.target===this) toggleSettings()">
@@ -379,7 +286,7 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
     <button class="tab-btn" onclick="switchTab('tab-mytrans', this)">📋 سجلي</button>
   </div>
 
-  <!-- محتوى الأدمن -->
+  <!-- ===== محتوى الأدمن ===== -->
   <div id="tab-overview" class="tab-content active">
     <div class="stats-grid">
       <div class="stat-card green"><div class="label">إجمالي الإيرادات</div><div class="value" id="ovRevenue">0</div></div>
@@ -460,7 +367,7 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
     <div class="section-title">تقرير مالي لكل كابتن</div>
     <div class="table-wrap"><table><thead><tr><th>الكابتن</th><th>النظام</th><th>عدد الشيفتات</th><th>إجمالي إيراد</th><th>إجمالي مصروف</th><th>الصافي</th><th>المديونية</th></tr></thead><tbody id="reportTable"></tbody></table></div>
   </div>
-    <!-- محتوى الكابتن -->
+    <!-- ===== محتوى الكابتن ===== -->
   <div id="tab-myhome" class="tab-content">
     <div class="stats-grid">
       <div class="stat-card green"><div class="label">إيراد اليوم</div><div class="value" id="myTodayWork">0</div></div>
@@ -499,14 +406,14 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
     </div>
     <div class="section-title">📸 عداد البداية</div>
     <div class="form-group">
-      <label>تصوير عداد البداية *</label>
-      <button type="button" class="btn btn-gold" onclick="openCamera('start')">📷 فتح الكاميرا وتصوير العداد</button>
-      <div class="ocr-loading" id="startOcrLoading">🤖 جاري قراءة الأرقام...</div>
+      <label>ارفع صورة عداد البداية * (تصوير أو من المعرض)</label>
+      <input type="file" id="startOdomImg" accept="image/*" onchange="handleImageUpload('start', this)">
+      <div class="ocr-loading" id="startOcrLoading">🤖 جاري قراءة الأرقام من الصورة...</div>
       <div class="ocr-result" id="startOcrResult"></div>
     </div>
     <div class="form-group">
-      <label>كيلوهات البداية * (يتم قراءتها تلقائياً)</label>
-      <input type="number" id="startOdoValue" placeholder="ادخل رقم العداد" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;font-weight:bold;font-size:16px;">
+      <label>كيلوهات البداية * (راجع الرقم وعدله لو غلط)</label>
+      <input type="number" id="startOdoValue" placeholder="مثال: 45200" style="background:rgba(255,193,7,0.1);color:#FFC107;font-weight:bold;font-size:16px;">
     </div>
     <div class="form-group"><label>ملاحظات (اختياري)</label><input type="text" id="openNote" placeholder="أي ملاحظات"></div>
     <div class="form-group">
@@ -538,14 +445,14 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
       <div id="fixedForm" style="display:none;">
         <div class="section-title">📸 عداد النهاية</div>
         <div class="form-group">
-          <label>تصوير عداد النهاية *</label>
-          <button type="button" class="btn btn-gold" onclick="openCamera('end')">📷 فتح الكاميرا وتصوير العداد</button>
+          <label>ارفع صورة عداد النهاية *</label>
+          <input type="file" id="endOdomImg" accept="image/*" onchange="handleImageUpload('end', this)">
           <div class="ocr-loading" id="endOcrLoading">🤖 جاري قراءة الأرقام...</div>
           <div class="ocr-result" id="endOcrResult"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>كيلوهات البداية (تلقائي)</label><input type="number" id="fsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
-          <div class="form-group"><label>كيلوهات النهاية * (تلقائي)</label><input type="number" id="fsKmEnd" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;"></div>
+          <div class="form-group"><label>كيلوهات البداية</label><input type="number" id="fsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
+          <div class="form-group"><label>كيلوهات النهاية * (راجع وعدل)</label><input type="number" id="fsKmEnd" oninput="calcFixed()" placeholder="ادخل رقم العداد" style="background:rgba(255,193,7,0.1);color:#FFC107;font-weight:bold;"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>المستهلك</label><input type="number" id="fsKmUsed" readonly style="background:rgba(255,193,7,0.1);color:#FFC107;font-weight:bold;"></div>
@@ -586,14 +493,14 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
       <div id="thirdForm" style="display:none;">
         <div class="section-title">📸 عداد النهاية</div>
         <div class="form-group">
-          <label>تصوير عداد النهاية *</label>
-          <button type="button" class="btn btn-gold" onclick="openCamera('tsEnd')">📷 فتح الكاميرا وتصوير العداد</button>
+          <label>ارفع صورة عداد النهاية *</label>
+          <input type="file" id="tsEndOdomImg" accept="image/*" onchange="handleImageUpload('tsEnd', this)">
           <div class="ocr-loading" id="tsEndOcrLoading">🤖 جاري قراءة الأرقام...</div>
           <div class="ocr-result" id="tsEndOcrResult"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>كيلوهات البداية (تلقائي)</label><input type="number" id="tsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
-          <div class="form-group"><label>كيلوهات النهاية * (تلقائي)</label><input type="number" id="tsKmEnd" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;"></div>
+          <div class="form-group"><label>كيلوهات البداية</label><input type="number" id="tsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
+          <div class="form-group"><label>كيلوهات النهاية * (راجع وعدل)</label><input type="number" id="tsKmEnd" oninput="calcThird()" placeholder="ادخل رقم العداد" style="background:rgba(255,193,7,0.1);color:#FFC107;font-weight:bold;"></div>
         </div>
         <div class="form-row"><div class="form-group"><label>المستهلك</label><input type="number" id="tsKmUsed" readonly style="background:rgba(255,193,7,0.1);"></div></div>
         <div class="section-title">💵 الإيرادات</div>
@@ -687,30 +594,6 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
 </div>
 
 <div id="toast"></div>
-<!-- نافذة الكاميرا (زرار التقاط + قراءة تلقائية) -->
-<div id="cameraModal" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column;">
-  <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,193,7,0.3);">
-    <h3 style="color:#FFC107;font-size:16px;margin:0;">📷 كاميرا قراءة العداد</h3>
-    <button onclick="closeCamera()" style="background:#EF5350;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:bold;">✖ إغلاق</button>
-  </div>
-
-  <div id="cameraReader" style="flex:1;position:relative;overflow:hidden;"></div>
-
-  <div id="cameraOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:15%;border:3px solid #00E676;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,230,118,0.3);pointer-events:none;">
-    <div style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);color:#00E676;font-size:12px;font-weight:bold;white-space:nowrap;text-shadow:0 0 10px #000;">📍 ضع الأرقام داخل الجزء الأيسر هنا</div>
-  </div>
-
-  <div style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.9);padding:12px 20px;border-radius:12px;border:1px solid rgba(255,193,7,0.4);text-align:center;min-width:280px;">
-    <div id="cameraStatus" style="color:#FFC107;font-size:13px;font-weight:bold;">📷 اضغط "التقط صورة" لقراءة العداد</div>
-    <div id="cameraResult" style="color:#00E676;font-size:24px;font-weight:900;margin-top:6px;">-</div>
-  </div>
-
-  <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;gap:8px;justify-content:center;flex-wrap:wrap;border-top:1px solid rgba(255,193,7,0.3);">
-    <button id="cameraCaptureBtn" onclick="captureAndRead()" style="background:linear-gradient(135deg,#FFC107,#FFA000);color:#0A0A0A;border:none;padding:14px 30px;border-radius:12px;font-weight:bold;font-size:16px;cursor:pointer;flex:1;min-width:180px;">📷 التقط صورة واقرأ</button>
-    <button id="cameraConfirmBtn" onclick="confirmCameraReading()" style="display:none;background:linear-gradient(135deg,#00E676,#00C853);color:#0A0A0A;border:none;padding:14px 30px;border-radius:12px;font-weight:bold;font-size:16px;cursor:pointer;flex:1;min-width:180px;">✅ تأكيد الرقم</button>
-    <button onclick="switchToManual()" style="background:linear-gradient(135deg,#2196F3,#1976D2);color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:bold;font-size:14px;cursor:pointer;">✏️ كتابة يدوية</button>
-  </div>
-</div>
 
 <!-- نافذة التفاصيل للمراجعة -->
 <div id="detailsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;padding:20px;overflow-y:auto;">
@@ -738,79 +621,58 @@ table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--bo
   </div>
 </div>
 <script>
+/* ============================================================
+   1. الثوابت والدوال المساعدة
+   ============================================================ */
 const COL_CAPTAINS = 'captains', COL_TRANS = 'transactions', COL_CARS = 'cars';
 const COL_ADMINS = 'admins', COL_DEBTS = 'debts', COL_PAYMENTS = 'payments';
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function todayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
-function nowFull() {
-  const d = new Date(); const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-  return days[d.getDay()] + ' ' + todayStr() + ' - ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
-}
+function nowFull() { const d = new Date(); const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']; return days[d.getDay()] + ' ' + todayStr() + ' - ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0'); }
 function shiftName(s) { return s === 'morning' ? 'صباحي' : (s === 'evening' ? 'مسائي' : '-'); }
-function shiftBadge(s) { return s === 'morning' ? '<span class="badge badge-morning">🌅 صباحي</span>' : '<span class="badge badge-evening">🌙 مسائي</span>'; }
 function systemName(sys) { return sys === 'fixed' ? '🔒 شيفت ثابت' : (sys === 'third' ? '⚖️ التلت والتلتين' : '-'); }
 function systemBadge(sys) { return sys === 'fixed' ? '<span class="badge badge-fixed">🔒 ثابت</span>' : '<span class="badge badge-third">⚖️ تلت</span>'; }
-function statusBadge(st) {
-  if (st === 'open') return '<span class="badge badge-open">🟢 مفتوح</span>';
-  if (st === 'pending') return '<span class="badge badge-pending">🟡 معلق</span>';
-  return '<span class="badge badge-closed">🔴 مغلق</span>';
-}
-function toast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'show' + (type === 'error' ? ' error' : (type === 'warn' ? ' warn' : ''));
-  setTimeout(() => { t.className = ''; }, 3000);
-}
+function statusBadge(st) { if (st === 'open') return '<span class="badge badge-open">🟢 مفتوح</span>'; if (st === 'pending') return '<span class="badge badge-pending">🟡 معلق</span>'; return '<span class="badge badge-closed">🔴 مغلق</span>'; }
+function toast(msg, type) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'show' + (type === 'error' ? ' error' : (type === 'warn' ? ' warn' : '')); setTimeout(() => { t.className = ''; }, 3500); }
 function showLoading(text) { document.getElementById('loadingText').textContent = text || 'جاري التحميل...'; document.getElementById('loadingOverlay').classList.add('active'); }
 function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
 function disableBtn(id, text) { const b = document.getElementById(id); if (!b) return; b.disabled = true; b.dataset.oldText = b.textContent; b.textContent = text || 'جاري...'; }
 function enableBtn(id) { const b = document.getElementById(id); if (!b) return; b.disabled = false; b.textContent = b.dataset.oldText || b.textContent; }
 
+/* ============================================================
+   2. رفع الصور
+   ============================================================ */
 async function uploadFile(file, folder) {
   if (!file) return null;
   const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
   if (folder) formData.append('folder', folder);
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`, { method: 'POST', body: formData });
   if (!res.ok) throw new Error('فشل رفع الصورة');
-  const data = await res.json();
-  const url = data.secure_url || data.url;
-  if (!url) throw new Error('لم يرجع خادم الصور رابطاً صالحاً');
-  return url;
+  const data = await res.json(); return data.secure_url || data.url;
 }
-async function uploadFiles(files, folder) {
-  if (!files || files.length === 0) return [];
-  const urls = []; for (const f of Array.from(files)) { try { const u = await uploadFile(f, folder); if (u) urls.push(u); } catch (e) {} }
-  return urls;
-}
-function previewMulti(inputId, previewId) {
-  const input = document.getElementById(inputId); const preview = document.getElementById(previewId); preview.innerHTML = '';
-  if (!input.files || input.files.length === 0) return;
-  Array.from(input.files).slice(0, 10).forEach(f => {
-    const reader = new FileReader(); reader.onload = (e) => { const img = document.createElement('img'); img.src = e.target.result; img.className = 'thumb'; preview.appendChild(img); }; reader.readAsDataURL(f);
-  });
-}
+async function uploadFiles(files, folder) { if (!files || files.length === 0) return []; const urls = []; for (const f of Array.from(files)) { try { const u = await uploadFile(f, folder); if (u) urls.push(u); } catch (e) {} } return urls; }
+function previewMulti(inputId, previewId) { const input = document.getElementById(inputId), preview = document.getElementById(previewId); preview.innerHTML = ''; if (!input.files || input.files.length === 0) return; Array.from(input.files).slice(0, 10).forEach(f => { const r = new FileReader(); r.onload = e => { const img = document.createElement('img'); img.src = e.target.result; img.className = 'thumb'; preview.appendChild(img); }; r.readAsDataURL(f); }); }
 
+/* ============================================================
+   3. Firestore Helpers
+   ============================================================ */
 async function getCaptains() { const snap = await db.collection(COL_CAPTAINS).get(); return snap.docs.map(d => ({ id: d.id, ...d.data() })); }
 async function addCaptainDB(data) { const ref = await db.collection(COL_CAPTAINS).add(data); return ref.id; }
 async function updateCaptainDB(id, data) { await db.collection(COL_CAPTAINS).doc(id).update(data); }
 async function deleteCaptainDB(id) { await db.collection(COL_CAPTAINS).doc(id).delete(); }
-
 async function getCars() { const snap = await db.collection(COL_CARS).get(); return snap.docs.map(d => ({ id: d.id, ...d.data() })); }
 async function addCarDB(data) { const ref = await db.collection(COL_CARS).add(data); return ref.id; }
 async function deleteCarDB(id) { await db.collection(COL_CARS).doc(id).delete(); }
-
 async function getTransactions() { const snap = await db.collection(COL_TRANS).orderBy('createdAt', 'desc').get(); return snap.docs.map(d => ({ id: d.id, ...d.data() })); }
 async function addTransactionDB(data) { const ref = await db.collection(COL_TRANS).add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); return ref.id; }
 async function updateTransactionDB(id, data) { await db.collection(COL_TRANS).doc(id).update(data); }
 async function deleteTransactionDB(id) { await db.collection(COL_TRANS).doc(id).delete(); }
-
 async function getAdmins() { const snap = await db.collection(COL_ADMINS).get(); return snap.docs.map(d => ({ id: d.id, ...d.data() })); }
 async function addAdminDB(data) { const ref = await db.collection(COL_ADMINS).add(data); return ref.id; }
 async function updateAdminDB(id, data) { await db.collection(COL_ADMINS).doc(id).update(data); }
-
 async function getDebts() { const snap = await db.collection(COL_DEBTS).orderBy('createdAt', 'desc').get(); return snap.docs.map(d => ({ id: d.id, ...d.data() })); }
 async function addDebtDB(data) { const ref = await db.collection(COL_DEBTS).add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); return ref.id; }
-
 async function getPayments() { const snap = await db.collection(COL_PAYMENTS).orderBy('createdAt', 'desc').get(); return snap.docs.map(d => ({ id: d.id, ...d.data() })); }
 async function addPaymentDB(data) { const ref = await db.collection(COL_PAYMENTS).add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); return ref.id; }
 
@@ -827,28 +689,37 @@ async function captainDebtBalance(capId) {
   return { totalAdd, totalPaid, balance: Math.max(0, totalAdd - totalPaid) };
 }
 
-function stopRealtimeListeners() { unsubscribers.forEach(unsub => { try { unsub(); } catch(e) {} }); unsubscribers = []; }
+/* ============================================================
+   4. التحديث اللحظي (Real-time)
+   ============================================================ */
+function stopRealtimeListeners() { unsubscribers.forEach(u => { try { u(); } catch(e) {} }); unsubscribers = []; }
 function startRealtimeListeners() {
   stopRealtimeListeners();
-  unsubscribers.push(db.collection(COL_TRANS).orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-    if (snapshot.docChanges().length > 0) { if (currentUser) { const a = document.querySelector('.tab-content.active')?.id;
+  unsubscribers.push(db.collection(COL_TRANS).orderBy('createdAt', 'desc').onSnapshot(s => {
+    if (s.docChanges().length > 0) { if (currentUser) { const a = document.querySelector('.tab-content.active')?.id;
       if (currentUser.role === 'admin') { if (a === 'tab-overview') renderOverview(); if (a === 'tab-trans') renderAllTransactions(); if (a === 'tab-reports') renderReports(); if (a === 'tab-captains') renderCaptainsTable(); }
       else { if (a === 'tab-myhome') renderMyHome(); if (a === 'tab-mytrans') renderMyTransactions(); if (a === 'tab-closeshift') renderCloseShift(); }
     } }
   }));
 }
 
+/* ============================================================
+   5. الثيم والإعدادات
+   ============================================================ */
 function applyTheme() { const t = localStorage.getItem('mashwarak_theme') || 'dark'; document.body.classList.toggle('light-mode', t === 'light'); const b = document.getElementById('themeBtn'); if (b) b.textContent = t === 'light' ? '☀️ نهاري' : '🌙 ليلي'; }
 function toggleTheme() { const c = localStorage.getItem('mashwarak_theme') || 'dark'; localStorage.setItem('mashwarak_theme', c === 'dark' ? 'light' : 'dark'); applyTheme(); }
 function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('open'); const i = currentUser && currentUser.role === 'admin'; document.getElementById('adminOnly1').style.display = i ? 'flex' : 'none'; document.getElementById('adminOnly2').style.display = i ? 'flex' : 'none'; }
 
+/* ============================================================
+   6. الدخول والخروج
+   ============================================================ */
 async function handleLogin() {
   const user = document.getElementById('loginUser').value.trim(), pass = document.getElementById('loginPass').value.trim(), err = document.getElementById('loginError');
   err.textContent = ''; if (!user || !pass) { err.textContent = 'أدخل اليوزر والباسورد'; return; }
   disableBtn('loginBtn', '⏳ جاري الدخول...');
   try {
     await auth.signInWithEmailAndPassword(user + FAKE_DOMAIN, pass);
-    const admins = await getAdmins(), admin = admins.find(a => a.username === user);
+    const admin = (await getAdmins()).find(a => a.username === user);
     if (admin) { currentUser = { role:'admin', adminId: admin.id, name: admin.name, username: admin.username }; localStorage.setItem('mashwarak_session', JSON.stringify(currentUser)); enterDashboard(); return; }
     const cap = (await getCaptains()).find(c => c.username === user);
     if (cap) { currentUser = { role:'captain', id: cap.id, name: cap.name, username: cap.username }; localStorage.setItem('mashwarak_session', JSON.stringify(currentUser)); enterDashboard(); return; }
@@ -867,7 +738,11 @@ async function switchTab(tabId, btn) {
   if (currentUser && currentUser.role === 'admin') await renderAdmin(); if (currentUser && currentUser.role === 'captain') await renderCaptain();
 }
 
+/* ============================================================
+   7. وظائف الأدمن
+   ============================================================ */
 async function renderAdmin() { try { await renderOverview(); await renderCaptainsTable(); await renderCarsTable(); await renderAllTransactions(); await renderReports(); await renderDebtsAdmin(); await fillCaptainFilter(); await fillCarDropdowns(); } catch (e) {} }
+
 async function renderOverview() {
   const shifts = await getTransactions(), captains = await getCaptains();
   let rev = 0, exp = 0, fixedCount = 0, thirdCount = 0, openCount = 0;
@@ -879,6 +754,7 @@ async function renderOverview() {
   if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">لا توجد عمليات</td></tr>'; return; }
   recent.forEach(s => { const cap = captains.find(c => c.id === s.captainId); tbody.innerHTML += `<tr><td>${cap ? cap.name : 'محذوف'}</td><td>${systemBadge(s.system)}</td><td>${s.carPlate || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue || 0) - (s.expense || 0)}</td><td>${statusBadge(s.status)}</td></tr>`; });
 }
+
 async function addCaptain() {
   const name = document.getElementById('capName').value.trim(), phone = document.getElementById('capPhone').value.trim(), user = document.getElementById('capUser').value.trim(), pass = document.getElementById('capPass').value.trim(), system = document.getElementById('capSystem').value, carId = document.getElementById('capCar').value;
   const tier1 = parseFloat(document.getElementById('capTier1').value) || 0, tier2 = parseFloat(document.getElementById('capTier2').value) || 0, tier3 = parseFloat(document.getElementById('capTier3').value) || 0;
@@ -893,6 +769,7 @@ async function addCaptain() {
     toast('✅ تم إضافة الكابتن'); await renderAdmin();
   } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { hideLoading(); }
 }
+
 async function renderCaptainsTable() {
   const captains = await getCaptains(), tbody = document.getElementById('captainsTable'); tbody.innerHTML = '';
   if (captains.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">لا يوجد كباتن</td></tr>'; return; }
@@ -902,29 +779,37 @@ async function renderCaptainsTable() {
     tbody.innerHTML += `<tr><td>${c.name}</td><td>${c.username}</td><td>${systemBadge(c.system)}</td><td>${c.carPlate || '-'}</td><td style="color:#00E676;">${rev}</td><td style="color:#EF5350;">${exp}</td><td style="color:#FFC107;font-weight:bold;">${rev - exp}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td><td><button class="btn btn-outline btn-small" onclick="editCaptain('${c.id}')">تعديل</button> <button class="btn btn-danger btn-small" onclick="deleteCaptain('${c.id}')">حذف</button></td></tr>`;
   }
 }
+
 async function deleteCaptain(id) { if (!confirm('حذف الكابتن وكل بياناته؟')) return; showLoading('جاري الحذف...'); try { await deleteCaptainFull(id); toast('🗑️ تم الحذف'); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); } }
+
 async function editCaptain(id) {
   const c = (await getCaptains()).find(x => x.id === id); if (!c) return;
   const n = prompt('الاسم:', c.name); if (n === null) return; const t1 = prompt('سعر الشريحة 1:', c.tiers?.t1 || 0); if (t1 === null) return; const t2 = prompt('سعر الشريحة 2:', c.tiers?.t2 || 0); if (t2 === null) return; const t3 = prompt('سعر الشريحة 3:', c.tiers?.t3 || 0); if (t3 === null) return;
   showLoading('جاري التعديل...'); try { await updateCaptainDB(id, { name: n.trim() || c.name, tiers: { t1: parseFloat(t1)||0, t2: parseFloat(t2)||0, t3: parseFloat(t3)||0 } }); toast('✏️ تم التعديل'); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
+
 async function addCar() {
   const plate = document.getElementById('carPlate').value.trim(), model = document.getElementById('carModel').value.trim();
   if (!plate || !model) { toast('أكمل البيانات', 'error'); return; } showLoading('جاري الإضافة...');
   try { if ((await getCars()).some(c => c.plate === plate)) { toast('اللوحة موجودة', 'error'); return; } await addCarDB({ plate, model, type: document.getElementById('carType').value, color: document.getElementById('carColor').value.trim(), createdAt: todayStr() }); document.getElementById('carPlate').value = ''; document.getElementById('carModel').value = ''; toast('✅ تم إضافة السيارة'); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
+
 async function renderCarsTable() {
   const cars = await getCars(), tbody = document.getElementById('carsTable'); tbody.innerHTML = '';
   if (cars.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد سيارات</td></tr>'; return; }
   cars.forEach(c => { tbody.innerHTML += `<tr><td>${c.plate}</td><td>${c.model}</td><td>${c.type}</td><td>${c.color || '-'}</td><td><button class="btn btn-danger btn-small" onclick="deleteCar('${c.id}')">حذف</button></td></tr>`; });
 }
+
 async function deleteCar(id) { if (!confirm('حذف السيارة؟')) return; showLoading('جاري الحذف...'); try { await deleteCarDB(id); toast('🗑️ تم الحذف'); await renderAdmin(); } finally { hideLoading(); } }
+
 async function fillCarDropdowns() {
   const cars = await getCars();
   const capSel = document.getElementById('capCar'); if (capSel) { const val = capSel.value; capSel.innerHTML = '<option value="">-- بدون --</option>'; cars.forEach(c => { capSel.innerHTML += `<option value="${c.id}">${c.plate} - ${c.model}</option>`; }); capSel.value = val; }
   const openSel = document.getElementById('openCar'); if (openSel) { const val = openSel.value; openSel.innerHTML = '<option value="">-- اختر السيارة --</option>'; cars.forEach(c => { openSel.innerHTML += `<option value="${c.id}">${c.plate} - ${c.model}</option>`; }); openSel.value = val; }
 }
+
 async function fillCaptainFilter() { const sel = document.getElementById('filterCaptain'); if (!sel) return; const val = sel.value || 'all'; sel.innerHTML = '<option value="all">الكل</option>'; (await getCaptains()).forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name}</option>`; }); sel.value = val; }
+
 async function renderAllTransactions() {
   const filterCap = document.getElementById('filterCaptain').value, filterSystem = document.getElementById('filterSystem').value, filterStatus = document.getElementById('filterStatus').value;
   let shifts = await getTransactions(); if (filterCap !== 'all') shifts = shifts.filter(s => s.captainId === filterCap); if (filterSystem !== 'all') shifts = shifts.filter(s => s.system === filterSystem); if (filterStatus !== 'all') shifts = shifts.filter(s => s.status === filterStatus);
@@ -932,215 +817,102 @@ async function renderAllTransactions() {
   if (shifts.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا توجد عمليات</td></tr>'; return; }
   shifts.forEach(s => { const cap = captains.find(c => c.id === s.captainId); tbody.innerHTML += `<tr><td>${cap ? cap.name : 'محذوف'}</td><td>${systemBadge(s.system)}</td><td>${s.date || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td><td><button class="btn btn-outline btn-small" onclick="showDetails('${s.id}')">${s.status === 'pending' ? '🔍 مراجعة' : 'عرض'}</button> <button class="btn btn-danger btn-small" onclick="deleteTrans('${s.id}')">حذف</button></td></tr>`; });
 }
+
 async function deleteTrans(id) { if (!confirm('حذف الشيفت نهائياً؟')) return; showLoading('جاري الحذف...'); try { await deleteTransactionDB(id); toast('🗑️ تم الحذف'); await renderAdmin(); } finally { hideLoading(); } }
+
 async function renderDebtsAdmin() {
   const captains = await getCaptains(), tbody = document.getElementById('debtsAdminTable'); tbody.innerHTML = '';
   for (const c of captains) { const d = await captainDebtBalance(c.id); tbody.innerHTML += `<tr><td>${c.name}</td><td style="color:#FFC107;">${d.totalAdd}</td><td style="color:#00E676;">${d.totalPaid}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td><td><button class="btn btn-outline btn-small" onclick="showCaptainDebts('${c.id}')">تفاصيل</button></td></tr>`; }
   const payTbody = document.getElementById('allPaymentsTable'); payTbody.innerHTML = '';
   const payments = await getPayments(); payments.forEach(p => { const cap = captains.find(c => c.id === p.captainId); payTbody.innerHTML += `<tr><td>${cap?.name || 'محذوف'}</td><td>${p.date}</td><td style="color:#00E676;font-weight:bold;">${p.amount}</td><td>${p.method}</td><td>${p.note || '-'}</td></tr>`; });
 }
+
 async function showCaptainDebts(capId) { const cap = (await getCaptains()).find(c => c.id === capId), bal = await captainDebtBalance(capId); alert(`💰 مديونيات ${cap.name}\n\nالتراكم: ${bal.totalAdd} ج\nالمسدد: ${bal.totalPaid} ج\nالرصيد: ${bal.balance} ج`); }
+
 async function renderReports() {
   const tbody = document.getElementById('reportTable'); tbody.innerHTML = ''; const captains = await getCaptains();
   for (const c of captains) { const shifts = (await getTransactions()).filter(t => t.captainId === c.id && t.status === 'closed'); const rev = shifts.reduce((s, x) => s + (x.revenue || 0), 0), exp = shifts.reduce((s, x) => s + (x.expense || 0), 0), d = await captainDebtBalance(c.id); tbody.innerHTML += `<tr><td>${c.name}</td><td>${systemBadge(c.system)}</td><td>${shifts.length}</td><td style="color:#00E676;">${rev}</td><td style="color:#EF5350;">${exp}</td><td style="color:#FFC107;font-weight:bold;">${rev - exp}</td><td style="color:${d.balance > 0 ? '#EF5350' : '#00E676'};font-weight:bold;">${d.balance}</td></tr>`; }
 }
 </script>
 <script>
+/* ============================================================
+   8. وظائف الكابتن
+   ============================================================ */
 async function renderCaptain() { try { await fillCarDropdowns(); await renderMyHome(); await renderMyTransactions(); await renderCloseShift(); await renderMyDebts(); } catch (e) {} }
-function selectShift(shift) { selectedShift = shift; document.getElementById('shiftMorning').classList.toggle('selected', shift === 'morning'); document.getElementById('shiftEvening').classList.toggle('selected', shift === 'evening'); }
-function selectSystemForShift(sys) { selectedSystemForShift = sys; document.getElementById('sysFixed').classList.toggle('selected', sys === 'fixed'); document.getElementById('sysThird').classList.toggle('selected', sys === 'third'); }
-function changeSystemForClose(sys) {
+
+async function selectShift(shift) { selectedShift = shift; document.getElementById('shiftMorning').classList.toggle('selected', shift === 'morning'); document.getElementById('shiftEvening').classList.toggle('selected', shift === 'evening'); }
+async function selectSystemForShift(sys) { selectedSystemForShift = sys; document.getElementById('sysFixed').classList.toggle('selected', sys === 'fixed'); document.getElementById('sysThird').classList.toggle('selected', sys === 'third'); }
+async function changeSystemForClose(sys) {
   if (!currentOpenShift) return; currentOpenShift.closeSystem = sys;
   document.getElementById('closeSysFixed').classList.toggle('selected', sys === 'fixed'); document.getElementById('closeSysThird').classList.toggle('selected', sys === 'third');
   if (sys === 'fixed') { document.getElementById('fixedForm').style.display = 'block'; document.getElementById('thirdForm').style.display = 'none'; calcFixed(); }
   else { document.getElementById('fixedForm').style.display = 'none'; document.getElementById('thirdForm').style.display = 'block'; calcThird(); }
 }
 
-/* ======== الكاميرا وقراءة العداد ======== */
-function normalizeDigits(value) {
-  return String(value || '')
-    .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
-    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
-}
+/* ============================================================
+   9. قراءة الصورة (OCR) عند الرفع
+   ============================================================ */
+async function handleImageUpload(type, input) {
+  const file = input.files[0]; if (!file) return;
+  let loadingId, resultId, targetInputId;
+  if (type === 'start') { loadingId = 'startOcrLoading'; resultId = 'startOcrResult'; targetInputId = 'startOdoValue'; }
+  else if (type === 'end') { loadingId = 'endOcrLoading'; resultId = 'endOcrResult'; targetInputId = 'fsKmEnd'; }
+  else if (type === 'tsEnd') { loadingId = 'tsEndOcrLoading'; resultId = 'tsEndOcrResult'; targetInputId = 'tsKmEnd'; }
 
-function getAccurateVideoCrop(video, overlay) {
-  // object-fit:cover يقص جزءاً من الفيديو؛ لذلك يجب تحويل إطار الشاشة إلى إحداثيات الصورة الأصلية أولاً.
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const vr = video.getBoundingClientRect(), or = overlay.getBoundingClientRect();
-  if (!vw || !vh || !vr.width || !vr.height) throw new Error('أبعاد الكاميرا غير جاهزة');
-  const scale = Math.max(vr.width / vw, vr.height / vh);
-  const renderedW = vw * scale, renderedH = vh * scale;
-  const offsetX = (vr.width - renderedW) / 2, offsetY = (vr.height - renderedH) / 2;
-  const x = Math.max(0, (or.left - vr.left - offsetX) / scale);
-  const y = Math.max(0, (or.top - vr.top - offsetY) / scale);
-  const right = Math.min(vw, (or.right - vr.left - offsetX) / scale);
-  const bottom = Math.min(vh, (or.bottom - vr.top - offsetY) / scale);
-  return { x, y, w: Math.max(1, right - x), h: Math.max(1, bottom - y) };
-}
+  const loadingEl = document.getElementById(loadingId), resultEl = document.getElementById(resultId);
+  loadingEl.classList.add('active'); resultEl.classList.remove('active'); document.getElementById(targetInputId).value = ''; document.getElementById(targetInputId).removeAttribute('readonly');
 
-function makeOcrVariants(source) {
-  const scale = Math.max(4, Math.min(6, 1800 / Math.max(source.width, source.height)));
-  const w = Math.round(source.width * scale), h = Math.round(source.height * scale);
-  const base = document.createElement('canvas'); base.width = w; base.height = h;
-  const bctx = base.getContext('2d', { willReadFrequently: true });
-  bctx.imageSmoothingEnabled = true; bctx.imageSmoothingQuality = 'high';
-  bctx.drawImage(source, 0, 0, w, h);
-  const sourceData = bctx.getImageData(0, 0, w, h);
-  const gray = new Float32Array(w * h), pixels = sourceData.data;
-  for (let i = 0, p = 0; i < pixels.length; i += 4, p++) gray[p] = pixels[i] * .299 + pixels[i+1] * .587 + pixels[i+2] * .114;
-  let min = 255, max = 0;
-  for (const v of gray) { if (v < min) min = v; if (v > max) max = v; }
-  const range = Math.max(1, max - min);
-  const variants = [];
-  const add = (name, fn) => {
-    const c = document.createElement('canvas'); c.width = w; c.height = h;
-    const ctx = c.getContext('2d', { willReadFrequently: true }), out = ctx.createImageData(w, h);
-    for (let p = 0; p < gray.length; p++) { const v = Math.max(0, Math.min(255, fn(p))); const i = p * 4; out.data[i] = out.data[i+1] = out.data[i+2] = v; out.data[i+3] = 255; }
-    ctx.putImageData(out, 0, 0); variants.push({ name, canvas: c });
-  };
-  // تباين محسّن، ثم عتبتان مختلفتان، ثم عكس الصورة؛ هذا يفيد العدادات الرقمية والفعلية معاً.
-  add('contrast', p => ((gray[p] - min) / range) * 255);
-  add('threshold', p => gray[p] > (min + range * .52) ? 255 : 0);
-  add('threshold-dark', p => gray[p] > (min + range * .68) ? 255 : 0);
-  add('inverted', p => 255 - (((gray[p] - min) / range) * 255 > 128 ? 255 : 0));
-  return { original: base, variants };
-}
-
-async function getOcrWorker() {
-  if (!currentWorker) {
-    currentWorker = Tesseract.createWorker('eng');
-    const worker = await currentWorker;
-    await worker.setParameters({
-      tessedit_char_whitelist: '0123456789',
-      tessedit_pageseg_mode: '7',
-      preserve_interword_spaces: '0'
-    });
-  }
-  return await currentWorker;
-}
-
-function extractOdometerCandidate(text) {
-  const clean = normalizeDigits(text).replace(/[^0-9]/g, '');
-  const matches = normalizeDigits(text).match(/\d{2,12}/g) || [];
-  const all = matches.concat(clean.length >= 2 ? [clean] : []);
-  return all.sort((a, b) => b.length - a.length)[0] || '';
-}
-
-async function openCamera(targetType) {
-  cameraTargetField = targetType;
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') { toast('⚠️ الكاميرا تحتاج HTTPS', 'warn'); return; }
-  const modal = document.getElementById('cameraModal'); modal.style.display = 'flex';
-  document.getElementById('cameraStatus').textContent = '📷 ثبّت العداد داخل الإطار ثم اضغط التقاط';
-  document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraCaptureBtn').style.display = 'inline-block';
-  document.getElementById('cameraOverlay').style.borderColor = '#00E676';
   try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, focusMode: { ideal: 'continuous' } }, audio: false });
-    const reader = document.getElementById('cameraReader'); reader.innerHTML = '';
-    const video = document.createElement('video'); video.id = 'cameraVideo'; video.autoplay = true; video.playsInline = true; video.muted = true; video.style.cssText = 'width:100%;height:100%;object-fit:cover;'; video.srcObject = cameraStream; reader.appendChild(video);
-    await video.play();
-    // تجهيز عامل OCR أثناء فتح الكاميرا حتى لا ينتظر المستخدم وقت التهيئة بعد التقاط الصورة.
-    getOcrWorker().catch(() => {});
-    const track = cameraStream.getVideoTracks()[0];
-    if (track && track.applyConstraints) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
-  } catch (err) { toast('❌ تعذر تشغيل الكاميرا: ' + err.message, 'error'); closeCamera(); }
-}
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target.result;
+      if (type === 'start') window.capturedStartImage = base64;
+      else if (type === 'end') window.capturedEndImage = base64;
+      else if (type === 'tsEnd') window.capturedTsEndImage = base64;
 
-async function captureAndRead() {
-  const video = document.getElementById('cameraVideo');
-  if (!video || video.readyState < 2) { toast('الكاميرا لسه بتفتح، استنى ثانية', 'warn'); return; }
-  const btn = document.getElementById('cameraCaptureBtn'); btn.disabled = true; btn.textContent = '⏳ جاري تحليل صورة العداد...';
-  document.getElementById('cameraStatus').textContent = '📸 جاري قص الأرقام وتحسين الإضاءة...'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none';
-  try {
-    const crop = getAccurateVideoCrop(video, document.getElementById('cameraOverlay'));
-    const source = document.createElement('canvas'); source.width = Math.round(crop.w); source.height = Math.round(crop.h);
-    const sctx = source.getContext('2d'); sctx.imageSmoothingEnabled = true; sctx.imageSmoothingQuality = 'high'; sctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, source.width, source.height);
-    // نحفظ الصورة الملونة الأصلية كاملة، بما فيها إطار العداد، للمراجعة عند الأدمن.
-    window.lastCapturedImage = source.toDataURL('image/jpeg', 0.95);
-    // كلمة km تكون غالباً في يمين الشاشة؛ نقص الجزء الخاص بالأرقام قبل OCR.
-    const numberCrop = document.createElement('canvas'); numberCrop.width = Math.round(source.width * 0.84); numberCrop.height = source.height;
-    numberCrop.getContext('2d').drawImage(source, 0, 0, numberCrop.width, numberCrop.height, 0, 0, numberCrop.width, numberCrop.height);
-    const prepared = makeOcrVariants(numberCrop), worker = await getOcrWorker(), results = [];
-    document.getElementById('cameraStatus').textContent = '🔎 قراءة الأرقام محلياً — بدون إنترنت أو تكلفة...';
-    for (let i = 0; i < prepared.variants.length; i++) {
-      const ret = await worker.recognize(prepared.variants[i].canvas);
-      const candidate = extractOdometerCandidate(ret.data.text), confidence = Number(ret.data.confidence) || 0;
-      if (candidate && candidate.length >= 2) results.push({ candidate, confidence });
-    }
-    if (!results.length) throw new Error('no digits');
-    const groups = new Map();
-    results.forEach(r => { const g = groups.get(r.candidate) || { candidate:r.candidate, votes:0, confidence:0 }; g.votes++; g.confidence = Math.max(g.confidence, r.confidence); groups.set(r.candidate, g); });
-    const ranked = [...groups.values()].sort((a,b) => (b.votes - a.votes) || (b.confidence - a.confidence) || (b.candidate.length - a.candidate.length));
-    let best = ranked[0];
-    const startValue = Number(currentOpenShift?.startOdometer || 0);
-    if (cameraTargetField !== 'start' && startValue > 0 && Number(best.candidate) <= startValue) {
-      const valid = ranked.find(r => Number(r.candidate) > startValue);
-      if (!valid) throw new Error('invalid odometer order');
-      best = valid;
-    }
-    const shownConfidence = Math.round(Math.min(99, best.confidence + Math.max(0, best.votes - 1) * 10));
-    window.lastCapturedNumber = best.candidate;
-    applyOdometerReadingToForm(best.candidate);
-    document.getElementById('cameraResult').textContent = best.candidate;
-    document.getElementById('cameraStatus').textContent = `✅ الرقم المقروء: ${best.candidate} — راجعه قبل التأكيد${best.votes > 1 ? ' (متفق عليه من أكثر من معالجة)' : ''}`;
-    document.getElementById('cameraStatus').style.color = '#00E676'; document.getElementById('cameraConfirmBtn').style.display = 'inline-block'; document.getElementById('cameraCaptureBtn').style.display = 'none'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
-  } catch (e) {
-    document.getElementById('cameraResult').textContent = '?'; document.getElementById('cameraStatus').textContent = '❌ لم نقرأ الأرقام. قرّب الكاميرا واجعل الأرقام داخل الجزء الأيسر من الإطار ثم أعد التصوير.'; document.getElementById('cameraStatus').style.color = '#EF5350'; document.getElementById('cameraOverlay').style.borderColor = '#EF5350';
-  } finally { btn.disabled = false; btn.textContent = '📷 التقط صورة واقرأ'; if (document.getElementById('cameraConfirmBtn').style.display === 'none') btn.style.display = 'inline-block'; }
-}
+      const img = new Image(); img.src = base64;
+      img.onload = async () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width, height = img.height;
+          if (width > 1200) { height = height * (1200 / width); width = 1200; }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
 
-function applyOdometerReadingToForm(value) {
-  const number = parseInt(normalizeDigits(value).replace(/[^0-9]/g, ''), 10);
-  if (!Number.isFinite(number)) return;
-  const image = window.lastCapturedImage;
-  if (cameraTargetField === 'start') {
-    const el = document.getElementById('startOdoValue');
-    el.value = number; el.removeAttribute('readonly');
-    document.getElementById('startOcrResult').innerHTML = `✅ قراءة البداية: <strong>${number}</strong>`;
-    document.getElementById('startOcrResult').classList.add('active');
-    if (image) window.capturedStartImage = image;
-  } else if (cameraTargetField === 'end') {
-    const el = document.getElementById('fsKmEnd');
-    el.value = number; el.removeAttribute('readonly');
-    document.getElementById('endOcrResult').innerHTML = `✅ قراءة النهاية: <strong>${number}</strong>`;
-    document.getElementById('endOcrResult').classList.add('active');
-    if (image) window.capturedEndImage = image;
-    calcFixed();
-  } else if (cameraTargetField === 'tsEnd') {
-    const el = document.getElementById('tsKmEnd');
-    el.value = number; el.removeAttribute('readonly');
-    document.getElementById('tsEndOcrResult').innerHTML = `✅ قراءة النهاية: <strong>${number}</strong>`;
-    document.getElementById('tsEndOcrResult').classList.add('active');
-    if (image) window.capturedTsEndImage = image;
-    calcThird();
+          if (!currentWorker) { currentWorker = Tesseract.createWorker('eng'); const w = await currentWorker; await w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7' }); }
+          const worker = await currentWorker; const ret = await worker.recognize(canvas);
+          
+          let text = ret.data.text.replace(/\s+/g, ''); 
+          let numbers = text.match(/\d{3,15}/g);
+
+          if (numbers && numbers.length > 0) {
+            const result = numbers.reduce((a, b) => a.length >= b.length ? a : b);
+            document.getElementById(targetInputId).value = result;
+            resultEl.innerHTML = `✅ الرقم المقروء: <strong>${result}</strong> (راجع الرقم وعدله يدوياً إذا كان غير صحيح)`;
+            resultEl.classList.add('active');
+            if (type === 'end') calcFixed(); if (type === 'tsEnd') calcThird();
+          } else { 
+            resultEl.innerHTML = `⚠️ لم نتمكن من قراءة الأرقام بوضوح. اكتب الرقم يدوياً في الخانة أدناه.`; 
+            resultEl.style.color = '#FFC107'; 
+            resultEl.classList.add('active'); 
+          }
+        } catch (err) { 
+          resultEl.innerHTML = `❌ خطأ أثناء القراءة. اكتب الرقم يدوياً.`; 
+          resultEl.classList.add('active'); 
+        } finally { loadingEl.classList.remove('active'); }
+      };
+    };
+    reader.readAsDataURL(file);
+  } catch (err) { 
+    loadingEl.classList.remove('active'); 
+    resultEl.innerHTML = `❌ خطأ في تحميل الصورة.`; 
+    resultEl.classList.add('active'); 
   }
 }
 
-function confirmCameraReading() {
-  const val = normalizeDigits(document.getElementById('cameraResult').textContent).replace(/[^0-9]/g, '');
-  if (!val || val.length < 2 || val.length > 12) { toast('الرقم غير صالح، أعد التصوير أو اكتبه يدوياً', 'error'); return; }
-  const value = parseInt(val, 10);
-  applyOdometerReadingToForm(value);
-  closeCamera(); toast('✅ تم حفظ الرقم وحساب الكيلومترات: راجع النتيجة قبل إرسال الشيفت');
-}
-function switchToManual() {
-  // حتى لو فشلت القراءة، لا نفقد الصورة: تُرفع مع الشيفت بعد كتابة الرقم يدوياً.
-  const captured = window.lastCapturedImage;
-  if (captured) {
-    if (cameraTargetField === 'start') window.capturedStartImage = captured;
-    else if (cameraTargetField === 'end') window.capturedEndImage = captured;
-    else if (cameraTargetField === 'tsEnd') window.capturedTsEndImage = captured;
-  }
-  const field = cameraTargetField === 'start' ? 'startOdoValue' : cameraTargetField === 'end' ? 'fsKmEnd' : 'tsKmEnd';
-  closeCamera();
-  const el = document.getElementById(field); if (el) { el.removeAttribute('readonly'); el.style.background = 'rgba(33,150,243,0.15)'; el.style.borderColor = '#2196F3'; el.focus(); toast('✏️ اكتب الرقم يدوياً — الصورة محفوظة للمراجعة', 'warn'); }
-}
-function closeCamera() {
-  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
-  if (currentWorker) { currentWorker.then(w => w.terminate()).catch(() => {}); currentWorker = null; }
-  document.getElementById('cameraModal').style.display = 'none';
-}
-
-/* ======== GPS ======== */
+/* ============================================================
+   10. GPS
+   ============================================================ */
 function captureStartLocation() {
   const btn = document.getElementById('btnStartGps'), info = document.getElementById('startGpsInfo'); btn.disabled = true; btn.textContent = '⏳ جاري تحديد الموقع...';
   navigator.geolocation.getCurrentPosition((pos) => { selectedStartLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, time: nowFull() }; btn.disabled = false; btn.classList.add('gps-done'); btn.textContent = '✅ تم تسجيل الموقع'; info.innerHTML = `✅ ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`; },
@@ -1152,50 +924,146 @@ function captureEndLocation() {
     (err) => { btn.disabled = false; btn.textContent = '📍 إرسال موقعي'; toast('فشل تحديد الموقع', 'error'); }, { enableHighAccuracy: true, timeout: 15000 });
 }
 
-/* ======== Logic ======== */
+/* ============================================================
+   11. بدء الشيفت
+   ============================================================ */
 async function openShift() {
   const carId = document.getElementById('openCar').value, startOdo = parseFloat(document.getElementById('startOdoValue').value);
-  if (!carId) { toast('اختر السيارة', 'error'); return; } if (!selectedShift) { toast('اختر الوردية', 'error'); return; } if (!selectedSystemForShift) { toast('اختر نظام اليوم', 'error'); return; } if (!startOdo) { toast('لم يتم قراءة العداد', 'error'); return; } if (!selectedStartLocation) { toast('أرسل موقع البداية', 'error'); return; }
+  if (!carId) { toast('اختر السيارة', 'error'); return; } 
+  if (!selectedShift) { toast('اختر الوردية', 'error'); return; } 
+  if (!selectedSystemForShift) { toast('اختر نظام اليوم', 'error'); return; } 
+  if (!startOdo) { toast('لم يتم قراءة العداد أو إدخاله', 'error'); return; } 
+  if (!selectedStartLocation) { toast('أرسل موقع البداية', 'error'); return; }
+  
   disableBtn('openShiftBtn', '⏳ جاري بدء الشيفت...'); showLoading('جاري بدء الشيفت...');
   try {
     if ((await getTransactions()).find(t => t.captainId === currentUser.id && (t.status === 'open' || t.status === 'pending'))) { toast('لديك شيفت مفتوح أو معلق!', 'error'); return; }
     const car = (await getCars()).find(c => c.id === carId);
+    
     let startOdoImgUrl = null;
     if (window.capturedStartImage) { const blob = await (await fetch(window.capturedStartImage)).blob(); const file = new File([blob], 'start_odometer.jpg', { type: 'image/jpeg' }); startOdoImgUrl = await uploadFile(file, 'odometers'); }
-    const shift = { captainId: currentUser.id, system: selectedSystemForShift, shift: selectedShift, carId: carId, carPlate: car ? car.plate : '-', carModel: car ? car.model : '-', startTime: nowFull(), startLocation: selectedStartLocation, startOdometer: startOdo, startOdometerImg: startOdoImgUrl, note: document.getElementById('openNote').value.trim(), status: 'open', date: todayStr(), revenue: 0, expense: 0 };
-    await addTransactionDB(shift); window.capturedStartImage = null;
+    
+    const shift = { 
+      captainId: currentUser.id, system: selectedSystemForShift, shift: selectedShift, 
+      carId: carId, carPlate: car ? car.plate : '-', carModel: car ? car.model : '-', 
+      startTime: nowFull(), startLocation: selectedStartLocation, startOdometer: startOdo, 
+      startOdometerImg: startOdoImgUrl, note: document.getElementById('openNote').value.trim(), 
+      status: 'open', date: todayStr(), revenue: 0, expense: 0 
+    };
+    await addTransactionDB(shift); 
+    window.capturedStartImage = null;
+    
     ['startOdoValue','openCar','openNote','startGpsInfo'].forEach(id => { const el = document.getElementById(id); if (el.tagName === 'INPUT') el.value = ''; else el.textContent = ''; });
-    document.getElementById('startOcrResult').classList.remove('active'); document.getElementById('shiftMorning').classList.remove('selected'); document.getElementById('shiftEvening').classList.remove('selected'); document.getElementById('sysFixed').classList.remove('selected'); document.getElementById('sysThird').classList.remove('selected'); document.getElementById('btnStartGps').classList.remove('gps-done'); document.getElementById('btnStartGps').textContent = '📍 إرسال موقعي';
+    document.getElementById('startOcrResult').classList.remove('active'); 
+    document.getElementById('shiftMorning').classList.remove('selected'); 
+    document.getElementById('shiftEvening').classList.remove('selected'); 
+    document.getElementById('sysFixed').classList.remove('selected'); 
+    document.getElementById('sysThird').classList.remove('selected'); 
+    document.getElementById('btnStartGps').classList.remove('gps-done'); 
+    document.getElementById('btnStartGps').textContent = '📍 إرسال موقعي';
+    
     selectedShift = null; selectedSystemForShift = null; selectedStartLocation = null;
-    toast('✅ تم بدء الشيفت'); await renderCaptain(); switchTab('tab-closeshift', document.querySelector('#captainTabs .tab-btn:nth-child(3)'));
+    toast('✅ تم بدء الشيفت'); 
+    await renderCaptain(); 
+    switchTab('tab-closeshift', document.querySelector('#captainTabs .tab-btn:nth-child(3)'));
   } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { enableBtn('openShiftBtn'); hideLoading(); }
 }
+
+/* ============================================================
+   12. حسابات الشيفت الثابت
+   ============================================================ */
 async function calcFixed() {
-  const kmStart = currentOpenShift?.startOdometer || 0, kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0, travel = parseFloat(document.getElementById('fsTravel').value) || 0, privateT = parseFloat(document.getElementById('fsPrivate').value) || 0, schools = parseFloat(document.getElementById('fsSchools').value) || 0, employees = parseFloat(document.getElementById('fsEmployees').value) || 0, trans = parseFloat(document.getElementById('fsTransferred').value) || 0;
-  document.getElementById('fsKmStart').value = kmStart; const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0; document.getElementById('fsKmUsed').value = kmUsed;
+  const kmStart = currentOpenShift?.startOdometer || 0, kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0;
+  const travel = parseFloat(document.getElementById('fsTravel').value) || 0, privateT = parseFloat(document.getElementById('fsPrivate').value) || 0;
+  const schools = parseFloat(document.getElementById('fsSchools').value) || 0, employees = parseFloat(document.getElementById('fsEmployees').value) || 0;
+  const trans = parseFloat(document.getElementById('fsTransferred').value) || 0;
+  
+  document.getElementById('fsKmStart').value = kmStart; 
+  const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0; 
+  document.getElementById('fsKmUsed').value = kmUsed;
+  
   const cap = (await getCaptains()).find(c => c.id === currentUser.id), tiers = cap && cap.tiers ? cap.tiers : { t1:0, t2:0, t3:0 };
   let tierLabel = '-', tierPrice = 0;
-  if (kmUsed > 0 && kmUsed <= 350) { tierLabel = 'الأولى'; tierPrice = tiers.t1 || 0; } else if (kmUsed > 350 && kmUsed <= 420) { tierLabel = 'الثانية'; tierPrice = tiers.t2 || 0; } else if (kmUsed > 420 && kmUsed <= 500) { tierLabel = 'الثالثة'; tierPrice = tiers.t3 || 0; } else if (kmUsed > 500) { tierLabel = 'خارج الشرائح'; tierPrice = 0; }
-  document.getElementById('fsTier').value = tierLabel; document.getElementById('fsTierValue').value = tierPrice;
-  const totalRevenue = tierPrice + travel + privateT + schools + employees; document.getElementById('fsRevenue').value = totalRevenue;
-  const extra = getExtraExpensesTotal('fs'); document.getElementById('fsTotalExtraExpense').value = extra.total; document.getElementById('fsRemaining').value = Math.max(0, totalRevenue - trans - extra.total);
+  if (kmUsed > 0 && kmUsed <= 350) { tierLabel = 'الأولى'; tierPrice = tiers.t1 || 0; } 
+  else if (kmUsed > 350 && kmUsed <= 420) { tierLabel = 'الثانية'; tierPrice = tiers.t2 || 0; } 
+  else if (kmUsed > 420 && kmUsed <= 500) { tierLabel = 'الثالثة'; tierPrice = tiers.t3 || 0; } 
+  else if (kmUsed > 500) { tierLabel = 'خارج الشرائح'; tierPrice = 0; }
+  
+  document.getElementById('fsTier').value = tierLabel; 
+  document.getElementById('fsTierValue').value = tierPrice;
+  
+  const totalRevenue = tierPrice + travel + privateT + schools + employees; 
+  document.getElementById('fsRevenue').value = totalRevenue;
+  
+  const extra = getExtraExpensesTotal('fs'); 
+  document.getElementById('fsTotalExtraExpense').value = extra.total; 
+  document.getElementById('fsRemaining').value = Math.max(0, totalRevenue - trans - extra.total);
 }
+
+/* ============================================================
+   13. حسابات التلت والتلتين
+   ============================================================ */
 function calcThird() {
-  const kmStart = currentOpenShift?.startOdometer || 0, kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0, uber = parseFloat(document.getElementById('tsUber').value) || 0, didi = parseFloat(document.getElementById('tsDidi').value) || 0, indriver = parseFloat(document.getElementById('tsIndriver').value) || 0, external = parseFloat(document.getElementById('tsExternal').value) || 0, travel = parseFloat(document.getElementById('tsTravel').value) || 0, privateT = parseFloat(document.getElementById('tsPrivate').value) || 0, schools = parseFloat(document.getElementById('tsSchools').value) || 0, employees = parseFloat(document.getElementById('tsEmployees').value) || 0, gas = parseFloat(document.getElementById('tsGas').value) || 0, fuel = parseFloat(document.getElementById('tsFuel').value) || 0, trans = parseFloat(document.getElementById('tsTransferred').value) || 0;
-  document.getElementById('tsKmStart').value = kmStart; const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0; document.getElementById('tsKmUsed').value = kmUsed;
-  const totalRev = uber + didi + indriver + external + travel + privateT + schools + employees, totalExp = gas + fuel, net = totalRev - totalExp, captainShare = net / 3, carShare = (net * 2) / 3;
-  const extra = getExtraExpensesTotal('ts'); document.getElementById('tsTotalExtraExpense').value = extra.total; const remaining = totalRev - captainShare - trans - totalExp - extra.total;
-  document.getElementById('tsTotalRevenue').value = totalRev; document.getElementById('tsCaptainShare').value = captainShare.toFixed(2); document.getElementById('tsCarShare').value = carShare.toFixed(2); document.getElementById('tsRemaining').value = remaining.toFixed(2);
+  const kmStart = currentOpenShift?.startOdometer || 0, kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0;
+  const uber = parseFloat(document.getElementById('tsUber').value) || 0, didi = parseFloat(document.getElementById('tsDidi').value) || 0;
+  const indriver = parseFloat(document.getElementById('tsIndriver').value) || 0, external = parseFloat(document.getElementById('tsExternal').value) || 0;
+  const travel = parseFloat(document.getElementById('tsTravel').value) || 0, privateT = parseFloat(document.getElementById('tsPrivate').value) || 0;
+  const schools = parseFloat(document.getElementById('tsSchools').value) || 0, employees = parseFloat(document.getElementById('tsEmployees').value) || 0;
+  const gas = parseFloat(document.getElementById('tsGas').value) || 0, fuel = parseFloat(document.getElementById('tsFuel').value) || 0;
+  const trans = parseFloat(document.getElementById('tsTransferred').value) || 0;
+  
+  document.getElementById('tsKmStart').value = kmStart; 
+  const kmUsed = (kmEnd > kmStart) ? (kmEnd - kmStart) : 0; 
+  document.getElementById('tsKmUsed').value = kmUsed;
+  
+  const totalRev = uber + didi + indriver + external + travel + privateT + schools + employees;
+  const totalExp = gas + fuel;
+  const net = totalRev - totalExp;
+  const captainShare = net / 3;
+  const carShare = (net * 2) / 3;
+  
+  const extra = getExtraExpensesTotal('ts'); 
+  document.getElementById('tsTotalExtraExpense').value = extra.total; 
+  const remaining = totalRev - captainShare - trans - totalExp - extra.total;
+  
+  document.getElementById('tsTotalRevenue').value = totalRev; 
+  document.getElementById('tsCaptainShare').value = captainShare.toFixed(2); 
+  document.getElementById('tsCarShare').value = carShare.toFixed(2); 
+  document.getElementById('tsRemaining').value = remaining.toFixed(2);
 }
+
+/* ============================================================
+   14. إظهار شاشة الإغلاق
+   ============================================================ */
 async function renderCloseShift() {
-  const openShift = (await getTransactions()).find(t => t.captainId === currentUser.id && t.status === 'open'); currentOpenShift = openShift;
+  const openShift = (await getTransactions()).find(t => t.captainId === currentUser.id && t.status === 'open'); 
+  currentOpenShift = openShift;
+  
   if (!openShift) { document.getElementById('noOpenShiftMsg').style.display = 'block'; document.getElementById('closeShiftBox').style.display = 'none'; return; }
-  document.getElementById('noOpenShiftMsg').style.display = 'none'; document.getElementById('closeShiftBox').style.display = 'block';
-  document.getElementById('csSystem').textContent = systemName(openShift.system); document.getElementById('csCar').textContent = openShift.carPlate + ' - ' + (openShift.carModel || ''); document.getElementById('csShift').textContent = shiftName(openShift.shift); document.getElementById('csStartTime').textContent = openShift.startTime;
-  currentOpenShift.closeSystem = openShift.system; document.getElementById('closeSysFixed').classList.toggle('selected', openShift.system === 'fixed'); document.getElementById('closeSysThird').classList.toggle('selected', openShift.system === 'third');
-  if (openShift.system === 'fixed') { document.getElementById('fixedForm').style.display = 'block'; document.getElementById('thirdForm').style.display = 'none'; calcFixed(); } else { document.getElementById('fixedForm').style.display = 'none'; document.getElementById('thirdForm').style.display = 'block'; calcThird(); }
-  selectedEndLocation = null; const btnE = document.getElementById('btnEndGps'); if (btnE) { btnE.classList.remove('gps-done'); btnE.textContent = '📍 إرسال موقعي'; btnE.disabled = false; } document.getElementById('endGpsInfo').textContent = '';
+  
+  document.getElementById('noOpenShiftMsg').style.display = 'none'; 
+  document.getElementById('closeShiftBox').style.display = 'block';
+  document.getElementById('csSystem').textContent = systemName(openShift.system); 
+  document.getElementById('csCar').textContent = openShift.carPlate + ' - ' + (openShift.carModel || ''); 
+  document.getElementById('csShift').textContent = shiftName(openShift.shift); 
+  document.getElementById('csStartTime').textContent = openShift.startTime;
+  
+  currentOpenShift.closeSystem = openShift.system; 
+  document.getElementById('closeSysFixed').classList.toggle('selected', openShift.system === 'fixed'); 
+  document.getElementById('closeSysThird').classList.toggle('selected', openShift.system === 'third');
+  
+  if (openShift.system === 'fixed') { document.getElementById('fixedForm').style.display = 'block'; document.getElementById('thirdForm').style.display = 'none'; calcFixed(); } 
+  else { document.getElementById('fixedForm').style.display = 'none'; document.getElementById('thirdForm').style.display = 'block'; calcThird(); }
+  
+  selectedEndLocation = null; 
+  const btnE = document.getElementById('btnEndGps'); 
+  if (btnE) { btnE.classList.remove('gps-done'); btnE.textContent = '📍 إرسال موقعي'; btnE.disabled = false; } 
+  document.getElementById('endGpsInfo').textContent = '';
 }
+
+/* ============================================================
+   15. المصروفات الإضافية
+   ============================================================ */
 function addExtraExpense(prefix) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; list.push({ name: '', amount: 0 }); renderExtraExpenses(prefix); }
 function removeExtraExpense(prefix, index) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; list.splice(index, 1); renderExtraExpenses(prefix); if (prefix === 'fs') calcFixed(); else calcThird(); }
 function updateExtraExpense(prefix, index, field, value) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; if (field === 'amount') list[index].amount = parseFloat(value) || 0; else list[index].name = value; if (prefix === 'fs') calcFixed(); else calcThird(); }
@@ -1207,32 +1075,64 @@ function renderExtraExpenses(prefix) {
 function getExtraExpensesTotal(prefix) { const list = prefix === 'fs' ? fsExtraExpenses : tsExtraExpenses; const manual = list.reduce((s, e) => s + (e.amount || 0), 0), fuel = parseFloat(document.getElementById(prefix + 'ExtraFuel')?.value) || 0, gas = parseFloat(document.getElementById(prefix + 'ExtraGas')?.value) || 0; return { manual, fuel, gas, total: manual + fuel + gas, list }; }
 function toggleTransferImg(prefix) { const m = document.getElementById(prefix + 'TransferMethod'), b = document.getElementById(prefix + 'TransferImgBox'), i = document.getElementById(prefix + 'TransferImg'); if (!m || !b) return; if (m.value === 'كاش') { b.style.display = 'none'; if (i) i.value = ''; } else b.style.display = 'block'; }
 
+/* ============================================================
+   16. إغلاق الشيفت (للمراجعة)
+   ============================================================ */
 async function closeShift() {
-  if (!currentOpenShift) { toast('لا يوجد شيفت مفتوح', 'error'); return; } if (!selectedEndLocation) { toast('أرسل موقع النهاية أولاً', 'error'); return; }
-  const shift = { ...currentOpenShift }; disableBtn('closeShiftBtn', '⏳ جاري الحفظ ورفع الصور...');
+  if (!currentOpenShift) { toast('لا يوجد شيفت مفتوح', 'error'); return; } 
+  if (!selectedEndLocation) { toast('أرسل موقع النهاية أولاً', 'error'); return; }
+  
+  const shift = { ...currentOpenShift }; 
+  disableBtn('closeShiftBtn', '⏳ جاري الحفظ ورفع الصور...');
+  
   try {
     let updateData = { endLocation: selectedEndLocation, endTime: nowFull(), status: 'pending', closedAt: nowFull(), system: currentOpenShift.closeSystem };
+    
     if (shift.system === 'fixed') {
-      const kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0, kmStart = shift.startOdometer, transMethod = document.getElementById('fsTransferMethod').value, transImg = document.getElementById('fsTransferImg').files[0];
-      if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
+      const kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0, kmStart = shift.startOdometer;
+      const transMethod = document.getElementById('fsTransferMethod').value, transImg = document.getElementById('fsTransferImg').files[0];
+      
+      if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } 
+      if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } 
+      if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
+      
       showLoading('جاري رفع الصور...');
       let endOdoImgUrl = null;
       if (window.capturedEndImage) { const blob = await (await fetch(window.capturedEndImage)).blob(); const file = new File([blob], 'end_odometer.jpg', { type: 'image/jpeg' }); endOdoImgUrl = await uploadFile(file, 'odometers'); }
-      const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; const extraExp = getExtraExpensesTotal('fs');
+      
+      const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; 
+      const extraExp = getExtraExpensesTotal('fs');
+      
       updateData = { ...updateData, revenue: parseFloat(document.getElementById('fsRevenue').value) || 0, expense: extraExp.total, kmEnd, kmUsed: kmEnd - kmStart, tier: document.getElementById('fsTier').value, tierValue: parseFloat(document.getElementById('fsTierValue').value) || 0, transferred: parseFloat(document.getElementById('fsTransferred').value) || 0, remaining: parseFloat(document.getElementById('fsRemaining').value) || 0, transferMethod: transMethod, transferImg: transImgUrl, endOdometerImg: endOdoImgUrl, travel: parseFloat(document.getElementById('fsTravel').value) || 0, privateTrips: parseFloat(document.getElementById('fsPrivate').value) || 0, schoolTrips: parseFloat(document.getElementById('fsSchools').value) || 0, employeeTrips: parseFloat(document.getElementById('fsEmployees').value) || 0, extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0), extraExpenseTotal: extraExp.total, extraFuel: extraExp.fuel, extraGas: extraExp.gas };
       window.capturedEndImage = null;
+      
     } else if (shift.system === 'third') {
-      const kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0, kmStart = shift.startOdometer, transMethod = document.getElementById('tsTransferMethod').value, transImg = document.getElementById('tsTransferImg').files[0];
-      if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
-      showLoading('جاري رفع الصور...'); const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; const gasUrls = await uploadFiles(document.getElementById('tsGasImgs').files, 'gas'), fuelUrls = await uploadFiles(document.getElementById('tsFuelImgs').files, 'fuel'), extraExp = getExtraExpensesTotal('ts');
+      const kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0, kmStart = shift.startOdometer;
+      const transMethod = document.getElementById('tsTransferMethod').value, transImg = document.getElementById('tsTransferImg').files[0];
+      
+      if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } 
+      if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } 
+      if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
+      
+      showLoading('جاري رفع الصور...'); 
+      const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; 
+      const gasUrls = await uploadFiles(document.getElementById('tsGasImgs').files, 'gas'), fuelUrls = await uploadFiles(document.getElementById('tsFuelImgs').files, 'fuel'), extraExp = getExtraExpensesTotal('ts');
+      
       let endOdoImgUrl = null;
       if (window.capturedTsEndImage) { const blob = await (await fetch(window.capturedTsEndImage)).blob(); const file = new File([blob], 'end_odometer.jpg', { type: 'image/jpeg' }); endOdoImgUrl = await uploadFile(file, 'odometers'); }
+      
       updateData = { ...updateData, revenue: parseFloat(document.getElementById('tsTotalRevenue').value) || 0, expense: (parseFloat(document.getElementById('tsGas').value)||0) + (parseFloat(document.getElementById('tsFuel').value)||0) + extraExp.total, kmEnd, kmUsed: kmEnd - kmStart, uber: parseFloat(document.getElementById('tsUber').value) || 0, didi: parseFloat(document.getElementById('tsDidi').value) || 0, indriver: parseFloat(document.getElementById('tsIndriver').value) || 0, external: parseFloat(document.getElementById('tsExternal').value) || 0, travel: parseFloat(document.getElementById('tsTravel').value) || 0, privateTrips: parseFloat(document.getElementById('tsPrivate').value) || 0, schoolTrips: parseFloat(document.getElementById('tsSchools').value) || 0, employeeTrips: parseFloat(document.getElementById('tsEmployees').value) || 0, gas: parseFloat(document.getElementById('tsGas').value) || 0, fuel: parseFloat(document.getElementById('tsFuel').value) || 0, captainShare: parseFloat(document.getElementById('tsCaptainShare').value) || 0, carShare: parseFloat(document.getElementById('tsCarShare').value) || 0, transferred: parseFloat(document.getElementById('tsTransferred').value) || 0, remaining: parseFloat(document.getElementById('tsRemaining').value) || 0, transferMethod: transMethod, transferImg: transImgUrl, endOdometerImg: endOdoImgUrl, gasImgs: gasUrls, fuelImgs: fuelUrls, extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0), extraExpenseTotal: extraExp.total, extraFuel: extraExp.fuel, extraGas: extraExp.gas };
       window.capturedTsEndImage = null;
     }
-    await updateTransactionDB(shift.id, updateData); resetCloseForms(); toast('✅ تم إرسال الشيفت للمراجعة بنجاح!'); await renderCaptain(); switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
+    
+    await updateTransactionDB(shift.id, updateData); 
+    resetCloseForms(); 
+    toast('✅ تم إرسال الشيفت للمراجعة بنجاح!'); 
+    await renderCaptain(); 
+    switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
   } catch (e) { console.error(e); toast('حدث خطأ: ' + e.message, 'error'); } finally { enableBtn('closeShiftBtn'); hideLoading(); }
 }
+
 function resetCloseForms() {
   ['fsKmEnd','fsKmUsed','fsTransferred','fsRemaining','fsTier','fsTierValue','fsRevenue','fsExtraFuel','fsExtraGas','fsTotalExtraExpense'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   ['fsTravel','fsPrivate','fsSchools','fsEmployees'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
@@ -1244,50 +1144,117 @@ function resetCloseForms() {
   fsExtraExpenses = []; tsExtraExpenses = []; renderExtraExpenses('fs'); renderExtraExpenses('ts'); selectedEndLocation = null;
 }
 
+/* ============================================================
+   17. رئيسية الكابتن والسجلات
+   ============================================================ */
 async function renderMyHome() {
-  const allTrans = await getTransactions(), shifts = allTrans.filter(t => t.captainId === currentUser.id && t.status === 'closed'), today = todayStr(); let todayWork = 0, todayExp = 0;
+  const allTrans = await getTransactions(), shifts = allTrans.filter(t => t.captainId === currentUser.id && t.status === 'closed'), today = todayStr(); 
+  let todayWork = 0, todayExp = 0;
   shifts.forEach(s => { if (s.date === today) { todayWork += s.revenue || 0; todayExp += s.expense || 0; } });
-  document.getElementById('myTodayWork').textContent = todayWork; document.getElementById('myTodayExp').textContent = todayExp; document.getElementById('myTodayNet').textContent = todayWork - todayExp;
-  const cap = (await getCaptains()).find(c => c.id === currentUser.id); document.getElementById('mySystem').textContent = cap ? systemName(cap.system) : '-'; document.getElementById('myCar').textContent = cap ? (cap.carPlate || '-') : '-';
-  const openShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'open'), pendingShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'pending'); let sT = '🔴 مغلق'; if (openShift) sT = '🟢 مفتوح'; if (pendingShift) sT = '🟡 معلق'; document.getElementById('myShiftStatus').textContent = sT; document.getElementById('myLastShift').textContent = shifts.length > 0 ? shifts[shifts.length - 1].date : '-';
+  document.getElementById('myTodayWork').textContent = todayWork; 
+  document.getElementById('myTodayExp').textContent = todayExp; 
+  document.getElementById('myTodayNet').textContent = todayWork - todayExp;
+  
+  const cap = (await getCaptains()).find(c => c.id === currentUser.id); 
+  document.getElementById('mySystem').textContent = cap ? systemName(cap.system) : '-'; 
+  document.getElementById('myCar').textContent = cap ? (cap.carPlate || '-') : '-';
+  
+  const openShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'open'), pendingShift = allTrans.find(t => t.captainId === currentUser.id && t.status === 'pending'); 
+  let sT = '🔴 مغلق'; if (openShift) sT = '🟢 مفتوح'; if (pendingShift) sT = '🟡 معلق'; 
+  document.getElementById('myShiftStatus').textContent = sT; 
+  document.getElementById('myLastShift').textContent = shifts.length > 0 ? shifts[shifts.length - 1].date : '-';
   document.getElementById('myDebtTotal').textContent = (await captainDebtBalance(currentUser.id)).balance;
-  const tbody = document.getElementById('myRecentTable'); tbody.innerHTML = ''; const recent = allTrans.filter(t => t.captainId === currentUser.id).slice(0, 5); if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
+  
+  const tbody = document.getElementById('myRecentTable'); tbody.innerHTML = ''; 
+  const recent = allTrans.filter(t => t.captainId === currentUser.id).slice(0, 5); 
+  if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
   recent.forEach(s => { tbody.innerHTML += `<tr><td>${s.date}</td><td>${systemBadge(s.system)}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td></tr>`; });
 }
+
 async function renderMyTransactions() {
-  const shifts = (await getTransactions()).filter(t => t.captainId === currentUser.id), tbody = document.getElementById('myAllTable'); tbody.innerHTML = ''; if (shifts.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
+  const shifts = (await getTransactions()).filter(t => t.captainId === currentUser.id), tbody = document.getElementById('myAllTable'); tbody.innerHTML = ''; 
+  if (shifts.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">لا توجد شيفتات</td></tr>'; return; }
   shifts.forEach(s => { tbody.innerHTML += `<tr><td>${s.date}</td><td>${systemBadge(s.system)}</td><td>${s.carPlate || '-'}</td><td style="color:#00E676;">${s.revenue || 0}</td><td style="color:#FFC107;font-weight:bold;">${(s.revenue||0) - (s.expense||0)}</td><td>${statusBadge(s.status)}</td><td><button class="btn btn-outline btn-small" onclick="showDetails('${s.id}')">عرض</button></td></tr>`; });
 }
+
 async function renderMyDebts() {
-  const bal = await captainDebtBalance(currentUser.id); document.getElementById('debtCurrentBalance').textContent = bal.balance; document.getElementById('debtTotalAccum').textContent = bal.totalAdd; document.getElementById('debtTotalPaid').textContent = bal.totalPaid;
-  const payTbody = document.getElementById('paymentsTable'); payTbody.innerHTML = ''; (await getPayments()).filter(p => p.captainId === currentUser.id).forEach(p => { payTbody.innerHTML += `<tr><td>${p.date}</td><td style="color:#00E676;font-weight:bold;">${p.amount}</td><td>${p.method}</td><td>${p.note || '-'}</td><td>${p.img ? `<img src="${p.img}" style="width:40px;height:40px;border-radius:6px;" onclick="window.open('${p.img}')">` : '-'}</td></tr>`; });
-  const debtTbody = document.getElementById('debtsTable'); debtTbody.innerHTML = ''; (await getDebts()).filter(d => d.captainId === currentUser.id).forEach(d => { debtTbody.innerHTML += `<tr><td>${d.date}</td><td>${systemBadge(d.system)}</td><td style="color:#EF5350;font-weight:bold;">+${d.amount}</td><td style="color:#FFC107;">${d.balanceAfter}</td></tr>`; });
+  const bal = await captainDebtBalance(currentUser.id); 
+  document.getElementById('debtCurrentBalance').textContent = bal.balance; 
+  document.getElementById('debtTotalAccum').textContent = bal.totalAdd; 
+  document.getElementById('debtTotalPaid').textContent = bal.totalPaid;
+  
+  const payTbody = document.getElementById('paymentsTable'); payTbody.innerHTML = ''; 
+  (await getPayments()).filter(p => p.captainId === currentUser.id).forEach(p => { payTbody.innerHTML += `<tr><td>${p.date}</td><td style="color:#00E676;font-weight:bold;">${p.amount}</td><td>${p.method}</td><td>${p.note || '-'}</td><td>${p.img ? `<img src="${p.img}" style="width:40px;height:40px;border-radius:6px;" onclick="window.open('${p.img}')">` : '-'}</td></tr>`; });
+  
+  const debtTbody = document.getElementById('debtsTable'); debtTbody.innerHTML = ''; 
+  (await getDebts()).filter(d => d.captainId === currentUser.id).forEach(d => { debtTbody.innerHTML += `<tr><td>${d.date}</td><td>${systemBadge(d.system)}</td><td style="color:#EF5350;font-weight:bold;">+${d.amount}</td><td style="color:#FFC107;">${d.balanceAfter}</td></tr>`; });
   updatePayHint();
 }
+
 async function updatePayHint() { const bal = (await captainDebtBalance(currentUser.id)).balance, hint = document.getElementById('payHint'); if (bal <= 0) hint.innerHTML = '<span style="color:#00E676;">✅ لا يوجد مديونية</span>'; else hint.innerHTML = `💰 المديونية: <strong style="color:#EF5350;">${bal} ج</strong>`; }
 async function validatePayAmount() { const bal = (await captainDebtBalance(currentUser.id)).balance, amount = parseFloat(document.getElementById('payAmount').value) || 0, hint = document.getElementById('payHint'); if (amount > bal) hint.innerHTML = `<span style="color:#EF5350;">❌ أكبر من المديونية (${bal})</span>`; else if (amount > 0) hint.innerHTML = `<span style="color:#00E676;">✅ صحيح</span>`; else updatePayHint(); }
+
 async function submitPayment() {
   const amount = parseFloat(document.getElementById('payAmount').value) || 0, method = document.getElementById('payMethod').value, note = document.getElementById('payNote').value.trim(), imgFile = document.getElementById('payImg').files[0], bal = (await captainDebtBalance(currentUser.id)).balance;
-  if (bal <= 0) { toast('لا يوجد مديونية', 'error'); return; } if (!amount || amount > bal) { toast('مبلغ غير صحيح', 'error'); return; } if (!method) { toast('اختر طريقة الدفع', 'error'); return; } if (!imgFile) { toast('صورة الإثبات مطلوبة', 'error'); return; }
+  if (bal <= 0) { toast('لا يوجد مديونية', 'error'); return; } 
+  if (!amount || amount > bal) { toast('مبلغ غير صحيح', 'error'); return; } 
+  if (!method) { toast('اختر طريقة الدفع', 'error'); return; } 
+  if (!imgFile) { toast('صورة الإثبات مطلوبة', 'error'); return; }
+  
   disableBtn('payBtn', '⏳ جاري الرفع...'); showLoading('جاري رفع صورة الإثبات...');
-  try { const imgUrl = await uploadFile(imgFile, 'payments'); await addPaymentDB({ captainId: currentUser.id, date: todayStr(), amount, method, note, img: imgUrl }); document.getElementById('payAmount').value = ''; document.getElementById('payMethod').value = ''; document.getElementById('payNote').value = ''; document.getElementById('payImg').value = ''; toast('✅ تم تسجيل التسديد'); await renderMyDebts(); await renderMyHome(); } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { enableBtn('payBtn'); hideLoading(); }
+  try { 
+    const imgUrl = await uploadFile(imgFile, 'payments'); 
+    await addPaymentDB({ captainId: currentUser.id, date: todayStr(), amount, method, note, img: imgUrl }); 
+    document.getElementById('payAmount').value = ''; document.getElementById('payMethod').value = ''; document.getElementById('payNote').value = ''; document.getElementById('payImg').value = ''; 
+    toast('✅ تم تسجيل التسديد'); 
+    await renderMyDebts(); await renderMyHome(); 
+  } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { enableBtn('payBtn'); hideLoading(); }
 }
-
-/* ======== المراجعة والتشغيل ======== */
+</script>
+<script>
+/* ============================================================
+   18. شاشة التفاصيل والمراجعة (للأدمن)
+   ============================================================ */
 async function showDetails(id) {
   const s = (await getTransactions()).find(t => t.id === id); if (!s) return; const cap = (await getCaptains()).find(c => c.id === s.captainId);
-  let html = `<div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">الكابتن:</strong> ${cap ? cap.name : 'محذوف'}</div><div><strong style="color:#FFC107;">النظام:</strong> ${systemName(s.system)}</div><div><strong style="color:#FFC107;">السيارة:</strong> ${s.carPlate || '-'}</div><div><strong style="color:#FFC107;">التاريخ:</strong> ${s.date || '-'}</div><div><strong style="color:#FFC107;">الوردية:</strong> ${shiftName(s.shift)}</div><div><strong style="color:#FFC107;">الحالة:</strong> ${statusBadge(s.status)}</div><hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div><strong style="color:#00E676;">الإيراد:</strong> ${s.revenue || 0} ج</div><div><strong style="color:#EF5350;">المصروف:</strong> ${s.expense || 0} ج</div><div><strong style="color:#FFC107;">الصافي:</strong> ${(s.revenue||0) - (s.expense||0)} ج</div><div><strong style="color:#FFC107;">المحول:</strong> ${s.transferred || 0} ج</div><div><strong style="color:#FFC107;">المتبقي:</strong> ${s.remaining || 0} ج</div><div><strong style="color:#FFC107;">طريقة التحويل:</strong> ${s.transferMethod || '-'}</div><div><strong style="color:#FFC107;">كيلوهات:</strong> ${s.startOdometer || 0} → ${s.kmEnd || 0} (مستهلك: ${s.kmUsed || 0})</div></div>`;
+  
+  let html = `<div style="color:#BDBDBD;font-size:13px;line-height:2;">
+    <div><strong style="color:#FFC107;">الكابتن:</strong> ${cap ? cap.name : 'محذوف'}</div>
+    <div><strong style="color:#FFC107;">النظام:</strong> ${systemName(s.system)}</div>
+    <div><strong style="color:#FFC107;">السيارة:</strong> ${s.carPlate || '-'}</div>
+    <div><strong style="color:#FFC107;">التاريخ:</strong> ${s.date || '-'}</div>
+    <div><strong style="color:#FFC107;">الوردية:</strong> ${shiftName(s.shift)}</div>
+    <div><strong style="color:#FFC107;">الحالة:</strong> ${statusBadge(s.status)}</div>
+    <hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">
+    <div><strong style="color:#00E676;">الإيراد:</strong> ${s.revenue || 0} ج</div>
+    <div><strong style="color:#EF5350;">المصروف:</strong> ${s.expense || 0} ج</div>
+    <div><strong style="color:#FFC107;">الصافي:</strong> ${(s.revenue||0) - (s.expense||0)} ج</div>
+    <div><strong style="color:#FFC107;">المحول:</strong> ${s.transferred || 0} ج</div>
+    <div><strong style="color:#FFC107;">المتبقي:</strong> ${s.remaining || 0} ج</div>
+    <div><strong style="color:#FFC107;">طريقة التحويل:</strong> ${s.transferMethod || '-'}</div>
+    <div><strong style="color:#FFC107;">كيلوهات:</strong> ${s.startOdometer || 0} → ${s.kmEnd || 0} (مستهلك: ${s.kmUsed || 0})</div>
+  </div>`;
+  
   if (s.system === 'fixed') { html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">الشريحة:</strong> ${s.tier || '-'}</div><div><strong style="color:#FFC107;">قيمة الشريحة:</strong> ${s.tierValue || 0} ج</div><div><strong style="color:#FFC107;">مشاوير سفر:</strong> ${s.travel || 0}</div><div><strong style="color:#FFC107;">مشاوير خاصة:</strong> ${s.privateTrips || 0}</div><div><strong style="color:#FFC107;">دورات مدارس:</strong> ${s.schoolTrips || 0}</div><div><strong style="color:#FFC107;">دورات موظفيين:</strong> ${s.employeeTrips || 0}</div></div>`; }
   else if (s.system === 'third') { html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">أوبر:</strong> ${s.uber || 0}</div><div><strong style="color:#FFC107;">ديدي:</strong> ${s.didi || 0}</div><div><strong style="color:#FFC107;">إندرايفر:</strong> ${s.indriver || 0}</div><div><strong style="color:#FFC107;">مشوار خارجي:</strong> ${s.external || 0}</div><div><strong style="color:#EF5350;">غاز:</strong> ${s.gas || 0}</div><div><strong style="color:#EF5350;">بنزين:</strong> ${s.fuel || 0}</div><div><strong style="color:#FFC107;">نصيب الكابتن:</strong> ${s.captainShare || 0}</div><div><strong style="color:#FFC107;">نصيب السيارة:</strong> ${s.carShare || 0}</div></div>`; }
-  if (s.extraExpenseTotal > 0) { html += `<hr style="border-color:rgba(239,83,80,0.2);margin:10px 0;"><div style="color:#EF5350;font-size:13px;margin-top:8px;"><div style="color:#EF5350;font-weight:bold;margin-bottom:4px;">💸 المصروفات الإضافية:</div><div>بنزين: ${s.extraFuel || 0} ج | غاز: ${s.extraGas || 0} ج</div></div>`; if (s.extraExpenses && s.extraExpenses.length > 0) { html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;"><strong>مصروفات أخرى:</strong><br>`; s.extraExpenses.forEach(e => { html += `• ${e.name}: ${e.amount} ج<br>`; }); html += `</div>`; } html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;font-weight:bold;">الإجمالي: ${s.extraExpenseTotal} ج</div>`; }
   
-  // صور العداد جزء أساسي من المراجعة: اعرضها دائماً وبحجم واضح، حتى لو كانت صورة قديمة أو لم تُرفع.
-  const startImg = s.startOdometerImg || s.startOdometerImage || s.startMeterImg || '';
-  const endImg = s.endOdometerImg || s.endOdometerImage || s.endMeterImg || '';
+  if (s.extraExpenseTotal > 0) { 
+    html += `<hr style="border-color:rgba(239,83,80,0.2);margin:10px 0;"><div style="color:#EF5350;font-size:13px;margin-top:8px;"><div style="color:#EF5350;font-weight:bold;margin-bottom:4px;">💸 المصروفات الإضافية:</div><div>بنزين: ${s.extraFuel || 0} ج | غاز: ${s.extraGas || 0} ج</div></div>`; 
+    if (s.extraExpenses && s.extraExpenses.length > 0) { 
+      html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;"><strong>مصروفات أخرى:</strong><br>`; 
+      s.extraExpenses.forEach(e => { html += `• ${e.name}: ${e.amount} ج<br>`; }); 
+      html += `</div>`; 
+    } 
+    html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;font-weight:bold;">الإجمالي: ${s.extraExpenseTotal} ج</div>`; 
+  }
+  
+  const startImg = s.startOdometerImg || '';
+  const endImg = s.endOdometerImg || '';
   const transferImg = s.transferImg || '';
   const renderReviewImage = (label, url, value, accent) => url
-    ? `<div style="background:rgba(255,255,255,0.04);border:1px solid ${accent};border-radius:14px;padding:10px;text-align:center;"><div style="color:#FFC107;font-size:13px;font-weight:bold;margin-bottom:8px;">${label}</div><div style="color:#BDBDBD;font-size:12px;margin-bottom:8px;">القراءة المسجلة: <strong style="color:#00E676;font-size:16px;">${value || 0}</strong></div><img src="${url}" alt="${label}" loading="lazy" style="display:block;width:100%;max-width:360px;max-height:260px;object-fit:contain;margin:auto;border-radius:10px;background:#000;border:1px solid ${accent};cursor:zoom-in;" onclick="window.open(this.src,'_blank')" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div style="display:none;color:#EF5350;font-size:12px;padding:18px;">تعذر تحميل الصورة — اضغط إعادة تحميل الصفحة أو راجع رابط الصورة.</div><button type="button" onclick="window.open('${url}','_blank')" style="margin-top:8px;background:#2196F3;color:white;border:0;border-radius:8px;padding:7px 12px;cursor:pointer;">🔍 فتح الصورة بالحجم الكامل</button></div>`
-    : `<div style="background:rgba(239,83,80,0.08);border:1px dashed rgba(239,83,80,0.55);border-radius:14px;padding:18px;text-align:center;color:#EF5350;"><div style="font-weight:bold;margin-bottom:6px;">${label}</div><div style="font-size:12px;">لم يتم حفظ صورة هذا العداد مع الشيفت</div></div>`;
+    ? `<div style="background:rgba(255,255,255,0.04);border:1px solid ${accent};border-radius:14px;padding:10px;text-align:center;"><div style="color:#FFC107;font-size:13px;font-weight:bold;margin-bottom:8px;">${label}</div><div style="color:#BDBDBD;font-size:12px;margin-bottom:8px;">القراءة المسجلة: <strong style="color:#00E676;font-size:16px;">${value || 0}</strong></div><img src="${url}" alt="${label}" loading="lazy" style="display:block;width:100%;max-width:360px;max-height:260px;object-fit:contain;margin:auto;border-radius:10px;background:#000;border:1px solid ${accent};cursor:zoom-in;" onclick="window.open(this.src,'_blank')"><button type="button" onclick="window.open('${url}','_blank')" style="margin-top:8px;background:#2196F3;color:white;border:0;border-radius:8px;padding:7px 12px;cursor:pointer;">🔍 فتح الصورة بالحجم الكامل</button></div>`
+    : `<div style="background:rgba(239,83,80,0.08);border:1px dashed rgba(239,83,80,0.55);border-radius:14px;padding:18px;text-align:center;color:#EF5350;"><div style="font-weight:bold;margin-bottom:6px;">${label}</div><div style="font-size:12px;">لم يتم حفظ صورة العداد</div></div>`;
+  
   const meterImagesHtml = `<hr style="border-color:rgba(255,193,7,0.35);margin:16px 0 10px;"><div style="color:#FFC107;font-weight:bold;font-size:15px;margin-bottom:10px;">📷 صور العداد للمراجعة</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;">${renderReviewImage('📸 عداد البداية', startImg, s.startOdometer, 'rgba(0,230,118,0.55)')}${renderReviewImage('📸 عداد النهاية', endImg, s.kmEnd, 'rgba(33,150,243,0.65)')}</div>`;
   html += meterImagesHtml;
   if (transferImg) html += `<div style="margin-top:12px;">${renderReviewImage('📄 صورة التحويل', transferImg, s.transferred, 'rgba(255,193,7,0.4)')}</div>`;
@@ -1297,45 +1264,135 @@ async function showDetails(id) {
   if (currentUser.role === 'admin' && s.status === 'pending') { adminControls.style.display = 'block'; document.getElementById('editKmStart').value = s.startOdometer || 0; document.getElementById('editKmEnd').value = s.kmEnd || 0; document.getElementById('editTransferred').value = s.transferred || 0; document.getElementById('editRemaining').value = s.remaining || 0; currentReviewShiftId = s.id; } else { adminControls.style.display = 'none'; }
   document.getElementById('detailsModal').style.display = 'block';
 }
+
 function closeDetails() { document.getElementById('detailsModal').style.display = 'none'; currentReviewShiftId = null; }
 
+/* ============================================================
+   19. إجراءات الأدمن (موافقة / رفض / تعديل)
+   ============================================================ */
 async function approveShift() {
   if (!currentReviewShiftId) return; if (!confirm('تأكيد الموافقة النهائية؟ سيتم إضافة المتبقي للمديونية.')) return;
   showLoading('جاري الموافقة...');
-  try { const s = (await getTransactions()).find(t => t.id === currentReviewShiftId); if (!s) return; await updateTransactionDB(s.id, { status: 'closed' }); if (s.remaining > 0) { const bal = await captainDebtBalance(s.captainId); await addDebtDB({ captainId: s.captainId, shiftId: s.id, date: todayStr(), system: s.system, amount: s.remaining, balanceAfter: bal.balance + s.remaining }); } toast('✅ تمت الموافقة'); closeDetails(); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
+  try { 
+    const s = (await getTransactions()).find(t => t.id === currentReviewShiftId); if (!s) return; 
+    await updateTransactionDB(s.id, { status: 'closed' }); 
+    if (s.remaining > 0) { 
+      const bal = await captainDebtBalance(s.captainId); 
+      await addDebtDB({ captainId: s.captainId, shiftId: s.id, date: todayStr(), system: s.system, amount: s.remaining, balanceAfter: bal.balance + s.remaining }); 
+    } 
+    toast('✅ تمت الموافقة'); closeDetails(); await renderAdmin(); 
+  } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
+
 async function rejectShift() {
   if (!currentReviewShiftId) return; const reason = prompt('سبب الرفض:'); if (reason === null) return; showLoading('جاري الرفض...');
   try { await updateTransactionDB(currentReviewShiftId, { status: 'open', rejectReason: reason }); toast('❌ تم الرفض'); closeDetails(); await renderAdmin(); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
+
 async function saveAdminEdit() {
-  if (!currentReviewShiftId) return; const newKmStart = parseFloat(document.getElementById('editKmStart').value) || 0, newKmEnd = parseFloat(document.getElementById('editKmEnd').value) || 0, newTrans = parseFloat(document.getElementById('editTransferred').value) || 0; showLoading('جاري التعديل...');
-  try { const s = (await getTransactions()).find(t => t.id === currentReviewShiftId); if (!s) return; let updateData = { startOdometer: newKmStart, kmEnd: newKmEnd, kmUsed: newKmEnd - newKmStart, transferred: newTrans };
-    if (s.system === 'fixed') { const cap = (await getCaptains()).find(c => c.id === s.captainId), tiers = cap.tiers || { t1:0, t2:0, t3:0 }; let tP = 0, tL = '-'; if (updateData.kmUsed > 0 && updateData.kmUsed <= 350) { tP = tiers.t1; tL = 'الأولى'; } else if (updateData.kmUsed > 350 && updateData.kmUsed <= 420) { tP = tiers.t2; tL = 'الثانية'; } else if (updateData.kmUsed > 420 && updateData.kmUsed <= 500) { tP = tiers.t3; tL = 'الثالثة'; }
-      const nR = tP + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0); updateData.tierValue = tP; updateData.tier = tL; updateData.revenue = nR; updateData.remaining = Math.max(0, nR - newTrans - (s.extraExpenseTotal||0));
-    } else { const nR = (s.uber||0) + (s.didi||0) + (s.indriver||0) + (s.external||0) + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0), nE = (s.gas||0) + (s.fuel||0) + (s.extraExpenseTotal||0), cS = (nR - nE) / 3, caS = ((nR - nE) * 2) / 3; updateData.revenue = nR; updateData.captainShare = cS; updateData.carShare = caS; updateData.remaining = nR - cS - newTrans - nE; }
+  if (!currentReviewShiftId) return; 
+  const newKmStart = parseFloat(document.getElementById('editKmStart').value) || 0, newKmEnd = parseFloat(document.getElementById('editKmEnd').value) || 0, newTrans = parseFloat(document.getElementById('editTransferred').value) || 0; 
+  showLoading('جاري التعديل...');
+  try { 
+    const s = (await getTransactions()).find(t => t.id === currentReviewShiftId); if (!s) return; 
+    let updateData = { startOdometer: newKmStart, kmEnd: newKmEnd, kmUsed: newKmEnd - newKmStart, transferred: newTrans };
+    if (s.system === 'fixed') { 
+      const cap = (await getCaptains()).find(c => c.id === s.captainId), tiers = cap.tiers || { t1:0, t2:0, t3:0 }; 
+      let tP = 0, tL = '-'; 
+      if (updateData.kmUsed > 0 && updateData.kmUsed <= 350) { tP = tiers.t1; tL = 'الأولى'; } 
+      else if (updateData.kmUsed > 350 && updateData.kmUsed <= 420) { tP = tiers.t2; tL = 'الثانية'; } 
+      else if (updateData.kmUsed > 420 && updateData.kmUsed <= 500) { tP = tiers.t3; tL = 'الثالثة'; }
+      const nR = tP + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0); 
+      updateData.tierValue = tP; updateData.tier = tL; updateData.revenue = nR; updateData.remaining = Math.max(0, nR - newTrans - (s.extraExpenseTotal||0));
+    } else { 
+      const nR = (s.uber||0) + (s.didi||0) + (s.indriver||0) + (s.external||0) + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0), nE = (s.gas||0) + (s.fuel||0) + (s.extraExpenseTotal||0), cS = (nR - nE) / 3, caS = ((nR - nE) * 2) / 3; 
+      updateData.revenue = nR; updateData.captainShare = cS; updateData.carShare = caS; updateData.remaining = nR - cS - newTrans - nE; 
+    }
     await updateTransactionDB(s.id, updateData); document.getElementById('editRemaining').value = updateData.remaining; toast('✏️ تم التعديل'); await showDetails(s.id);
   } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); }
 }
 
-async function exportExcel() { showLoading('جاري التصدير...'); try { const trans = await getTransactions(), caps = await getCaptains(); let csv = '\uFEFF=== الشيفتات ===\nالكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل\n'; trans.forEach(s => { const cap = caps.find(c => c.id === s.captainId); csv += [cap ? cap.name : 'محذوف', s.system === 'fixed' ? 'ثابت' : 'تلت', s.carPlate || '-', s.date || '-', shiftName(s.shift), s.status, s.revenue || 0, s.expense || 0, (s.revenue||0) - (s.expense||0), s.transferred || 0, s.remaining || 0, s.transferMethod || '-'].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n'; }); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mashwarak_' + todayStr() + '.csv'; a.click(); toast('✅ تم التصدير'); } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); } }
-async function changeAdminPassword() { if (!currentUser || currentUser.role !== 'admin') return; const oldPass = prompt('كلمة المرور الحالية:'); if (!oldPass) return; try { await auth.currentUser.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(currentUser.username + FAKE_DOMAIN, oldPass)); const newPass = prompt('كلمة المرور الجديدة (6 أحرف على الأقل):'); if (!newPass || newPass.length < 6) { toast('قصيرة', 'error'); return; } await auth.currentUser.updatePassword(newPass); toast('✅ تم التغيير'); } catch (e) { toast('❌ غير صحيحة', 'error'); } }
-async function addNewAdmin() { if (!currentUser || currentUser.role !== 'admin') return; const name = prompt('اسم الأدمن:'), username = prompt('اسم المستخدم (إنجليزي):'); if (!name || !/^[a-zA-Z0-9_]+$/.test(username)) { toast('بيانات غلط', 'error'); return; } const password = prompt('كلمة المرور (6+):'); if (!password || password.length < 6) { toast('قصيرة', 'error'); return; } showLoading('جاري الإنشاء...'); try { const oldUser = auth.currentUser, userCred = await auth.createUserWithEmailAndPassword(username + FAKE_DOMAIN, password); await addAdminDB({ username, name, password, main: false, authUid: userCred.user.uid, createdAt: todayStr() }); await auth.updateCurrentUser(oldUser); toast('✅ تم إضافة الأدمن'); } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { hideLoading(); } }
+/* ============================================================
+   20. تصدير Excel وإدارة الأدمن
+   ============================================================ */
+async function exportExcel() { 
+  showLoading('جاري التصدير...'); 
+  try { 
+    const trans = await getTransactions(), caps = await getCaptains(); 
+    let csv = '\uFEFF=== الشيفتات ===\nالكابتن,النظام,السيارة,التاريخ,الوردية,الحالة,الإيراد,المصروف,الصافي,المحول,المتبقي,طريقة التحويل\n'; 
+    trans.forEach(s => { 
+      const cap = caps.find(c => c.id === s.captainId); 
+      csv += [cap ? cap.name : 'محذوف', s.system === 'fixed' ? 'ثابت' : 'تلت', s.carPlate || '-', s.date || '-', shiftName(s.shift), s.status, s.revenue || 0, s.expense || 0, (s.revenue||0) - (s.expense||0), s.transferred || 0, s.remaining || 0, s.transferMethod || '-'].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n'; 
+    }); 
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }), a = document.createElement('a'); 
+    a.href = URL.createObjectURL(blob); a.download = 'mashwarak_' + todayStr() + '.csv'; a.click(); 
+    toast('✅ تم التصدير'); 
+  } catch (e) { toast('خطأ', 'error'); } finally { hideLoading(); } 
+}
 
+async function changeAdminPassword() { 
+  if (!currentUser || currentUser.role !== 'admin') return; 
+  const oldPass = prompt('كلمة المرور الحالية:'); if (!oldPass) return; 
+  try { 
+    await auth.currentUser.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(currentUser.username + FAKE_DOMAIN, oldPass)); 
+    const newPass = prompt('كلمة المرور الجديدة (6 أحرف على الأقل):'); 
+    if (!newPass || newPass.length < 6) { toast('قصيرة', 'error'); return; } 
+    await auth.currentUser.updatePassword(newPass); 
+    toast('✅ تم التغيير'); 
+  } catch (e) { toast('❌ غير صحيحة', 'error'); } 
+}
+
+async function addNewAdmin() { 
+  if (!currentUser || currentUser.role !== 'admin') return; 
+  const name = prompt('اسم الأدمن:'), username = prompt('اسم المستخدم (إنجليزي):'); 
+  if (!name || !/^[a-zA-Z0-9_]+$/.test(username)) { toast('بيانات غلط', 'error'); return; } 
+  const password = prompt('كلمة المرور (6+):'); 
+  if (!password || password.length < 6) { toast('قصيرة', 'error'); return; } 
+  showLoading('جاري الإنشاء...'); 
+  try { 
+    const oldUser = auth.currentUser, userCred = await auth.createUserWithEmailAndPassword(username + FAKE_DOMAIN, password); 
+    await addAdminDB({ username, name, password, main: false, authUid: userCred.user.uid, createdAt: todayStr() }); 
+    await auth.updateCurrentUser(oldUser); 
+    toast('✅ تم إضافة الأدمن'); 
+  } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { hideLoading(); } 
+}
+
+/* ============================================================
+   21. التشغيل النهائي والأحداث
+   ============================================================ */
 applyTheme();
+
 auth.onAuthStateChanged(async function(firebaseUser) {
-  if (firebaseUser) { const saved = localStorage.getItem('mashwarak_session'); if (saved) { currentUser = JSON.parse(saved); enterDashboard(); } }
-  else { currentUser = null; localStorage.removeItem('mashwarak_session'); document.getElementById('dashboard').style.display = 'none'; document.getElementById('loginScreen').style.display = 'block'; }
+  if (firebaseUser) { 
+    const saved = localStorage.getItem('mashwarak_session'); 
+    if (saved) { 
+      currentUser = JSON.parse(saved); 
+      enterDashboard(); 
+    } 
+  }
+  else { 
+    currentUser = null; localStorage.removeItem('mashwarak_session'); 
+    document.getElementById('dashboard').style.display = 'none'; 
+    document.getElementById('loginScreen').style.display = 'block'; 
+  }
 });
+
 (async function initDefaultAdmin() {
-  try { await new Promise(r => setTimeout(r, 800)); if ((await getAdmins()).length > 0) return;
-    try { const cred = await auth.createUserWithEmailAndPassword('Abdallh' + FAKE_DOMAIN, 'Abdallh2027'); await addAdminDB({ username: 'Abdallh', name: 'عبدالله', password: 'Abdallh2027', main: true, authUid: cred.user.uid, createdAt: todayStr() }); await auth.signOut(); } catch (e) {}
+  try { 
+    await new Promise(r => setTimeout(r, 800)); 
+    if ((await getAdmins()).length > 0) return;
+    try { 
+      const cred = await auth.createUserWithEmailAndPassword('Abdallh' + FAKE_DOMAIN, 'Abdallh2027'); 
+      await addAdminDB({ username: 'Abdallh', name: 'عبدالله', password: 'Abdallh2027', main: true, authUid: cred.user.uid, createdAt: todayStr() }); 
+      await auth.signOut(); 
+    } catch (e) {}
   } catch (e) {}
 })();
+
 document.getElementById('loginPass').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
 document.getElementById('loginUser').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
 document.addEventListener('input', function(e) { if (e.target.type === 'number' && parseFloat(e.target.value) < 0) e.target.value = 0; });
-window.addEventListener('load', function() { console.log('🚗 مشوارك — v17.0'); setTimeout(hideLoading, 800); });
+window.addEventListener('load', function() { console.log('🚗 مشوارك — v18.0'); setTimeout(hideLoading, 800); });
 setTimeout(hideLoading, 1500);
 </script>
 </body>
