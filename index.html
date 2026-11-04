@@ -13,11 +13,12 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
 
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<!-- مكتبة قراءة الأرقام -->
+<!-- Tesseract.js (قراءة الأرقام) -->
 <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
 <script>
@@ -51,17 +52,14 @@ let currentReviewShiftId = null;
 
 // حالة الكاميرا
 let cameraStream = null;
-let cameraInterval = null;
 let cameraTargetField = null;
 let currentWorker = null;
-let isReading = false;
 
 // لحفظ الصور
 let capturedStartImage = null;
 let capturedEndImage = null;
 let capturedTsEndImage = null;
 </script>
-
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Tahoma','Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent; }
 html, body { width:100%; min-height:100vh; overflow-x:hidden; }
@@ -142,31 +140,15 @@ body::after {
   z-index:-1;
   pointer-events:none;
 }
-@keyframes starMove {
-  0% { background-position:0% 0%; }
-  100% { background-position:100% 100%; }
-}
+@keyframes starMove { 0% { background-position:0% 0%; } 100% { background-position:100% 100%; } }
 
 #settingsBtn {
-  position:fixed;
-  top:14px;
-  left:14px;
-  width:48px;
-  height:48px;
-  border-radius:50%;
-  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
-  color:#0A0A0A;
-  border:none;
-  font-size:24px;
-  cursor:pointer;
-  z-index:9999;
-  box-shadow:0 0 25px var(--shadow);
-  transition:transform 0.4s, box-shadow 0.3s;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  position:fixed; top:14px; left:14px; width:48px; height:48px; border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; border:none;
+  font-size:24px; cursor:pointer; z-index:9999; box-shadow:0 0 25px var(--shadow);
+  transition:transform 0.4s; display:flex; align-items:center; justify-content:center;
 }
-#settingsBtn:hover { transform:rotate(90deg); box-shadow:0 0 40px var(--shadow); }
+#settingsBtn:hover { transform:rotate(90deg); }
 
 #settingsPanel {
   position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9998;
@@ -187,7 +169,7 @@ body::after {
 .settings-item span { color:var(--text-strong); font-size:14px; font-weight:bold; }
 .settings-item button {
   padding:8px 14px; border-radius:10px; border:none; font-size:13px; font-weight:bold;
-  cursor:pointer; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; transition:0.3s;
+  cursor:pointer; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A;
 }
 
 #loginScreen {
@@ -213,7 +195,7 @@ body::after {
 .input-wrap { position:relative; margin:12px 0; }
 .input-wrap input {
   width:100%; padding:14px 45px 14px 14px; border-radius:14px;
-  border:1px solid var(--border); background:var(--bg-input); color:var(--text); font-size:15px; transition:0.3s;
+  border:1px solid var(--border); background:var(--bg-input); color:var(--text); font-size:15px;
 }
 .input-wrap input:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,193,7,0.15); }
 .input-wrap .icon { position:absolute; top:50%; right:14px; transform:translateY(-50%); font-size:16px; color:var(--gold); pointer-events:none; }
@@ -224,7 +206,7 @@ body::after {
 }
 .btn-gold { background:linear-gradient(135deg,var(--gold-light),var(--gold)); color:#0A0A0A; box-shadow:0 0 25px var(--shadow); }
 .btn-gold:hover { transform:translateY(-2px); }
-.btn-danger { background:linear-gradient(135deg,#EF5350,#B71C1C); color:#fff; box-shadow:0 0 20px rgba(239,83,80,0.4); }
+.btn-danger { background:linear-gradient(135deg,#EF5350,#B71C1C); color:#fff; }
 .btn-outline { background:transparent; color:var(--gold); border:1.5px solid var(--gold); }
 .btn-small { width:auto; padding:7px 12px; font-size:12px; margin:3px 2px; border-radius:10px; margin-top:0; }
 .btn-gps { background:linear-gradient(135deg,#00C853,#009624); color:#fff; font-size:14px; padding:12px; }
@@ -239,7 +221,7 @@ body::after {
 #dashboard {
   display:none; width:100%; max-width:960px; background:var(--bg-card);
   border-radius:22px; padding:18px; border:1px solid var(--border-strong);
-  margin-top:15px; backdrop-filter:blur(8px);
+  margin-top:15px;
 }
 #dashboard h1 { font-size:20px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); -webkit-background-clip:text; color:transparent; font-weight:900; }
 .topbar { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
@@ -249,10 +231,10 @@ body::after {
 .tabs { display:flex; gap:6px; margin-bottom:15px; flex-wrap:wrap; }
 .tab-btn {
   flex:1; min-width:80px; padding:10px 6px; background:var(--bg-input); color:var(--text-mute);
-  border:1px solid var(--border); border-radius:12px; cursor:pointer; font-size:12px; font-weight:bold; transition:0.3s;
+  border:1px solid var(--border); border-radius:12px; cursor:pointer; font-size:12px; font-weight:bold;
 }
 .tab-btn.active { background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#0A0A0A; border-color:transparent; }
-.tab-content { display:none; animation:fadeUp 0.3s ease; }
+.tab-content { display:none; }
 .tab-content.active { display:block; }
 
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:15px; }
@@ -267,9 +249,10 @@ body::after {
 .form-group label { display:block; font-size:13px; color:var(--text-strong); margin-bottom:6px; font-weight:bold; }
 .form-group input, .form-group select, .form-group textarea {
   width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
-  background:var(--bg-input); color:var(--text); font-size:14px; transition:0.3s;
+  background:var(--bg-input); color:var(--text); font-size:14px;
 }
-.form-group input:focus, .form-group select:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,193,7,0.15); }
+.form-group input:focus, .form-group select:focus { outline:none; border-color:var(--gold); }
+.form-group input[type="file"] { padding:8px; font-size:12px; color:var(--gold-light); cursor:pointer; }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
 @media (max-width:520px) { .form-row, .form-row-3 { grid-template-columns:1fr; } }
@@ -286,21 +269,19 @@ body::after {
 table { width:100%; border-collapse:collapse; background:rgba(20,20,20,0.7); font-size:12.5px; min-width:500px; }
 table th { background:linear-gradient(135deg, rgba(255,193,7,0.25), rgba(255,160,0,0.15)); color:var(--gold-light); padding:10px 8px; text-align:center; font-size:11.5px; border-bottom:1px solid var(--border-strong); }
 table td { padding:10px 8px; text-align:center; border-bottom:1px solid var(--border); color:var(--text); }
-table tr:hover td { background:rgba(255,193,7,0.06); }
 
 .badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:bold; }
 .badge-fixed { background:rgba(255,193,7,0.15); color:#FFC107; border:1px solid rgba(255,193,7,0.4); }
 .badge-third { background:rgba(255,152,0,0.15); color:#FFB74D; border:1px solid rgba(255,152,0,0.5); }
 .badge-open { background:rgba(0,230,118,0.15); color:#00E676; border:1px solid rgba(0,230,118,0.4); }
 .badge-closed { background:rgba(117,117,117,0.2); color:#9E9E9E; border:1px solid rgba(117,117,117,0.4); }
-.badge-pending { background:rgba(255,193,7,0.2); color:#FFC107; border:1px solid rgba(255,193,7,0.5); animation:pulse 2s infinite; }
-.badge-rejected { background:rgba(239,83,80,0.2); color:#EF5350; border:1px solid rgba(239,83,80,0.5); }
+.badge-pending { background:rgba(255,193,7,0.2); color:#FFC107; border:1px solid rgba(255,193,7,0.5); }
 
 #toast {
   position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-120px);
   background:linear-gradient(135deg,#00E676,#00C853); color:#0A0A0A;
   padding:12px 25px; border-radius:14px; font-weight:bold; font-size:14px;
-  transition:0.4s; z-index:99999; box-shadow:0 8px 30px rgba(0,230,118,0.5); max-width:90%; text-align:center;
+  transition:0.4s; z-index:99999; max-width:90%; text-align:center;
 }
 #toast.show { transform:translateX(-50%) translateY(0); }
 #toast.error { background:linear-gradient(135deg,#EF5350,#B71C1C); color:#fff; }
@@ -319,7 +300,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 .loading-text { color:#FFC107; font-size:16px; font-weight:bold; }
 
 .ocr-loading { display:none; background:rgba(33,150,243,0.1); border:1px solid rgba(33,150,243,0.4); color:#2196F3; padding:10px; border-radius:10px; margin-top:6px; text-align:center; font-weight:bold; font-size:13px; }
-.ocr-loading.active { display:block; animation:pulse 1.5s infinite; }
+.ocr-loading.active { display:block; }
 .ocr-result { display:none; background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.4); color:#00E676; padding:10px; border-radius:10px; margin-top:6px; font-weight:bold; font-size:14px; text-align:center; }
 .ocr-result.active { display:block; }
 
@@ -398,7 +379,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <button class="tab-btn" onclick="switchTab('tab-mytrans', this)">📋 سجلي</button>
   </div>
 
-  <!-- ====== محتوى الأدمن ====== -->
+  <!-- محتوى الأدمن -->
   <div id="tab-overview" class="tab-content active">
     <div class="stats-grid">
       <div class="stat-card green"><div class="label">إجمالي الإيرادات</div><div class="value" id="ovRevenue">0</div></div>
@@ -479,8 +460,7 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
     <div class="section-title">تقرير مالي لكل كابتن</div>
     <div class="table-wrap"><table><thead><tr><th>الكابتن</th><th>النظام</th><th>عدد الشيفتات</th><th>إجمالي إيراد</th><th>إجمالي مصروف</th><th>الصافي</th><th>المديونية</th></tr></thead><tbody id="reportTable"></tbody></table></div>
   </div>
-
-  <!-- ====== محتوى الكابتن ====== -->
+    <!-- محتوى الكابتن -->
   <div id="tab-myhome" class="tab-content">
     <div class="stats-grid">
       <div class="stat-card green"><div class="label">إيراد اليوم</div><div class="value" id="myTodayWork">0</div></div>
@@ -707,29 +687,32 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 </div>
 
 <div id="toast"></div>
-
-<!-- نافذة الكاميرا -->
+<!-- نافذة الكاميرا (زرار التقاط + قراءة تلقائية) -->
 <div id="cameraModal" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column;">
   <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,193,7,0.3);">
     <h3 style="color:#FFC107;font-size:16px;margin:0;">📷 كاميرا قراءة العداد</h3>
     <button onclick="closeCamera()" style="background:#EF5350;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:bold;">✖ إغلاق</button>
   </div>
+
   <div id="cameraReader" style="flex:1;position:relative;overflow:hidden;"></div>
+
   <div id="cameraOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:15%;border:3px solid #00E676;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,230,118,0.3);pointer-events:none;">
     <div style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);color:#00E676;font-size:12px;font-weight:bold;white-space:nowrap;text-shadow:0 0 10px #000;">📍 ضع العداد هنا</div>
   </div>
-  <div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.9);padding:10px 20px;border-radius:12px;border:1px solid rgba(255,193,7,0.4);text-align:center;min-width:250px;">
-    <div id="cameraStatus" style="color:#FFC107;font-size:13px;font-weight:bold;">⏳ جاري البحث عن رقم...</div>
+
+  <div style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.9);padding:12px 20px;border-radius:12px;border:1px solid rgba(255,193,7,0.4);text-align:center;min-width:280px;">
+    <div id="cameraStatus" style="color:#FFC107;font-size:13px;font-weight:bold;">📷 اضغط "التقط صورة" لقراءة العداد</div>
     <div id="cameraResult" style="color:#00E676;font-size:24px;font-weight:900;margin-top:6px;">-</div>
   </div>
-  <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;gap:8px;justify-content:center;border-top:1px solid rgba(255,193,7,0.3);">
-    <button id="cameraConfirmBtn" onclick="confirmCameraReading()" style="display:none;background:linear-gradient(135deg,#00E676,#00C853);color:#0A0A0A;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">✅ تأكيد</button>
-    <button onclick="restartCamera()" style="background:linear-gradient(135deg,#FFC107,#FFA000);color:#0A0A0A;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">🔄 إعادة</button>
-    <button onclick="switchToManual()" style="background:linear-gradient(135deg,#2196F3,#1976D2);color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">✏️ كتابة يدوية</button>
+
+  <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;gap:8px;justify-content:center;flex-wrap:wrap;border-top:1px solid rgba(255,193,7,0.3);">
+    <button id="cameraCaptureBtn" onclick="captureAndRead()" style="background:linear-gradient(135deg,#FFC107,#FFA000);color:#0A0A0A;border:none;padding:14px 30px;border-radius:12px;font-weight:bold;font-size:16px;cursor:pointer;flex:1;min-width:180px;">📷 التقط صورة واقرأ</button>
+    <button id="cameraConfirmBtn" onclick="confirmCameraReading()" style="display:none;background:linear-gradient(135deg,#00E676,#00C853);color:#0A0A0A;border:none;padding:14px 30px;border-radius:12px;font-weight:bold;font-size:16px;cursor:pointer;flex:1;min-width:180px;">✅ تأكيد الرقم</button>
+    <button onclick="switchToManual()" style="background:linear-gradient(135deg,#2196F3,#1976D2);color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:bold;font-size:14px;cursor:pointer;">✏️ كتابة يدوية</button>
   </div>
 </div>
 
-<!-- نافذة التفاصيل -->
+<!-- نافذة التفاصيل للمراجعة -->
 <div id="detailsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;padding:20px;overflow-y:auto;">
   <div style="max-width:700px;margin:30px auto;background:linear-gradient(145deg,#1A1A1A,#0A0A0A);border:1.5px solid rgba(255,193,7,0.4);border-radius:20px;padding:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -974,67 +957,67 @@ function changeSystemForClose(sys) {
 async function openCamera(targetType) {
   cameraTargetField = targetType;
   if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') { toast('⚠️ الكاميرا تحتاج HTTPS', 'warn'); return; }
-  const modal = document.getElementById('cameraModal'); modal.style.display = 'flex'; document.getElementById('cameraStatus').textContent = '⏳ جاري تشغيل الكاميرا...'; document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraConfirmBtn').style.display = 'none';
+  const modal = document.getElementById('cameraModal'); modal.style.display = 'flex'; document.getElementById('cameraStatus').textContent = '📷 اضغط "التقط صورة" لقراءة العداد'; document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraCaptureBtn').style.display = 'inline-block';
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } });
     const reader = document.getElementById('cameraReader'); reader.innerHTML = '';
     const video = document.createElement('video'); video.id = 'cameraVideo'; video.autoplay = true; video.playsInline = true; video.muted = true; video.style.width = '100%'; video.style.height = '100%'; video.style.objectFit = 'cover'; video.srcObject = cameraStream; reader.appendChild(video);
-    await video.play(); document.getElementById('cameraOverlay').style.position = 'absolute'; document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم داخل المربع'; startCameraOCR();
+    await video.play(); document.getElementById('cameraOverlay').style.position = 'absolute';
   } catch (err) { toast('❌ تعذر تشغيل الكاميرا: ' + err.message, 'error'); closeCamera(); }
 }
-function startCameraOCR() {
-  if (!currentWorker) { currentWorker = Tesseract.createWorker('eng'); currentWorker.then(w => { w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7', tessedit_ocr_engine_mode: '1' }); }); }
-  if (cameraInterval) clearInterval(cameraInterval);
-  cameraInterval = setInterval(async () => {
-    if (isReading) return; const video = document.getElementById('cameraVideo'); if (!video || video.readyState !== 4) return; isReading = true;
-    try {
-      const canvas = document.createElement('canvas'); const videoRect = video.getBoundingClientRect(); const overlayRect = document.getElementById('cameraOverlay').getBoundingClientRect();
-      const cropX = ((overlayRect.left - videoRect.left) / videoRect.width) * video.videoWidth, cropY = ((overlayRect.top - videoRect.top) / videoRect.height) * video.videoHeight, cropW = (overlayRect.width / videoRect.width) * video.videoWidth, cropH = (overlayRect.height / videoRect.height) * video.videoHeight;
-      
-      // 🆕 تكبير 4x لتحسين الدقة
-      const scale = 4; canvas.width = cropW * scale; canvas.height = cropH * scale;
-      const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW * scale, cropH * scale);
-      
-      // 🆕 تحسين الصورة (Grayscale + Threshold + Noise Reduction)
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const data = imageData.data;
-      let totalLuminance = 0; for (let i = 0; i < data.length; i += 4) { totalLuminance += (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114); }
-      const avgLuminance = totalLuminance / (data.length / 4); const threshold = avgLuminance * 0.85;
-      for (let i = 0; i < data.length; i += 4) { const gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114; const val = gray > threshold ? 255 : 0; data[i] = val; data[i+1] = val; data[i+2] = val; }
-      ctx.putImageData(imageData, 0, 0);
 
-      const worker = await currentWorker; const ret = await worker.recognize(canvas);
-      let text = ret.data.text.replace(/\s+/g, ''); let numbers = text.match(/\d{3,15}/g);
-      
-      if (numbers && numbers.length > 0) {
-        const result = numbers.reduce((a, b) => a.length >= b.length ? a : b);
-        const confidence = ret.data.confidence || 0;
-        document.getElementById('cameraResult').textContent = result; document.getElementById('cameraStatus').textContent = `✅ الرقم: ${result} (ثقة ${confidence.toFixed(0)}%)`; document.getElementById('cameraStatus').style.color = '#00E676'; document.getElementById('cameraConfirmBtn').style.display = 'inline-block'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
-        window.lastCapturedImage = canvas.toDataURL('image/jpeg', 0.8); window.lastCapturedNumber = result;
-      } else {
-        document.getElementById('cameraResult').textContent = '?'; document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم بوضوح'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraOverlay').style.borderColor = '#FFC107';
-      }
-    } catch (e) {} finally { isReading = false; }
-  }, 800);
+async function captureAndRead() {
+  const video = document.getElementById('cameraVideo');
+  if (!video || video.readyState !== 4) { toast('الكاميرا لسه بتفتح، استنى ثانية', 'warn'); return; }
+  const btn = document.getElementById('cameraCaptureBtn'); btn.disabled = true; btn.textContent = '⏳ جاري التقاط الصورة...';
+  document.getElementById('cameraStatus').textContent = '📸 جاري التقاط الصورة...'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraResult').textContent = '-';
+  try {
+    const canvas = document.createElement('canvas'); const videoRect = video.getBoundingClientRect(); const overlayRect = document.getElementById('cameraOverlay').getBoundingClientRect();
+    const cropX = ((overlayRect.left - videoRect.left) / videoRect.width) * video.videoWidth, cropY = ((overlayRect.top - videoRect.top) / videoRect.height) * video.videoHeight, cropW = (overlayRect.width / videoRect.width) * video.videoWidth, cropH = (overlayRect.height / videoRect.height) * video.videoHeight;
+    const scale = 4; canvas.width = cropW * scale; canvas.height = cropH * scale;
+    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW * scale, cropH * scale);
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const data = imageData.data;
+    let totalLuminance = 0; for (let i = 0; i < data.length; i += 4) { totalLuminance += (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114); }
+    const avgLuminance = totalLuminance / (data.length / 4), threshold = avgLuminance * 0.85;
+    for (let i = 0; i < data.length; i += 4) { const gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114; const val = gray > threshold ? 255 : 0; data[i] = val; data[i+1] = val; data[i+2] = val; }
+    ctx.putImageData(imageData, 0, 0);
+    
+    window.lastCapturedImage = canvas.toDataURL('image/jpeg', 0.85);
+    document.getElementById('cameraStatus').textContent = '🤖 جاري قراءة الأرقام بالذكاء الاصطناعي...';
+
+    if (!currentWorker) { currentWorker = Tesseract.createWorker('eng'); const w = await currentWorker; await w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7', tessedit_ocr_engine_mode: '1' }); }
+    const worker = await currentWorker; const ret = await worker.recognize(canvas);
+    let text = ret.data.text.replace(/\s+/g, ''), numbers = text.match(/\d{3,15}/g);
+    
+    if (numbers && numbers.length > 0) {
+      const result = numbers.reduce((a, b) => a.length >= b.length ? a : b), confidence = ret.data.confidence || 0;
+      document.getElementById('cameraResult').textContent = result; document.getElementById('cameraStatus').textContent = `✅ الرقم: ${result} (ثقة ${confidence.toFixed(0)}%)`; document.getElementById('cameraStatus').style.color = '#00E676'; document.getElementById('cameraConfirmBtn').style.display = 'inline-block'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
+      document.getElementById('cameraCaptureBtn').style.display = 'none'; window.lastCapturedNumber = result;
+    } else {
+      document.getElementById('cameraResult').textContent = '?'; document.getElementById('cameraStatus').textContent = '❌ لم يتم قراءة رقم — أعد التصوير أو اكتب يدوياً'; document.getElementById('cameraStatus').style.color = '#EF5350'; document.getElementById('cameraOverlay').style.borderColor = '#EF5350';
+    }
+  } catch (e) { toast('حدث خطأ في القراءة — أعد التصوير', 'error'); document.getElementById('cameraStatus').textContent = '❌ فشل في قراءة الصورة'; document.getElementById('cameraStatus').style.color = '#EF5350'; }
+  finally { btn.disabled = false; btn.textContent = '📷 التقط صورة واقرأ'; if (document.getElementById('cameraConfirmBtn').style.display === 'none') btn.style.display = 'inline-block'; }
 }
+
 function confirmCameraReading() {
   const val = document.getElementById('cameraResult').textContent; if (!val || val === '-' || val === '?') { toast('لا يوجد رقم', 'error'); return; }
-  const value = parseInt(val); const capturedImage = window.lastCapturedImage;
+  const value = parseInt(val), capturedImage = window.lastCapturedImage;
   if (cameraTargetField === 'start') { document.getElementById('startOdoValue').value = value; document.getElementById('startOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('startOcrResult').classList.add('active'); window.capturedStartImage = capturedImage; }
   else if (cameraTargetField === 'end') { document.getElementById('fsKmEnd').value = value; document.getElementById('endOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('endOcrResult').classList.add('active'); window.capturedEndImage = capturedImage; calcFixed(); }
   else if (cameraTargetField === 'tsEnd') { document.getElementById('tsKmEnd').value = value; document.getElementById('tsEndOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('tsEndOcrResult').classList.add('active'); window.capturedTsEndImage = capturedImage; calcThird(); }
   closeCamera(); toast('✅ تم حفظ الرقم: ' + value);
 }
-function restartCamera() { document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none'; }
 function switchToManual() {
   closeCamera();
   const field = cameraTargetField === 'start' ? 'startOdoValue' : cameraTargetField === 'end' ? 'fsKmEnd' : 'tsKmEnd';
   const el = document.getElementById(field); if (el) { el.removeAttribute('readonly'); el.style.background = 'rgba(33,150,243,0.15)'; el.style.borderColor = '#2196F3'; el.focus(); toast('✏️ اكتب الرقم يدوياً', 'warn'); }
 }
 function closeCamera() {
-  if (cameraInterval) { clearInterval(cameraInterval); cameraInterval = null; }
   if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
   if (currentWorker) { currentWorker.then(w => w.terminate()).catch(() => {}); currentWorker = null; }
-  document.getElementById('cameraModal').style.display = 'none'; isReading = false;
+  document.getElementById('cameraModal').style.display = 'none';
 }
 
 /* ======== GPS ======== */
@@ -1057,19 +1040,10 @@ async function openShift() {
   try {
     if ((await getTransactions()).find(t => t.captainId === currentUser.id && (t.status === 'open' || t.status === 'pending'))) { toast('لديك شيفت مفتوح أو معلق!', 'error'); return; }
     const car = (await getCars()).find(c => c.id === carId);
-    
-    // 🆕 رفع صورة عداد البداية (لو موجودة)
     let startOdoImgUrl = null;
-    if (window.capturedStartImage) {
-      const blob = await (await fetch(window.capturedStartImage)).blob();
-      const file = new File([blob], 'start_odometer.jpg', { type: 'image/jpeg' });
-      startOdoImgUrl = await uploadFile(file, 'odometers');
-    }
-
+    if (window.capturedStartImage) { const blob = await (await fetch(window.capturedStartImage)).blob(); const file = new File([blob], 'start_odometer.jpg', { type: 'image/jpeg' }); startOdoImgUrl = await uploadFile(file, 'odometers'); }
     const shift = { captainId: currentUser.id, system: selectedSystemForShift, shift: selectedShift, carId: carId, carPlate: car ? car.plate : '-', carModel: car ? car.model : '-', startTime: nowFull(), startLocation: selectedStartLocation, startOdometer: startOdo, startOdometerImg: startOdoImgUrl, note: document.getElementById('openNote').value.trim(), status: 'open', date: todayStr(), revenue: 0, expense: 0 };
-    await addTransactionDB(shift);
-    window.capturedStartImage = null;
-    
+    await addTransactionDB(shift); window.capturedStartImage = null;
     ['startOdoValue','openCar','openNote','startGpsInfo'].forEach(id => { const el = document.getElementById(id); if (el.tagName === 'INPUT') el.value = ''; else el.textContent = ''; });
     document.getElementById('startOcrResult').classList.remove('active'); document.getElementById('shiftMorning').classList.remove('selected'); document.getElementById('shiftEvening').classList.remove('selected'); document.getElementById('sysFixed').classList.remove('selected'); document.getElementById('sysThird').classList.remove('selected'); document.getElementById('btnStartGps').classList.remove('gps-done'); document.getElementById('btnStartGps').textContent = '📍 إرسال موقعي';
     selectedShift = null; selectedSystemForShift = null; selectedStartLocation = null;
@@ -1122,15 +1096,8 @@ async function closeShift() {
       const kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0, kmStart = shift.startOdometer, transMethod = document.getElementById('fsTransferMethod').value, transImg = document.getElementById('fsTransferImg').files[0];
       if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
       showLoading('جاري رفع الصور...');
-      
-      // 🆕 رفع صورة العداد النهائي
       let endOdoImgUrl = null;
-      if (window.capturedEndImage) {
-        const blob = await (await fetch(window.capturedEndImage)).blob();
-        const file = new File([blob], 'end_odometer.jpg', { type: 'image/jpeg' });
-        endOdoImgUrl = await uploadFile(file, 'odometers');
-      }
-      
+      if (window.capturedEndImage) { const blob = await (await fetch(window.capturedEndImage)).blob(); const file = new File([blob], 'end_odometer.jpg', { type: 'image/jpeg' }); endOdoImgUrl = await uploadFile(file, 'odometers'); }
       const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; const extraExp = getExtraExpensesTotal('fs');
       updateData = { ...updateData, revenue: parseFloat(document.getElementById('fsRevenue').value) || 0, expense: extraExp.total, kmEnd, kmUsed: kmEnd - kmStart, tier: document.getElementById('fsTier').value, tierValue: parseFloat(document.getElementById('fsTierValue').value) || 0, transferred: parseFloat(document.getElementById('fsTransferred').value) || 0, remaining: parseFloat(document.getElementById('fsRemaining').value) || 0, transferMethod: transMethod, transferImg: transImgUrl, endOdometerImg: endOdoImgUrl, travel: parseFloat(document.getElementById('fsTravel').value) || 0, privateTrips: parseFloat(document.getElementById('fsPrivate').value) || 0, schoolTrips: parseFloat(document.getElementById('fsSchools').value) || 0, employeeTrips: parseFloat(document.getElementById('fsEmployees').value) || 0, extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0), extraExpenseTotal: extraExp.total, extraFuel: extraExp.fuel, extraGas: extraExp.gas };
       window.capturedEndImage = null;
@@ -1138,15 +1105,8 @@ async function closeShift() {
       const kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0, kmStart = shift.startOdometer, transMethod = document.getElementById('tsTransferMethod').value, transImg = document.getElementById('tsTransferImg').files[0];
       if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; } if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; } if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
       showLoading('جاري رفع الصور...'); const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null; const gasUrls = await uploadFiles(document.getElementById('tsGasImgs').files, 'gas'), fuelUrls = await uploadFiles(document.getElementById('tsFuelImgs').files, 'fuel'), extraExp = getExtraExpensesTotal('ts');
-      
-      // 🆕 رفع صورة العداد النهائي
       let endOdoImgUrl = null;
-      if (window.capturedTsEndImage) {
-        const blob = await (await fetch(window.capturedTsEndImage)).blob();
-        const file = new File([blob], 'end_odometer.jpg', { type: 'image/jpeg' });
-        endOdoImgUrl = await uploadFile(file, 'odometers');
-      }
-      
+      if (window.capturedTsEndImage) { const blob = await (await fetch(window.capturedTsEndImage)).blob(); const file = new File([blob], 'end_odometer.jpg', { type: 'image/jpeg' }); endOdoImgUrl = await uploadFile(file, 'odometers'); }
       updateData = { ...updateData, revenue: parseFloat(document.getElementById('tsTotalRevenue').value) || 0, expense: (parseFloat(document.getElementById('tsGas').value)||0) + (parseFloat(document.getElementById('tsFuel').value)||0) + extraExp.total, kmEnd, kmUsed: kmEnd - kmStart, uber: parseFloat(document.getElementById('tsUber').value) || 0, didi: parseFloat(document.getElementById('tsDidi').value) || 0, indriver: parseFloat(document.getElementById('tsIndriver').value) || 0, external: parseFloat(document.getElementById('tsExternal').value) || 0, travel: parseFloat(document.getElementById('tsTravel').value) || 0, privateTrips: parseFloat(document.getElementById('tsPrivate').value) || 0, schoolTrips: parseFloat(document.getElementById('tsSchools').value) || 0, employeeTrips: parseFloat(document.getElementById('tsEmployees').value) || 0, gas: parseFloat(document.getElementById('tsGas').value) || 0, fuel: parseFloat(document.getElementById('tsFuel').value) || 0, captainShare: parseFloat(document.getElementById('tsCaptainShare').value) || 0, carShare: parseFloat(document.getElementById('tsCarShare').value) || 0, transferred: parseFloat(document.getElementById('tsTransferred').value) || 0, remaining: parseFloat(document.getElementById('tsRemaining').value) || 0, transferMethod: transMethod, transferImg: transImgUrl, endOdometerImg: endOdoImgUrl, gasImgs: gasUrls, fuelImgs: fuelUrls, extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0), extraExpenseTotal: extraExp.total, extraFuel: extraExp.fuel, extraGas: extraExp.gas };
       window.capturedTsEndImage = null;
     }
@@ -1192,29 +1152,13 @@ async function submitPayment() {
   disableBtn('payBtn', '⏳ جاري الرفع...'); showLoading('جاري رفع صورة الإثبات...');
   try { const imgUrl = await uploadFile(imgFile, 'payments'); await addPaymentDB({ captainId: currentUser.id, date: todayStr(), amount, method, note, img: imgUrl }); document.getElementById('payAmount').value = ''; document.getElementById('payMethod').value = ''; document.getElementById('payNote').value = ''; document.getElementById('payImg').value = ''; toast('✅ تم تسجيل التسديد'); await renderMyDebts(); await renderMyHome(); } catch (e) { toast('خطأ: ' + e.message, 'error'); } finally { enableBtn('payBtn'); hideLoading(); }
 }
-</script>
-<script>
+
+/* ======== المراجعة والتشغيل ======== */
 async function showDetails(id) {
   const s = (await getTransactions()).find(t => t.id === id); if (!s) return; const cap = (await getCaptains()).find(c => c.id === s.captainId);
-  let html = `<div style="color:#BDBDBD;font-size:13px;line-height:2;">
-      <div><strong style="color:#FFC107;">الكابتن:</strong> ${cap ? cap.name : 'محذوف'}</div>
-      <div><strong style="color:#FFC107;">النظام:</strong> ${systemName(s.system)}</div>
-      <div><strong style="color:#FFC107;">السيارة:</strong> ${s.carPlate || '-'}</div>
-      <div><strong style="color:#FFC107;">التاريخ:</strong> ${s.date || '-'}</div>
-      <div><strong style="color:#FFC107;">الوردية:</strong> ${shiftName(s.shift)}</div>
-      <div><strong style="color:#FFC107;">الحالة:</strong> ${statusBadge(s.status)}</div>
-      <hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;">
-      <div><strong style="color:#00E676;">الإيراد:</strong> ${s.revenue || 0} ج</div>
-      <div><strong style="color:#EF5350;">المصروف:</strong> ${s.expense || 0} ج</div>
-      <div><strong style="color:#FFC107;">الصافي:</strong> ${(s.revenue||0) - (s.expense||0)} ج</div>
-      <div><strong style="color:#FFC107;">المحول:</strong> ${s.transferred || 0} ج</div>
-      <div><strong style="color:#FFC107;">المتبقي:</strong> ${s.remaining || 0} ج</div>
-      <div><strong style="color:#FFC107;">طريقة التحويل:</strong> ${s.transferMethod || '-'}</div>
-      <div><strong style="color:#FFC107;">كيلوهات:</strong> ${s.startOdometer || 0} → ${s.kmEnd || 0} (مستهلك: ${s.kmUsed || 0})</div>
-    </div>`;
+  let html = `<div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">الكابتن:</strong> ${cap ? cap.name : 'محذوف'}</div><div><strong style="color:#FFC107;">النظام:</strong> ${systemName(s.system)}</div><div><strong style="color:#FFC107;">السيارة:</strong> ${s.carPlate || '-'}</div><div><strong style="color:#FFC107;">التاريخ:</strong> ${s.date || '-'}</div><div><strong style="color:#FFC107;">الوردية:</strong> ${shiftName(s.shift)}</div><div><strong style="color:#FFC107;">الحالة:</strong> ${statusBadge(s.status)}</div><hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div><strong style="color:#00E676;">الإيراد:</strong> ${s.revenue || 0} ج</div><div><strong style="color:#EF5350;">المصروف:</strong> ${s.expense || 0} ج</div><div><strong style="color:#FFC107;">الصافي:</strong> ${(s.revenue||0) - (s.expense||0)} ج</div><div><strong style="color:#FFC107;">المحول:</strong> ${s.transferred || 0} ج</div><div><strong style="color:#FFC107;">المتبقي:</strong> ${s.remaining || 0} ج</div><div><strong style="color:#FFC107;">طريقة التحويل:</strong> ${s.transferMethod || '-'}</div><div><strong style="color:#FFC107;">كيلوهات:</strong> ${s.startOdometer || 0} → ${s.kmEnd || 0} (مستهلك: ${s.kmUsed || 0})</div></div>`;
   if (s.system === 'fixed') { html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">الشريحة:</strong> ${s.tier || '-'}</div><div><strong style="color:#FFC107;">قيمة الشريحة:</strong> ${s.tierValue || 0} ج</div><div><strong style="color:#FFC107;">مشاوير سفر:</strong> ${s.travel || 0}</div><div><strong style="color:#FFC107;">مشاوير خاصة:</strong> ${s.privateTrips || 0}</div><div><strong style="color:#FFC107;">دورات مدارس:</strong> ${s.schoolTrips || 0}</div><div><strong style="color:#FFC107;">دورات موظفيين:</strong> ${s.employeeTrips || 0}</div></div>`; }
   else if (s.system === 'third') { html += `<hr style="border-color:rgba(255,193,7,0.2);margin:10px 0;"><div style="color:#BDBDBD;font-size:13px;line-height:2;"><div><strong style="color:#FFC107;">أوبر:</strong> ${s.uber || 0}</div><div><strong style="color:#FFC107;">ديدي:</strong> ${s.didi || 0}</div><div><strong style="color:#FFC107;">إندرايفر:</strong> ${s.indriver || 0}</div><div><strong style="color:#FFC107;">مشوار خارجي:</strong> ${s.external || 0}</div><div><strong style="color:#EF5350;">غاز:</strong> ${s.gas || 0}</div><div><strong style="color:#EF5350;">بنزين:</strong> ${s.fuel || 0}</div><div><strong style="color:#FFC107;">نصيب الكابتن:</strong> ${s.captainShare || 0}</div><div><strong style="color:#FFC107;">نصيب السيارة:</strong> ${s.carShare || 0}</div></div>`; }
-  
   if (s.extraExpenseTotal > 0) { html += `<hr style="border-color:rgba(239,83,80,0.2);margin:10px 0;"><div style="color:#EF5350;font-size:13px;margin-top:8px;"><div style="color:#EF5350;font-weight:bold;margin-bottom:4px;">💸 المصروفات الإضافية:</div><div>بنزين: ${s.extraFuel || 0} ج | غاز: ${s.extraGas || 0} ج</div></div>`; if (s.extraExpenses && s.extraExpenses.length > 0) { html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;"><strong>مصروفات أخرى:</strong><br>`; s.extraExpenses.forEach(e => { html += `• ${e.name}: ${e.amount} ج<br>`; }); html += `</div>`; } html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;font-weight:bold;">الإجمالي: ${s.extraExpenseTotal} ج</div>`; }
   
   const imgs = [{ key: 'startOdometerImg', label: '📸 عداد البداية' }, { key: 'endOdometerImg', label: '📸 عداد النهاية' }, { key: 'transferImg', label: '📸 التحويل' }];
@@ -1264,7 +1208,7 @@ auth.onAuthStateChanged(async function(firebaseUser) {
 document.getElementById('loginPass').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
 document.getElementById('loginUser').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
 document.addEventListener('input', function(e) { if (e.target.type === 'number' && parseFloat(e.target.value) < 0) e.target.value = 0; });
-window.addEventListener('load', function() { console.log('🚗 مشوارك — v16.0'); setTimeout(hideLoading, 800); });
+window.addEventListener('load', function() { console.log('🚗 مشوارك — v17.0'); setTimeout(hideLoading, 800); });
 setTimeout(hideLoading, 1500);
 </script>
 </body>
