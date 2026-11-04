@@ -953,57 +953,129 @@ function changeSystemForClose(sys) {
   else { document.getElementById('fixedForm').style.display = 'none'; document.getElementById('thirdForm').style.display = 'block'; calcThird(); }
 }
 
-/* ======== الكاميرا ======== */
+/* ======== الكاميرا وقراءة العداد ======== */
+function normalizeDigits(value) {
+  return String(value || '')
+    .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+}
+
+function getAccurateVideoCrop(video, overlay) {
+  // object-fit:cover يقص جزءاً من الفيديو؛ لذلك يجب تحويل إطار الشاشة إلى إحداثيات الصورة الأصلية أولاً.
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const vr = video.getBoundingClientRect(), or = overlay.getBoundingClientRect();
+  if (!vw || !vh || !vr.width || !vr.height) throw new Error('أبعاد الكاميرا غير جاهزة');
+  const scale = Math.max(vr.width / vw, vr.height / vh);
+  const renderedW = vw * scale, renderedH = vh * scale;
+  const offsetX = (vr.width - renderedW) / 2, offsetY = (vr.height - renderedH) / 2;
+  const x = Math.max(0, (or.left - vr.left - offsetX) / scale);
+  const y = Math.max(0, (or.top - vr.top - offsetY) / scale);
+  const right = Math.min(vw, (or.right - vr.left - offsetX) / scale);
+  const bottom = Math.min(vh, (or.bottom - vr.top - offsetY) / scale);
+  return { x, y, w: Math.max(1, right - x), h: Math.max(1, bottom - y) };
+}
+
+function makeOcrVariants(source) {
+  const scale = Math.max(4, Math.min(6, 1800 / Math.max(source.width, source.height)));
+  const w = Math.round(source.width * scale), h = Math.round(source.height * scale);
+  const base = document.createElement('canvas'); base.width = w; base.height = h;
+  const bctx = base.getContext('2d', { willReadFrequently: true });
+  bctx.imageSmoothingEnabled = true; bctx.imageSmoothingQuality = 'high';
+  bctx.drawImage(source, 0, 0, w, h);
+  const sourceData = bctx.getImageData(0, 0, w, h);
+  const gray = new Float32Array(w * h), pixels = sourceData.data;
+  for (let i = 0, p = 0; i < pixels.length; i += 4, p++) gray[p] = pixels[i] * .299 + pixels[i+1] * .587 + pixels[i+2] * .114;
+  let min = 255, max = 0;
+  for (const v of gray) { if (v < min) min = v; if (v > max) max = v; }
+  const range = Math.max(1, max - min);
+  const variants = [];
+  const add = (name, fn) => {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d', { willReadFrequently: true }), out = ctx.createImageData(w, h);
+    for (let p = 0; p < gray.length; p++) { const v = Math.max(0, Math.min(255, fn(p))); const i = p * 4; out.data[i] = out.data[i+1] = out.data[i+2] = v; out.data[i+3] = 255; }
+    ctx.putImageData(out, 0, 0); variants.push({ name, canvas: c });
+  };
+  // تباين محسّن، ثم عتبتان مختلفتان، ثم عكس الصورة؛ هذا يفيد العدادات الرقمية والفعلية معاً.
+  add('contrast', p => ((gray[p] - min) / range) * 255);
+  add('threshold', p => gray[p] > (min + range * .52) ? 255 : 0);
+  add('threshold-dark', p => gray[p] > (min + range * .68) ? 255 : 0);
+  add('inverted', p => 255 - (((gray[p] - min) / range) * 255 > 128 ? 255 : 0));
+  return { original: base, variants };
+}
+
+async function getOcrWorker() {
+  if (!currentWorker) {
+    currentWorker = Tesseract.createWorker('eng');
+    const worker = await currentWorker;
+    await worker.setParameters({
+      tessedit_char_whitelist: '0123456789',
+      tessedit_pageseg_mode: '7',
+      preserve_interword_spaces: '0'
+    });
+  }
+  return await currentWorker;
+}
+
+function extractOdometerCandidate(text) {
+  const clean = normalizeDigits(text).replace(/[^0-9]/g, '');
+  const matches = normalizeDigits(text).match(/\d{2,12}/g) || [];
+  const all = matches.concat(clean.length >= 2 ? [clean] : []);
+  return all.sort((a, b) => b.length - a.length)[0] || '';
+}
+
 async function openCamera(targetType) {
   cameraTargetField = targetType;
   if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') { toast('⚠️ الكاميرا تحتاج HTTPS', 'warn'); return; }
-  const modal = document.getElementById('cameraModal'); modal.style.display = 'flex'; document.getElementById('cameraStatus').textContent = '📷 اضغط "التقط صورة" لقراءة العداد'; document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraCaptureBtn').style.display = 'inline-block';
+  const modal = document.getElementById('cameraModal'); modal.style.display = 'flex';
+  document.getElementById('cameraStatus').textContent = '📷 ثبّت العداد داخل الإطار ثم اضغط التقاط';
+  document.getElementById('cameraResult').textContent = '-'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraCaptureBtn').style.display = 'inline-block';
+  document.getElementById('cameraOverlay').style.borderColor = '#00E676';
   try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } });
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, focusMode: { ideal: 'continuous' } }, audio: false });
     const reader = document.getElementById('cameraReader'); reader.innerHTML = '';
-    const video = document.createElement('video'); video.id = 'cameraVideo'; video.autoplay = true; video.playsInline = true; video.muted = true; video.style.width = '100%'; video.style.height = '100%'; video.style.objectFit = 'cover'; video.srcObject = cameraStream; reader.appendChild(video);
-    await video.play(); document.getElementById('cameraOverlay').style.position = 'absolute';
+    const video = document.createElement('video'); video.id = 'cameraVideo'; video.autoplay = true; video.playsInline = true; video.muted = true; video.style.cssText = 'width:100%;height:100%;object-fit:cover;'; video.srcObject = cameraStream; reader.appendChild(video);
+    await video.play();
+    const track = cameraStream.getVideoTracks()[0];
+    if (track && track.applyConstraints) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
   } catch (err) { toast('❌ تعذر تشغيل الكاميرا: ' + err.message, 'error'); closeCamera(); }
 }
 
 async function captureAndRead() {
   const video = document.getElementById('cameraVideo');
-  if (!video || video.readyState !== 4) { toast('الكاميرا لسه بتفتح، استنى ثانية', 'warn'); return; }
-  const btn = document.getElementById('cameraCaptureBtn'); btn.disabled = true; btn.textContent = '⏳ جاري التقاط الصورة...';
-  document.getElementById('cameraStatus').textContent = '📸 جاري التقاط الصورة...'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none'; document.getElementById('cameraResult').textContent = '-';
+  if (!video || video.readyState < 2) { toast('الكاميرا لسه بتفتح، استنى ثانية', 'warn'); return; }
+  const btn = document.getElementById('cameraCaptureBtn'); btn.disabled = true; btn.textContent = '⏳ جاري تحسين وقراءة الصورة...';
+  document.getElementById('cameraStatus').textContent = '📸 جاري قص العداد وتجربة أكثر من طريقة قراءة...'; document.getElementById('cameraStatus').style.color = '#FFC107'; document.getElementById('cameraConfirmBtn').style.display = 'none';
   try {
-    const canvas = document.createElement('canvas'); const videoRect = video.getBoundingClientRect(); const overlayRect = document.getElementById('cameraOverlay').getBoundingClientRect();
-    const cropX = ((overlayRect.left - videoRect.left) / videoRect.width) * video.videoWidth, cropY = ((overlayRect.top - videoRect.top) / videoRect.height) * video.videoHeight, cropW = (overlayRect.width / videoRect.width) * video.videoWidth, cropH = (overlayRect.height / videoRect.height) * video.videoHeight;
-    const scale = 4; canvas.width = cropW * scale; canvas.height = cropH * scale;
-    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW * scale, cropH * scale);
-    
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const data = imageData.data;
-    let totalLuminance = 0; for (let i = 0; i < data.length; i += 4) { totalLuminance += (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114); }
-    const avgLuminance = totalLuminance / (data.length / 4), threshold = avgLuminance * 0.85;
-    for (let i = 0; i < data.length; i += 4) { const gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114; const val = gray > threshold ? 255 : 0; data[i] = val; data[i+1] = val; data[i+2] = val; }
-    ctx.putImageData(imageData, 0, 0);
-    
-    window.lastCapturedImage = canvas.toDataURL('image/jpeg', 0.85);
-    document.getElementById('cameraStatus').textContent = '🤖 جاري قراءة الأرقام بالذكاء الاصطناعي...';
-
-    if (!currentWorker) { currentWorker = Tesseract.createWorker('eng'); const w = await currentWorker; await w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7', tessedit_ocr_engine_mode: '1' }); }
-    const worker = await currentWorker; const ret = await worker.recognize(canvas);
-    let text = ret.data.text.replace(/\s+/g, ''), numbers = text.match(/\d{3,15}/g);
-    
-    if (numbers && numbers.length > 0) {
-      const result = numbers.reduce((a, b) => a.length >= b.length ? a : b), confidence = ret.data.confidence || 0;
-      document.getElementById('cameraResult').textContent = result; document.getElementById('cameraStatus').textContent = `✅ الرقم: ${result} (ثقة ${confidence.toFixed(0)}%)`; document.getElementById('cameraStatus').style.color = '#00E676'; document.getElementById('cameraConfirmBtn').style.display = 'inline-block'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
-      document.getElementById('cameraCaptureBtn').style.display = 'none'; window.lastCapturedNumber = result;
-    } else {
-      document.getElementById('cameraResult').textContent = '?'; document.getElementById('cameraStatus').textContent = '❌ لم يتم قراءة رقم — أعد التصوير أو اكتب يدوياً'; document.getElementById('cameraStatus').style.color = '#EF5350'; document.getElementById('cameraOverlay').style.borderColor = '#EF5350';
+    const crop = getAccurateVideoCrop(video, document.getElementById('cameraOverlay'));
+    const source = document.createElement('canvas'); source.width = Math.round(crop.w); source.height = Math.round(crop.h);
+    const sctx = source.getContext('2d'); sctx.imageSmoothingEnabled = true; sctx.imageSmoothingQuality = 'high'; sctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, source.width, source.height);
+    const prepared = makeOcrVariants(source);
+    // نحفظ صورة ملونة واضحة، لا الصورة الثنائية، حتى يمكن مراجعتها لاحقاً.
+    window.lastCapturedImage = prepared.original.toDataURL('image/jpeg', 0.92);
+    const worker = await getOcrWorker(), results = [];
+    for (const variant of prepared.variants) {
+      const ret = await worker.recognize(variant.canvas);
+      const candidate = extractOdometerCandidate(ret.data.text);
+      if (candidate) results.push({ candidate, confidence: Number(ret.data.confidence) || 0 });
     }
-  } catch (e) { toast('حدث خطأ في القراءة — أعد التصوير', 'error'); document.getElementById('cameraStatus').textContent = '❌ فشل في قراءة الصورة'; document.getElementById('cameraStatus').style.color = '#EF5350'; }
-  finally { btn.disabled = false; btn.textContent = '📷 التقط صورة واقرأ'; if (document.getElementById('cameraConfirmBtn').style.display === 'none') btn.style.display = 'inline-block'; }
+    if (!results.length) throw new Error('no digits');
+    const groups = new Map();
+    results.forEach(r => { const g = groups.get(r.candidate) || { candidate:r.candidate, votes:0, confidence:0 }; g.votes++; g.confidence = Math.max(g.confidence, r.confidence); groups.set(r.candidate, g); });
+    const best = [...groups.values()].sort((a,b) => (b.votes - a.votes) || (b.confidence - a.confidence) || (b.candidate.length - a.candidate.length))[0];
+    const shownConfidence = Math.round(Math.min(99, best.confidence + (best.votes - 1) * 8));
+    window.lastCapturedNumber = best.candidate;
+    document.getElementById('cameraResult').textContent = best.candidate;
+    document.getElementById('cameraStatus').textContent = `✅ الرقم المقترح: ${best.candidate} — ثقة تقريبية ${shownConfidence}%`;
+    document.getElementById('cameraStatus').style.color = '#00E676'; document.getElementById('cameraConfirmBtn').style.display = 'inline-block'; document.getElementById('cameraCaptureBtn').style.display = 'none'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
+  } catch (e) {
+    document.getElementById('cameraResult').textContent = '?'; document.getElementById('cameraStatus').textContent = '❌ لم نقرأ الرقم. نظّف زجاج العداد، قرّب الكاميرا وأعد المحاولة أو اكتب يدوياً.'; document.getElementById('cameraStatus').style.color = '#EF5350'; document.getElementById('cameraOverlay').style.borderColor = '#EF5350';
+  } finally { btn.disabled = false; btn.textContent = '📷 التقط صورة واقرأ'; if (document.getElementById('cameraConfirmBtn').style.display === 'none') btn.style.display = 'inline-block'; }
 }
 
 function confirmCameraReading() {
-  const val = document.getElementById('cameraResult').textContent; if (!val || val === '-' || val === '?') { toast('لا يوجد رقم', 'error'); return; }
-  const value = parseInt(val), capturedImage = window.lastCapturedImage;
+  const val = normalizeDigits(document.getElementById('cameraResult').textContent).replace(/[^0-9]/g, '');
+  if (!val || val.length < 2 || val.length > 12) { toast('الرقم غير صالح، أعد التصوير أو اكتبه يدوياً', 'error'); return; }
+  const value = parseInt(val, 10), capturedImage = window.lastCapturedImage;
   if (cameraTargetField === 'start') { document.getElementById('startOdoValue').value = value; document.getElementById('startOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('startOcrResult').classList.add('active'); window.capturedStartImage = capturedImage; }
   else if (cameraTargetField === 'end') { document.getElementById('fsKmEnd').value = value; document.getElementById('endOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('endOcrResult').classList.add('active'); window.capturedEndImage = capturedImage; calcFixed(); }
   else if (cameraTargetField === 'tsEnd') { document.getElementById('tsKmEnd').value = value; document.getElementById('tsEndOcrResult').innerHTML = `✅ الرقم: <strong>${value}</strong>`; document.getElementById('tsEndOcrResult').classList.add('active'); window.capturedTsEndImage = capturedImage; calcThird(); }
