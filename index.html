@@ -1038,6 +1038,8 @@ async function openCamera(targetType) {
     const reader = document.getElementById('cameraReader'); reader.innerHTML = '';
     const video = document.createElement('video'); video.id = 'cameraVideo'; video.autoplay = true; video.playsInline = true; video.muted = true; video.style.cssText = 'width:100%;height:100%;object-fit:cover;'; video.srcObject = cameraStream; reader.appendChild(video);
     await video.play();
+    // تجهيز عامل OCR أثناء فتح الكاميرا حتى لا ينتظر المستخدم وقت التهيئة بعد التقاط الصورة.
+    getOcrWorker().catch(() => {});
     const track = cameraStream.getVideoTracks()[0];
     if (track && track.applyConstraints) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
   } catch (err) { toast('❌ تعذر تشغيل الكاميرا: ' + err.message, 'error'); closeCamera(); }
@@ -1052,20 +1054,20 @@ async function captureAndRead() {
     const crop = getAccurateVideoCrop(video, document.getElementById('cameraOverlay'));
     const source = document.createElement('canvas'); source.width = Math.round(crop.w); source.height = Math.round(crop.h);
     const sctx = source.getContext('2d'); sctx.imageSmoothingEnabled = true; sctx.imageSmoothingQuality = 'high'; sctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, source.width, source.height);
+    // هذه هي الصورة التي التقطها المستخدم فعلياً؛ تحفظ كما هي للمراجعة، وليس نسخة OCR الثنائية.
+    window.lastCapturedImage = source.toDataURL('image/jpeg', 0.95);
     const prepared = makeOcrVariants(source);
-    // نحفظ صورة ملونة واضحة، لا الصورة الثنائية، حتى يمكن مراجعتها لاحقاً.
-    window.lastCapturedImage = prepared.original.toDataURL('image/jpeg', 0.92);
     const worker = await getOcrWorker(), results = [];
-    for (const variant of prepared.variants) {
-      const ret = await worker.recognize(variant.canvas);
-      const candidate = extractOdometerCandidate(ret.data.text);
-      if (candidate) results.push({ candidate, confidence: Number(ret.data.confidence) || 0 });
+    // قراءة سريعة أولاً. نستخدم نسخة احتياطية واحدة فقط إذا كانت النتيجة ضعيفة/غير موجودة.
+    for (let i = 0; i < Math.min(2, prepared.variants.length); i++) {
+      const ret = await worker.recognize(prepared.variants[i].canvas);
+      const candidate = extractOdometerCandidate(ret.data.text), confidence = Number(ret.data.confidence) || 0;
+      if (candidate) results.push({ candidate, confidence });
+      if (candidate && confidence >= 68) break;
     }
     if (!results.length) throw new Error('no digits');
-    const groups = new Map();
-    results.forEach(r => { const g = groups.get(r.candidate) || { candidate:r.candidate, votes:0, confidence:0 }; g.votes++; g.confidence = Math.max(g.confidence, r.confidence); groups.set(r.candidate, g); });
-    const best = [...groups.values()].sort((a,b) => (b.votes - a.votes) || (b.confidence - a.confidence) || (b.candidate.length - a.candidate.length))[0];
-    const shownConfidence = Math.round(Math.min(99, best.confidence + (best.votes - 1) * 8));
+    const best = results.sort((a,b) => (b.confidence - a.confidence) || (b.candidate.length - a.candidate.length))[0];
+    const shownConfidence = Math.round(Math.min(99, best.confidence));
     window.lastCapturedNumber = best.candidate;
     document.getElementById('cameraResult').textContent = best.candidate;
     document.getElementById('cameraStatus').textContent = `✅ الرقم المقترح: ${best.candidate} — ثقة تقريبية ${shownConfidence}%`;
@@ -1085,9 +1087,16 @@ function confirmCameraReading() {
   closeCamera(); toast('✅ تم حفظ الرقم: ' + value);
 }
 function switchToManual() {
-  closeCamera();
+  // حتى لو فشلت القراءة، لا نفقد الصورة: تُرفع مع الشيفت بعد كتابة الرقم يدوياً.
+  const captured = window.lastCapturedImage;
+  if (captured) {
+    if (cameraTargetField === 'start') window.capturedStartImage = captured;
+    else if (cameraTargetField === 'end') window.capturedEndImage = captured;
+    else if (cameraTargetField === 'tsEnd') window.capturedTsEndImage = captured;
+  }
   const field = cameraTargetField === 'start' ? 'startOdoValue' : cameraTargetField === 'end' ? 'fsKmEnd' : 'tsKmEnd';
-  const el = document.getElementById(field); if (el) { el.removeAttribute('readonly'); el.style.background = 'rgba(33,150,243,0.15)'; el.style.borderColor = '#2196F3'; el.focus(); toast('✏️ اكتب الرقم يدوياً', 'warn'); }
+  closeCamera();
+  const el = document.getElementById(field); if (el) { el.removeAttribute('readonly'); el.style.background = 'rgba(33,150,243,0.15)'; el.style.borderColor = '#2196F3'; el.focus(); toast('✏️ اكتب الرقم يدوياً — الصورة محفوظة للمراجعة', 'warn'); }
 }
 function closeCamera() {
   if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
