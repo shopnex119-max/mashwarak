@@ -1058,19 +1058,30 @@ async function captureAndRead() {
     window.lastCapturedImage = source.toDataURL('image/jpeg', 0.95);
     const prepared = makeOcrVariants(source);
     const worker = await getOcrWorker(), results = [];
-    // قراءة سريعة أولاً. نستخدم نسخة احتياطية واحدة فقط إذا كانت النتيجة ضعيفة/غير موجودة.
-    for (let i = 0; i < Math.min(2, prepared.variants.length); i++) {
+    // الدقة أهم من التخمين: نقرأ أربع نسخ محسنة ونختار الرقم الذي يتكرر/يثق به OCR أكثر.
+    for (let i = 0; i < Math.min(4, prepared.variants.length); i++) {
       const ret = await worker.recognize(prepared.variants[i].canvas);
       const candidate = extractOdometerCandidate(ret.data.text), confidence = Number(ret.data.confidence) || 0;
-      if (candidate) results.push({ candidate, confidence });
-      if (candidate && confidence >= 68) break;
+      if (candidate && candidate.length >= 2) results.push({ candidate, confidence });
+      // إذا اتفقت نسختان على نفس الرقم بثقة جيدة نتوقف لتوفير الوقت.
+      if (results.length >= 2 && results[results.length - 1].candidate === results[results.length - 2].candidate && confidence >= 60) break;
     }
     if (!results.length) throw new Error('no digits');
-    const best = results.sort((a,b) => (b.confidence - a.confidence) || (b.candidate.length - a.candidate.length))[0];
-    const shownConfidence = Math.round(Math.min(99, best.confidence));
+    const groups = new Map();
+    results.forEach(r => { const g = groups.get(r.candidate) || { candidate:r.candidate, votes:0, confidence:0 }; g.votes++; g.confidence = Math.max(g.confidence, r.confidence); groups.set(r.candidate, g); });
+    const ranked = [...groups.values()].sort((a,b) => (b.votes - a.votes) || (b.confidence - a.confidence) || (b.candidate.length - a.candidate.length));
+    const best = ranked[0];
+    // عداد النهاية لا يمكن أن يكون أقل من أو مساوياً لعداد البداية؛ هذا يمنع أخطاء OCR الشائعة.
+    const startValue = Number(currentOpenShift?.startOdometer || 0);
+    if (cameraTargetField !== 'start' && startValue > 0 && Number(best.candidate) <= startValue) {
+      const valid = ranked.find(r => Number(r.candidate) > startValue);
+      if (!valid) throw new Error('invalid odometer order');
+      best.candidate = valid.candidate; best.votes = valid.votes; best.confidence = valid.confidence;
+    }
+    const shownConfidence = Math.round(Math.min(99, best.confidence + Math.max(0, best.votes - 1) * 10));
     window.lastCapturedNumber = best.candidate;
     document.getElementById('cameraResult').textContent = best.candidate;
-    document.getElementById('cameraStatus').textContent = `✅ الرقم المقترح: ${best.candidate} — ثقة تقريبية ${shownConfidence}%`;
+    document.getElementById('cameraStatus').textContent = `✅ الرقم المقروء: ${best.candidate} — ثقة تقريبية ${shownConfidence}%${best.votes > 1 ? ' (متفق عليه من أكثر من قراءة)' : ''}`;
     document.getElementById('cameraStatus').style.color = '#00E676'; document.getElementById('cameraConfirmBtn').style.display = 'inline-block'; document.getElementById('cameraCaptureBtn').style.display = 'none'; document.getElementById('cameraOverlay').style.borderColor = '#00E676';
   } catch (e) {
     document.getElementById('cameraResult').textContent = '?'; document.getElementById('cameraStatus').textContent = '❌ لم نقرأ الرقم. نظّف زجاج العداد، قرّب الكاميرا وأعد المحاولة أو اكتب يدوياً.'; document.getElementById('cameraStatus').style.color = '#EF5350'; document.getElementById('cameraOverlay').style.borderColor = '#EF5350';
