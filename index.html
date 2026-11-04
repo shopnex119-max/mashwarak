@@ -22,6 +22,9 @@
 <!-- Tesseract.js للذكاء الاصطناعي (قراءة الأرقام) -->
 <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
+<!-- html5-qrcode للكاميرا -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCInSwEYBNFP0DSPS49CppkjNZKAq7GIQY",
@@ -51,6 +54,13 @@ let unsubscribers = [];
 let fsExtraExpenses = [];
 let tsExtraExpenses = [];
 let currentReviewShiftId = null;
+
+// حالة الكاميرا
+let cameraStream = null;
+let cameraInterval = null;
+let cameraTargetField = null;
+let currentWorker = null;
+let isReading = false;
 </script>
 
 <style>
@@ -1014,9 +1024,9 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 
     <div class="section-title">📸 عداد البداية</div>
     <div class="form-group">
-      <label>صورة عداد البداية *</label>
-      <input type="file" id="startOdomImg" accept="image/*" onchange="processOCR('start')">
-      <div class="ocr-loading" id="startOcrLoading">🤖 جاري قراءة الأرقام بالذكاء الاصطناعي...</div>
+      <label>تصوير عداد البداية *</label>
+      <button type="button" class="btn btn-gold" onclick="openCamera('start')" style="font-size:15px;">📷 فتح الكاميرا وتصوير العداد</button>
+      <div class="ocr-loading" id="startOcrLoading">🤖 جاري قراءة الأرقام...</div>
       <div class="ocr-result" id="startOcrResult"></div>
     </div>
     <div class="form-group">
@@ -1059,14 +1069,14 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
       <div id="fixedForm" style="display:none;">
         <div class="section-title">📸 عداد النهاية</div>
         <div class="form-group">
-          <label>صورة عداد النهاية *</label>
-          <input type="file" id="endOdomImg" accept="image/*" onchange="processOCR('end')">
+          <label>تصوير عداد النهاية *</label>
+          <button type="button" class="btn btn-gold" onclick="openCamera('end')" style="font-size:15px;">📷 فتح الكاميرا وتصوير العداد</button>
           <div class="ocr-loading" id="endOcrLoading">🤖 جاري قراءة الأرقام...</div>
           <div class="ocr-result" id="endOcrResult"></div>
         </div>
 
         <div class="form-row">
-          <div class="form-group"><label>كيلوهات البداية</label><input type="number" id="fsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
+          <div class="form-group"><label>كيلوهات البداية (تلقائي)</label><input type="number" id="fsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
           <div class="form-group"><label>كيلوهات النهاية * (تلقائي)</label><input type="number" id="fsKmEnd" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;"></div>
         </div>
         <div class="form-row">
@@ -1119,14 +1129,14 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
       <div id="thirdForm" style="display:none;">
         <div class="section-title">📸 عداد النهاية</div>
         <div class="form-group">
-          <label>صورة عداد النهاية *</label>
-          <input type="file" id="tsEndOdomImg" accept="image/*" onchange="processOCR('tsEnd')">
+          <label>تصوير عداد النهاية *</label>
+          <button type="button" class="btn btn-gold" onclick="openCamera('tsEnd')" style="font-size:15px;">📷 فتح الكاميرا وتصوير العداد</button>
           <div class="ocr-loading" id="tsEndOcrLoading">🤖 جاري قراءة الأرقام...</div>
           <div class="ocr-result" id="tsEndOcrResult"></div>
         </div>
 
         <div class="form-row">
-          <div class="form-group"><label>كيلوهات البداية</label><input type="number" id="tsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
+          <div class="form-group"><label>كيلوهات البداية (تلقائي)</label><input type="number" id="tsKmStart" readonly style="background:rgba(255,255,255,0.05);"></div>
           <div class="form-group"><label>كيلوهات النهاية * (تلقائي)</label><input type="number" id="tsKmEnd" readonly style="background:rgba(255,255,255,0.05);color:#FFC107;"></div>
         </div>
         <div class="form-row">
@@ -1240,6 +1250,32 @@ table tr:hover td { background:rgba(255,193,7,0.06); }
 </div>
 
 <div id="toast"></div>
+
+<!-- 🆕 نافذة الكاميرا لقراءة العداد -->
+<div id="cameraModal" style="display:none;position:fixed;inset:0;background:#000;z-index:99999;flex-direction:column;">
+  <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,193,7,0.3);">
+    <h3 style="color:#FFC107;font-size:16px;margin:0;">📷 كاميرا قراءة العداد</h3>
+    <button onclick="closeCamera()" style="background:#EF5350;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:bold;">✖ إغلاق</button>
+  </div>
+
+  <div id="cameraReader" style="flex:1;position:relative;overflow:hidden;"></div>
+
+  <!-- المربع الأخضر (Scanner Overlay) -->
+  <div id="cameraOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:30%;border:3px solid #00E676;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,230,118,0.3);pointer-events:none;"></div>
+
+  <!-- معلومات OCR -->
+  <div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.9);padding:10px 20px;border-radius:12px;border:1px solid rgba(255,193,7,0.4);text-align:center;min-width:250px;">
+    <div id="cameraStatus" style="color:#FFC107;font-size:13px;font-weight:bold;">⏳ جاري البحث عن رقم...</div>
+    <div id="cameraResult" style="color:#00E676;font-size:24px;font-weight:900;margin-top:6px;">-</div>
+  </div>
+
+  <!-- أزرار التحكم -->
+  <div style="padding:12px;background:rgba(10,10,10,0.95);display:flex;gap:8px;justify-content:center;border-top:1px solid rgba(255,193,7,0.3);">
+    <button id="cameraConfirmBtn" onclick="confirmCameraReading()" style="display:none;background:linear-gradient(135deg,#00E676,#00C853);color:#0A0A0A;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;box-shadow:0 0 20px rgba(0,230,118,0.5);">✅ تأكيد الرقم</button>
+    <button onclick="restartCamera()" style="background:linear-gradient(135deg,#FFC107,#FFA000);color:#0A0A0A;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">🔄 إعادة</button>
+    <button onclick="switchToManual()" style="background:linear-gradient(135deg,#2196F3,#1976D2);color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:15px;cursor:pointer;">✏️ كتابة يدوية</button>
+  </div>
+</div>
 
 <!-- نافذة التفاصيل الكاملة للمراجعة -->
 <div id="detailsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;padding:20px;overflow-y:auto;">
@@ -1918,65 +1954,192 @@ function changeSystemForClose(sys) {
 }
 
 /* ============================================================
-   الذكاء الاصطناعي (OCR) لقراءة العداد
+   🆕 كاميرا قراءة العداد (Live OCR)
    ============================================================ */
-async function processOCR(type) {
-  let inputId, loadingId, resultId, targetFieldId;
+
+async function openCamera(targetType) {
+  cameraTargetField = targetType;
   
-  if (type === 'start') {
-    inputId = 'startOdomImg'; loadingId = 'startOcrLoading'; resultId = 'startOcrResult'; targetFieldId = 'startOdoValue';
-  } else if (type === 'end') {
-    inputId = 'endOdomImg'; loadingId = 'endOcrLoading'; resultId = 'endOcrResult'; targetFieldId = 'fsKmEnd';
-  } else if (type === 'tsEnd') {
-    inputId = 'tsEndOdomImg'; loadingId = 'tsEndOcrLoading'; resultId = 'tsEndOcrResult'; targetFieldId = 'tsKmEnd';
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    toast('⚠️ الكاميرا تحتاج HTTPS. ارفع الموقع على GitHub Pages.', 'warn');
+    return;
   }
 
-  const file = document.getElementById(inputId).files[0];
-  if (!file) return;
-
-  const loadingEl = document.getElementById(loadingId);
-  const resultEl = document.getElementById(resultId);
-  
-  loadingEl.classList.add('active');
-  resultEl.classList.remove('active');
-  document.getElementById(targetFieldId).value = '';
+  const modal = document.getElementById('cameraModal');
+  modal.style.display = 'flex';
+  document.getElementById('cameraStatus').textContent = '⏳ جاري تشغيل الكاميرا...';
+  document.getElementById('cameraResult').textContent = '-';
+  document.getElementById('cameraConfirmBtn').style.display = 'none';
 
   try {
-    const worker = await Tesseract.createWorker('eng');
-    await worker.setParameters({ tessedit_char_whitelist: '0123456789' });
-    
-    const ret = await worker.recognize(file);
-    await worker.terminate();
-    
-    let text = ret.data.text.replace(/\s+/g, '');
-    let numbers = text.match(/\d+/g);
-    let result = '';
-    
-    if (numbers && numbers.length > 0) {
-      result = numbers.reduce((a, b) => a.length > b.length ? a : b);
-    }
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
 
-    loadingEl.classList.remove('active');
+    const reader = document.getElementById('cameraReader');
+    reader.innerHTML = '';
+    
+    const video = document.createElement('video');
+    video.id = 'cameraVideo';
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    video.style.width = '100%';
+    video.style.height = '100%';
+    video.style.objectFit = 'cover';
+    video.srcObject = cameraStream;
+    reader.appendChild(video);
 
-    if (result && result.length >= 3) {
-      document.getElementById(targetFieldId).value = result;
-      resultEl.innerHTML = `✅ الرقم المقروء: <strong>${result}</strong> (لن يتم الحفظ إلا بموافقة الأدمن)`;
-      resultEl.classList.add('active');
-      
-      if (type === 'end') calcFixed();
-      if (type === 'tsEnd') calcThird();
-    } else {
-      resultEl.innerHTML = `⚠️ لم نتمكن من قراءة الرقم بوضوح. أعد رفع صورة أوضح.`;
-      resultEl.style.color = '#FFC107'; resultEl.style.borderColor = 'rgba(255,193,7,0.4)'; resultEl.style.background = 'rgba(255,193,7,0.1)';
-      resultEl.classList.add('active');
-    }
-  } catch (e) {
-    console.error(e);
-    loadingEl.classList.remove('active');
-    resultEl.innerHTML = `❌ حدث خطأ في القراءة. أعد رفع الصورة.`;
-    resultEl.style.color = '#EF5350'; resultEl.style.borderColor = 'rgba(239,83,80,0.4)'; resultEl.style.background = 'rgba(239,83,80,0.1)';
-    resultEl.classList.add('active');
+    await video.play();
+
+    const overlay = document.getElementById('cameraOverlay');
+    overlay.style.position = 'absolute';
+
+    document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم داخل المربع';
+    
+    startCameraOCR();
+
+  } catch (err) {
+    console.error(err);
+    toast('❌ تعذر تشغيل الكاميرا: ' + err.message, 'error');
+    closeCamera();
   }
+}
+
+function startCameraOCR() {
+  if (!currentWorker) {
+    currentWorker = Tesseract.createWorker('eng');
+    currentWorker.then(w => {
+      w.setParameters({ tessedit_char_whitelist: '0123456789' });
+    });
+  }
+
+  if (cameraInterval) clearInterval(cameraInterval);
+  
+  cameraInterval = setInterval(async () => {
+    if (isReading) return;
+    const video = document.getElementById('cameraVideo');
+    if (!video || video.readyState !== 4) return;
+
+    isReading = true;
+
+    try {
+      const canvas = document.createElement('canvas');
+      const videoRect = video.getBoundingClientRect();
+      const overlayRect = document.getElementById('cameraOverlay').getBoundingClientRect();
+      
+      const cropX = ((overlayRect.left - videoRect.left) / videoRect.width) * video.videoWidth;
+      const cropY = ((overlayRect.top - videoRect.top) / videoRect.height) * video.videoHeight;
+      const cropW = (overlayRect.width / videoRect.width) * video.videoWidth;
+      const cropH = (overlayRect.height / videoRect.height) * video.videoHeight;
+      
+      canvas.width = cropW;
+      canvas.height = cropH;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+      const worker = await currentWorker;
+      const ret = await worker.recognize(canvas);
+      
+      let text = ret.data.text.replace(/\s+/g, '');
+      let numbers = text.match(/\d{4,}/g);
+      
+      if (numbers && numbers.length > 0) {
+        const result = numbers.reduce((a, b) => a.length > b.length ? a : b);
+        
+        document.getElementById('cameraResult').textContent = result;
+        document.getElementById('cameraStatus').textContent = '✅ تم قراءة الرقم! اضغط "تأكيد"';
+        document.getElementById('cameraStatus').style.color = '#00E676';
+        document.getElementById('cameraConfirmBtn').style.display = 'inline-block';
+        document.getElementById('cameraOverlay').style.borderColor = '#00E676';
+      } else {
+        document.getElementById('cameraResult').textContent = '?';
+        document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم بوضوح';
+        document.getElementById('cameraStatus').style.color = '#FFC107';
+        document.getElementById('cameraConfirmBtn').style.display = 'none';
+      }
+    } catch (e) {
+      // تجاهل
+    } finally {
+      isReading = false;
+    }
+  }, 1500);
+}
+
+function confirmCameraReading() {
+  const resultText = document.getElementById('cameraResult').textContent;
+  if (!resultText || resultText === '-' || resultText === '?') {
+    toast('لا يوجد رقم لتأكيده', 'error');
+    return;
+  }
+
+  const value = parseInt(resultText);
+
+  if (cameraTargetField === 'start') {
+    document.getElementById('startOdoValue').value = value;
+    document.getElementById('startOcrResult').innerHTML = `✅ الرقم المقروء: <strong>${value}</strong>`;
+    document.getElementById('startOcrResult').classList.add('active');
+  } else if (cameraTargetField === 'end') {
+    document.getElementById('fsKmEnd').value = value;
+    document.getElementById('endOcrResult').innerHTML = `✅ الرقم المقروء: <strong>${value}</strong>`;
+    document.getElementById('endOcrResult').classList.add('active');
+    calcFixed();
+  } else if (cameraTargetField === 'tsEnd') {
+    document.getElementById('tsKmEnd').value = value;
+    document.getElementById('tsEndOcrResult').innerHTML = `✅ الرقم المقروء: <strong>${value}</strong>`;
+    document.getElementById('tsEndOcrResult').classList.add('active');
+    calcThird();
+  }
+
+  closeCamera();
+  toast('✅ تم حفظ الرقم: ' + value);
+}
+
+function restartCamera() {
+  document.getElementById('cameraResult').textContent = '-';
+  document.getElementById('cameraStatus').textContent = '🔍 وجّه الكاميرا على الرقم داخل المربع';
+  document.getElementById('cameraStatus').style.color = '#FFC107';
+  document.getElementById('cameraConfirmBtn').style.display = 'none';
+  document.getElementById('cameraOverlay').style.borderColor = '#00E676';
+}
+
+function switchToManual() {
+  closeCamera();
+  
+  if (cameraTargetField === 'start') {
+    document.getElementById('startOdoValue').removeAttribute('readonly');
+    document.getElementById('startOdoValue').style.background = 'rgba(33,150,243,0.15)';
+    document.getElementById('startOdoValue').style.borderColor = '#2196F3';
+    document.getElementById('startOdoValue').focus();
+    toast('✏️ اكتب الرقم يدوياً (سيراجعه الأدمن)', 'warn');
+  } else if (cameraTargetField === 'end') {
+    document.getElementById('fsKmEnd').removeAttribute('readonly');
+    document.getElementById('fsKmEnd').style.background = 'rgba(33,150,243,0.15)';
+    document.getElementById('fsKmEnd').style.borderColor = '#2196F3';
+    document.getElementById('fsKmEnd').focus();
+    toast('✏️ اكتب الرقم يدوياً (سيراجعه الأدمن)', 'warn');
+  } else if (cameraTargetField === 'tsEnd') {
+    document.getElementById('tsKmEnd').removeAttribute('readonly');
+    document.getElementById('tsKmEnd').style.background = 'rgba(33,150,243,0.15)';
+    document.getElementById('tsKmEnd').style.borderColor = '#2196F3';
+    document.getElementById('tsKmEnd').focus();
+    toast('✏️ اكتب الرقم يدوياً (سيراجعه الأدمن)', 'warn');
+  }
+}
+
+function closeCamera() {
+  if (cameraInterval) { clearInterval(cameraInterval); cameraInterval = null; }
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  if (currentWorker) {
+    currentWorker.then(w => w.terminate()).catch(() => {});
+    currentWorker = null;
+  }
+  document.getElementById('cameraModal').style.display = 'none';
+  isReading = false;
 }
 
 /* ============================================================
@@ -2020,17 +2183,15 @@ function captureEndLocation() {
 async function openShift() {
   const carId = document.getElementById('openCar').value;
   const startOdo = parseFloat(document.getElementById('startOdoValue').value);
-  const startImg = document.getElementById('startOdomImg').files[0];
 
   if (!carId) { toast('اختر السيارة', 'error'); return; }
   if (!selectedShift) { toast('اختر الوردية', 'error'); return; }
   if (!selectedSystemForShift) { toast('اختر نظام اليوم', 'error'); return; }
-  if (!startOdo) { toast('صورة العداد لم يتم قراءتها بعد!', 'error'); return; }
-  if (!startImg) { toast('صورة عداد البداية إجبارية', 'error'); return; }
+  if (!startOdo) { toast('لم يتم قراءة العداد — استخدم الكاميرا', 'error'); return; }
   if (!selectedStartLocation) { toast('أرسل موقع البداية', 'error'); return; }
 
   disableBtn('openShiftBtn', '⏳ جاري بدء الشيفت...');
-  showLoading('جاري بدء الشيفت ورفع الصورة...');
+  showLoading('جاري بدء الشيفت...');
 
   try {
     const allTrans = await getTransactions();
@@ -2040,8 +2201,6 @@ async function openShift() {
 
     const cars = await getCars();
     const car = cars.find(c => c.id === carId);
-    
-    const startImgUrl = await uploadFile(startImg, 'odometer_start');
 
     const shift = {
       captainId: currentUser.id,
@@ -2053,7 +2212,6 @@ async function openShift() {
       startTime: nowFull(),
       startLocation: selectedStartLocation,
       startOdometer: startOdo,
-      startOdometerImg: startImgUrl,
       note: document.getElementById('openNote').value.trim(),
       status: 'open',
       date: todayStr(),
@@ -2064,7 +2222,6 @@ async function openShift() {
     await addTransactionDB(shift);
 
     document.getElementById('startOdoValue').value = '';
-    document.getElementById('startOdomImg').value = '';
     document.getElementById('startOcrResult').classList.remove('active');
     document.getElementById('openCar').value = '';
     document.getElementById('openNote').value = '';
@@ -2292,18 +2449,15 @@ async function closeShift() {
     if (shift.system === 'fixed') {
       const kmEnd = parseFloat(document.getElementById('fsKmEnd').value) || 0;
       const kmStart = shift.startOdometer;
-      const endImg = document.getElementById('endOdomImg').files[0];
       const transMethod = document.getElementById('fsTransferMethod').value;
       const transImg = document.getElementById('fsTransferImg').files[0];
 
       if (kmEnd <= kmStart) { toast('كيلوهات النهاية يجب أن تكون أكبر من البداية', 'error'); return; }
-      if (!endImg) { toast('صورة عداد النهاية إجبارية', 'error'); return; }
       if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; }
       if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
 
       showLoading('جاري رفع الصور...');
       
-      const endImgUrl = await uploadFile(endImg, 'odometer_end');
       const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null;
       
       const extraExp = getExtraExpensesTotal('fs');
@@ -2319,7 +2473,6 @@ async function closeShift() {
         remaining: parseFloat(document.getElementById('fsRemaining').value) || 0,
         transferMethod: transMethod,
         transferImg: transImgUrl,
-        endOdometerImg: endImgUrl,
         travel: parseFloat(document.getElementById('fsTravel').value) || 0,
         privateTrips: parseFloat(document.getElementById('fsPrivate').value) || 0,
         schoolTrips: parseFloat(document.getElementById('fsSchools').value) || 0,
@@ -2333,18 +2486,15 @@ async function closeShift() {
     } else if (shift.system === 'third') {
       const kmEnd = parseFloat(document.getElementById('tsKmEnd').value) || 0;
       const kmStart = shift.startOdometer;
-      const endImg = document.getElementById('tsEndOdomImg').files[0];
       const transMethod = document.getElementById('tsTransferMethod').value;
       const transImg = document.getElementById('tsTransferImg').files[0];
 
       if (kmEnd <= kmStart) { toast('كيلوهات النهاية أكبر من البداية', 'error'); return; }
-      if (!endImg) { toast('صورة عداد النهاية إجبارية', 'error'); return; }
       if (!transMethod) { toast('اختر طريقة التحويل', 'error'); return; }
       if (transMethod !== 'كاش' && !transImg) { toast('صورة التحويل مطلوبة', 'error'); return; }
 
       showLoading('جاري رفع الصور...');
 
-      const endImgUrl = await uploadFile(endImg, 'odometer_end');
       const transImgUrl = transImg ? await uploadFile(transImg, 'transfers') : null;
       const gasImgs = document.getElementById('tsGasImgs').files;
       const fuelImgs = document.getElementById('tsFuelImgs').files;
@@ -2374,7 +2524,6 @@ async function closeShift() {
         remaining: parseFloat(document.getElementById('tsRemaining').value) || 0,
         transferMethod: transMethod,
         transferImg: transImgUrl,
-        endOdometerImg: endImgUrl,
         gasImgs: gasUrls,
         fuelImgs: fuelUrls,
         extraExpenses: extraExp.list.filter(e => e.name && e.amount > 0),
@@ -2386,7 +2535,7 @@ async function closeShift() {
 
     await updateTransactionDB(shift.id, updateData);
     resetCloseForms();
-    toast('✅ تم إرسال الشيفت للمراجعة بنجاح! في انتظار موافقة الأدمن.');
+    toast('✅ تم إرسال الشيفت للمراجعة بنجاح!');
     await renderCaptain();
     switchTab('tab-myhome', document.querySelector('#captainTabs .tab-btn'));
 
@@ -2415,9 +2564,6 @@ function resetCloseForms() {
   document.getElementById('tsTransferImgBox').style.display = 'block';
   ['tsTransferImg','tsGasImgs','tsFuelImgs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('tsGasPreview').innerHTML = ''; document.getElementById('tsFuelPreview').innerHTML = '';
-  ['endOdomImg', 'tsEndOdomImg'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('endOcrResult').classList.remove('active');
-  document.getElementById('tsEndOcrResult').classList.remove('active');
 
   fsExtraExpenses = []; tsExtraExpenses = [];
   renderExtraExpenses('fs'); renderExtraExpenses('ts');
@@ -2619,7 +2765,7 @@ async function showDetails(id) {
     html += `<div style="color:#EF5350;font-size:13px;margin-top:4px;font-weight:bold;">الإجمالي: ${s.extraExpenseTotal} ج</div>`;
   }
 
-  // عرض الصور (العدادات والتحويل)
+  // عرض الصور
   const imgs = [
     { key: 'startOdometerImg', label: '📸 صورة عداد البداية' },
     { key: 'endOdometerImg', label: '📸 صورة عداد النهاية' },
@@ -2635,7 +2781,7 @@ async function showDetails(id) {
 
   document.getElementById('detailsContent').innerHTML = html;
 
-  // إظهار لوحة تحكم المراجعة للأدمن فقط (لو الشيفت معلق)
+  // لوحة تحكم المراجعة
   const adminControls = document.getElementById('adminReviewControls');
   if (currentUser.role === 'admin' && s.status === 'pending') {
     adminControls.style.display = 'block';
@@ -2670,10 +2816,8 @@ async function approveShift() {
     const s = shifts.find(t => t.id === currentReviewShiftId);
     if (!s) return;
 
-    // 1. تغيير حالة الشيفت لـ closed
     await updateTransactionDB(s.id, { status: 'closed' });
 
-    // 2. إضافة المتبقي للمديونية (لو موجود)
     if (s.remaining > 0) {
       const bal = await captainDebtBalance(s.captainId);
       await addDebtDB({
@@ -2704,7 +2848,6 @@ async function rejectShift() {
 
   showLoading('جاري الرفض...');
   try {
-    // إرجاع الشيفت لحالة open عشان الكابتن يعدله ويبعته تاني
     await updateTransactionDB(currentReviewShiftId, { 
       status: 'open', 
       rejectReason: reason 
@@ -2734,7 +2877,6 @@ async function saveAdminEdit() {
     const s = shifts.find(t => t.id === currentReviewShiftId);
     if (!s) return;
 
-    // إعادة الحسابات بناءً على تعديلات الأدمن
     let updateData = {
       startOdometer: newKmStart,
       kmEnd: newKmEnd,
@@ -2758,7 +2900,6 @@ async function saveAdminEdit() {
       updateData.revenue = newRev;
       updateData.remaining = Math.max(0, newRev - newTrans - (s.extraExpenseTotal||0));
     } else {
-      // تلت
       const newRev = (s.uber||0) + (s.didi||0) + (s.indriver||0) + (s.external||0) + (s.travel||0) + (s.privateTrips||0) + (s.schoolTrips||0) + (s.employeeTrips||0);
       const newExp = (s.gas||0) + (s.fuel||0) + (s.extraExpenseTotal||0);
       const captainShare = (newRev - newExp) / 3;
@@ -2773,8 +2914,8 @@ async function saveAdminEdit() {
     await updateTransactionDB(s.id, updateData);
     document.getElementById('editRemaining').value = updateData.remaining;
     
-    toast('✏️ تم حفظ التعديلات وإعادة الحساب. اضغط "موافقة نهائية" لتأكيد الشيفت.');
-    await showDetails(s.id); // إعادة فتح الشاشة بالبيانات الجديدة
+    toast('✏️ تم حفظ التعديلات. اضغط "موافقة نهائية" لتأكيد الشيفت.');
+    await showDetails(s.id);
   } catch (e) {
     console.error(e);
     toast('حدث خطأ', 'error');
@@ -2856,7 +2997,6 @@ async function addNewAdmin() {
    ============================================================ */
 applyTheme();
 
-// مراقبة تسجيل الدخول
 auth.onAuthStateChanged(async function(firebaseUser) {
   if (firebaseUser) {
     const savedSession = localStorage.getItem('mashwarak_session');
@@ -2872,7 +3012,6 @@ auth.onAuthStateChanged(async function(firebaseUser) {
   }
 });
 
-// إنشاء أدمن افتراضي أول مرة
 (async function initDefaultAdmin() {
   try {
     await new Promise(r => setTimeout(r, 800));
@@ -2886,17 +3025,15 @@ auth.onAuthStateChanged(async function(firebaseUser) {
   } catch (e) {}
 })();
 
-// أحداث الدخول
 document.getElementById('loginPass').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
 document.getElementById('loginUser').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleLogin(); });
 
-// منع القيم السالبة
 document.addEventListener('input', function(e) {
   if (e.target.type === 'number' && parseFloat(e.target.value) < 0) e.target.value = 0;
 });
 
 window.addEventListener('load', function() {
-  console.log('🚗 مشوارك — النسخة 14.0 (نظام المراجعة + OCR)');
+  console.log('🚗 مشوارك — النسخة 15.0 (كاميرا ذكية + مراجعة)');
   setTimeout(hideLoading, 800);
 });
 setTimeout(hideLoading, 1500);
